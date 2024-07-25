@@ -1,6 +1,10 @@
+use axum::extract::{FromRequest, FromRequestParts, Request};
+use axum_extra::extract::PrivateCookieJar;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+
+use crate::{errors::BackendError, AppState};
 
 #[derive(Debug, Serialize, Default, Clone)]
 pub struct GithubId(i64);
@@ -26,4 +30,11 @@ pub struct Guest {
     pub naughty_reason: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize)]
+pub struct GithubUser {
+    pub id: i64,
+    pub login: String,
+    pub name: Option<String>,
 }

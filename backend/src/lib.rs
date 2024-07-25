@@ -10,3 +10,5 @@ pub mod cruds;
 pub mod domain;
 
 pub mod errors;
+
+pub mod shuttle_utils;
