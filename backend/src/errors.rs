@@ -20,6 +20,9 @@ pub enum BackendError {
     #[error("Unauthorized")]
     Unauthorized,
 
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
     #[error("Internal error")]
     InternalErr,
 
@@ -78,6 +81,7 @@ impl IntoResponse for BackendError {
         let response = match self {
             Self::SQLErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
+            Self::Forbidden(msg) => (StatusCode::FORBIDDEN, msg),
             Self::InternalErr => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),

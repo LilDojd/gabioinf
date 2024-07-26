@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use axum::{
-    extract::FromRequestParts,
-    http::request::Parts,
-};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use chrono::{DateTime, Utc};
 
 use crate::{
@@ -56,15 +53,25 @@ impl GuestCrud {
         Ok(guest)
     }
 
-    pub async fn promote_user_to_admin(&self, guest: &Guest) -> BResult<()> {
-        match sqlx::query("UPDATE guests SET is_admin = true WHERE id = $1")
-            .bind(guest.id)
-            .execute(self.db.as_ref())
+    pub async fn promote_to_admin(&self, guest_id: i64) -> BResult<Guest> {
+        let guest = sqlx::query_as::<_, Guest>(
+            "UPDATE guests SET is_admin = true WHERE id = $1 RETURNING *",
+        )
+        .bind(guest_id)
+        .fetch_one(self.db.as_ref())
+        .await
+        .map_err(BackendError::from)?;
+
+        Ok(guest)
+    }
+
+    pub async fn get_all_admins(&self) -> BResult<Vec<Guest>> {
+        let admins = sqlx::query_as::<_, Guest>("SELECT * FROM guests WHERE is_admin = true")
+            .fetch_all(self.db.as_ref())
             .await
-        {
-            Ok(_) => Ok(()),
-            Err(err) => Err(BackendError::from(err)),
-        }
+            .map_err(BackendError::from)?;
+
+        Ok(admins)
     }
 
     pub async fn register_session<S: AsRef<str>>(
