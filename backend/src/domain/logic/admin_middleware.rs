@@ -7,8 +7,8 @@ use axum::{
 use crate::{domain::models::Guest, errors::BackendError, AppState};
 
 pub async fn admin_middleware(
-    State(state): State<AppState>,
-    mut req: Request,
+    State(_state): State<AppState>,
+    req: Request,
     next: Next,
 ) -> Result<Response, BackendError> {
     let guest = req.extensions().get::<Guest>().cloned();
