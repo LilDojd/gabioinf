@@ -4,7 +4,7 @@ use crate::{
 };
 use axum::{
     http,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Extension, Router,
 };
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
@@ -14,21 +14,29 @@ use oauth2::basic::BasicClient;
 use tower_http::cors::CorsLayer;
 
 use super::{
-    admin_dashboard, execute_sql_query, get_all_admins, get_guests, logout, promote_to_admin,
+    admin_dashboard, create_entry, delete_entry, execute_sql_query, flag_as_naughty,
+    get_all_admins, get_all_entries, get_guests, get_naughty_entries, logout, promote_to_admin,
+    update_entry,
 };
 
 pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
     let cors = CorsLayer::new()
         .allow_credentials(true)
-        .allow_methods(vec![Method::GET, Method::POST, Method::PUT])
+        .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers(vec![ORIGIN, AUTHORIZATION, ACCEPT])
         .allow_origin(state.domain.parse::<HeaderValue>().unwrap());
 
-    let guestbook_router = Router::new();
-    // .route("/", get(guestbook))
-    // .route("/sign", post(sign_guestbook))
-    // .route("/:id/hide", patch(hide_entry))
-    // .route("/:id/delete", delete(delete_entry));
+    let guestbook_router = Router::new()
+        .route("/", post(create_entry))
+        .route("/", get(get_all_entries))
+        .route("/:id", put(update_entry))
+        .route("/:id", delete(delete_entry))
+        .route("/:id/flag", post(flag_as_naughty))
+        .route("/naughty", get(get_naughty_entries))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ));
 
     let admin_router = Router::new()
         .route("/admin", get(admin_dashboard))
