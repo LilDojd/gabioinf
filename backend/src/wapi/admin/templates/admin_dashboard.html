@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <style>
+      :root {
+        --primary-color: #1a237e;
+        --secondary-color: #3f51b5;
+        --accent-color: #7986cb;
+        --text-color: #ffffff;
+        --background-color: #e8eaf6;
+        --error-color: #f44336;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: var(--background-color);
+        color: var(--primary-color);
+      }
+      .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+      }
+      header {
+        background-color: var(--primary-color);
+        color: var(--text-color);
+        text-align: center;
+        padding: 1rem;
+        margin-bottom: 2rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 2.5rem;
+      }
+      .dashboard-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+      }
+      .dashboard-card:hover {
+        transform: translateY(-5px);
+      }
+      h2 {
+        color: var(--secondary-color);
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+      textarea {
+        width: 100%;
+        height: 150px;
+        margin-bottom: 10px;
+        border: 1px solid var(--accent-color);
+        border-radius: 4px;
+        padding: 10px;
+        font-family: "Courier New", Courier, monospace;
+      }
+      button {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: var(--primary-color);
+      }
+      #result {
+        margin-top: 20px;
+        border: 1px solid var(--accent-color);
+        border-radius: 4px;
+        padding: 20px;
+        background-color: #ffffff;
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid var(--accent-color);
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+      }
+      tr:nth-child(even) {
+        background-color: #f8f8f8;
+      }
+      .error-message {
+        color: var(--error-color);
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Admin Dashboard</h1>
+    </header>
+    <div class="container">
+      <div class="dashboard-card">
+        <h2>Run SQL Query</h2>
+        <form id="sqlForm">
+          <textarea
+            id="sqlQuery"
+            placeholder="Enter your SQL query here"
+          ></textarea>
+          <button type="submit">Run Query</button>
+        </form>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>Query Results</h2>
+        <div id="result"></div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("sqlForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const query = document.getElementById("sqlQuery").value;
+          const response = await fetch("/v1/admin/query", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ query }),
+          });
+          const data = await response.json();
+          const resultDiv = document.getElementById("result");
+          if (response.ok) {
+            if (data.error) {
+              resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
+            } else {
+              let tableHtml = "<table><thead><tr>";
+              data.columns.forEach((col) => {
+                tableHtml += `<th>${col}</th>`;
+              });
+              tableHtml += "</tr></thead><tbody>";
+              data.rows.forEach((row) => {
+                tableHtml += "<tr>";
+                row.forEach((cell) => {
+                  tableHtml += `<td>${cell}</td>`;
+                });
+                tableHtml += "</tr>";
+              });
+              tableHtml += "</tbody></table>";
+              resultDiv.innerHTML = tableHtml;
+            }
+          } else {
+            resultDiv.innerHTML = `<div class="error-message">Error: ${data.error || "Unknown error"}</div>`;
+          }
+        });
+    </script>
+  </body>
+</html>
