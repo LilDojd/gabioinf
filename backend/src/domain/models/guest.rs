@@ -1,4 +1,3 @@
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -19,7 +18,9 @@ impl From<i64> for GithubId {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, sqlx::Type)]
+#[derive(
+    Debug, Serialize, Deserialize, Default, Clone, Copy, sqlx::Type, PartialEq, Eq, PartialOrd, Ord,
+)]
 #[sqlx(transparent)]
 pub struct GuestId(i64);
 

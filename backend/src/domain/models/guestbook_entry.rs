@@ -12,7 +12,7 @@ pub struct GuestbookEntry {
     pub signature: Option<String>, // Base64 encoded image data
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub author: GuestId,
+    pub author_id: GuestId,
 }
 
 #[derive(Debug)]
