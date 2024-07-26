@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS guests (
     id              BIGSERIAL PRIMARY KEY,
-    github_id       VARCHAR(255) UNIQUE NOT NULL,
+    github_id       BIGSERIAL UNIQUE NOT NULL,
     name            VARCHAR(255) NOT NULL,
     username        VARCHAR(255) NOT NULL,
     is_naughty      BOOLEAN NOT NULL DEFAULT FALSE,
