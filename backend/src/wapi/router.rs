@@ -26,13 +26,25 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
         .allow_headers(vec![ORIGIN, AUTHORIZATION, ACCEPT])
         .allow_origin(state.domain.parse::<HeaderValue>().unwrap());
 
+    let public_guestbook_router = Router::new()
+        .route("/", get(get_all_entries))
+        .route("/naughty", get(get_naughty_entries));
+
     let guestbook_router = Router::new()
         .route("/", post(create_entry))
-        .route("/", get(get_all_entries))
-        .route("/:id", put(update_entry))
         .route("/:id", delete(delete_entry))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ));
+
+    let admin_guestbook_router = Router::new()
         .route("/:id/flag", post(flag_as_naughty))
-        .route("/naughty", get(get_naughty_entries))
+        .route("/:id", put(update_entry))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            admin_middleware,
+        ))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
@@ -68,6 +80,8 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
 
     Router::new()
         .nest("/guestbook", guestbook_router)
+        .nest("/guestbook", public_guestbook_router)
+        .nest("/admin/guestbook", admin_guestbook_router)
         .nest("/", auth_router)
         .nest("/guests", guests_router)
         .nest("/", protected_router)

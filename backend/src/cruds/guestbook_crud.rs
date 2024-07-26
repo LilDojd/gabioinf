@@ -18,6 +18,16 @@ impl GuestbookCrud {
         Self { db }
     }
 
+    pub async fn get_entry(&self, id: i64) -> BResult<GuestbookEntry> {
+        let entry = sqlx::query_as::<_, GuestbookEntry>("SELECT * FROM guestbook WHERE id = $1")
+            .bind(id)
+            .fetch_one(self.db.as_ref())
+            .await
+            .map_err(BackendError::from)?;
+
+        Ok(entry)
+    }
+
     pub async fn create_entry<S: AsRef<str>>(
         &self,
         guest_id: &GuestId,
