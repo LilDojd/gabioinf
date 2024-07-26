@@ -18,6 +18,17 @@ use oauth2::{
 };
 use serde::Deserialize;
 
+/// Builds an OAuth2 client for the GitHub OAuth provider
+/// # Arguments
+///
+/// * `client_id` - The client ID for the OAuth application
+/// * `client_secret` - The client secret for the OAuth application
+/// * `oauth_redirect_uri` - The redirect URI for the OAuth application
+///
+/// # Returns
+///
+/// A `BasicClient` object for the GitHub OAuth provider
+///
 pub fn build_oauth_client<S: AsRef<str>>(
     client_id: S,
     client_secret: S,
@@ -37,11 +48,13 @@ pub fn build_oauth_client<S: AsRef<str>>(
     .set_redirect_uri(RedirectUrl::new(oauth_redirect_uri).unwrap())
 }
 
+/// Request payload for the OAuth callback
 #[derive(Debug, Deserialize)]
 pub struct AuthRequest {
     code: String,
 }
 
+/// Initiates the GitHub OAuth flow
 pub async fn github_auth(Extension(oauth_client): Extension<BasicClient>) -> impl IntoResponse {
     let (authorize_url, _csrf_state) = oauth_client
         .authorize_url(CsrfToken::new_random)
@@ -51,6 +64,11 @@ pub async fn github_auth(Extension(oauth_client): Extension<BasicClient>) -> imp
     Redirect::to(authorize_url.as_ref())
 }
 
+/// Handles the OAuth callback from GitHub
+///
+/// This function exchanges the authorization code for an access token and retrieves the user's
+/// information from the GitHub API. The user is then upserted in the database and a session is
+/// created.
 pub async fn github_callback(
     State(state): State<AppState>,
     jar: PrivateCookieJar,
