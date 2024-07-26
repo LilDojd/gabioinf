@@ -1,8 +1,7 @@
-use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Database, Decode, FromRow};
+use sqlx::FromRow;
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, sqlx::Type)]
 #[sqlx(transparent)]

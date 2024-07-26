@@ -6,3 +6,6 @@ pub use guest::*;
 
 mod admin;
 pub use admin::*;
+
+mod guestbook;
+pub use guestbook::*;
