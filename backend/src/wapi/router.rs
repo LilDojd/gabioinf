@@ -1,3 +1,7 @@
+//! API router configuration.
+//!
+//! This module defines the routing structure for the entire API, including
+//! public routes, authenticated routes, and admin-only routes.
 use crate::{
     domain::logic::{admin_middleware, auth_middleware, github_auth, github_callback, protected},
     AppState,
@@ -19,6 +23,20 @@ use super::{
     update_entry,
 };
 
+/// Configures and returns the main API router.
+///
+/// This function sets up all routes for the application, including public routes,
+/// authenticated routes, and admin-only routes. It also configures CORS and
+/// attaches middleware where necessary.
+///
+/// # Arguments
+///
+/// * `state` - The shared application state.
+/// * `oauth_client` - The OAuth client for authentication.
+///
+/// # Returns
+///
+/// Returns a configured `Router` instance ready to be served.
 pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
     let cors = CorsLayer::new()
         .allow_credentials(true)

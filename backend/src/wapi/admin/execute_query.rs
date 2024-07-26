@@ -1,3 +1,8 @@
+//! SQL query execution handler.
+//!
+//! This module contains the handler function for executing arbitrary SQL queries.
+//! It's a powerful feature intended for administrative use only.
+
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgRow;
@@ -7,22 +12,78 @@ use sqlx::ValueRef;
 
 use crate::AppState;
 
+/// Represents the request payload for SQL query execution.
 #[derive(Deserialize, Debug)]
 pub struct SqlQueryRequest {
     query: String,
 }
 
+/// Represents the response for a successful SQL query execution.
 #[derive(Serialize, Debug)]
 pub struct SqlQueryResponse {
     columns: Vec<String>,
     rows: Vec<Vec<String>>,
 }
 
+/// Represents the response for a failed SQL query execution.
 #[derive(Serialize, Debug)]
 pub struct SqlQueryErrorResponse {
     error: String,
 }
 
+/// Handler for executing arbitrary SQL queries.
+///
+/// This function allows execution of any SQL query provided in the request payload.
+/// It's designed for administrative use and should be heavily restricted.
+///
+/// # Arguments
+///
+/// * `state` - The application state, containing the database connection.
+/// * `payload` - The JSON payload containing the SQL query to execute.
+///
+/// # Returns
+///
+/// Returns an `impl IntoResponse` which resolves to:
+/// - On success: A `200 OK` status with a JSON body containing columns and rows.
+/// - On error: A `400 Bad Request` status with a JSON body containing the error message.
+///
+/// # Security Considerations
+///
+/// - This endpoint should ONLY be accessible to highly privileged administrators.
+/// - It poses significant security risks if misused, including data loss or exposure.
+/// - Implement strict access controls, audit logging, and input validation.
+/// - Consider whitelisting allowed queries or query types for additional security.
+///
+/// # Performance Note
+///
+/// Arbitrary queries can be resource-intensive. Consider implementing query timeouts
+/// and resource limits to prevent DoS vulnerabilities.
+///
+/// # Example
+///
+/// ```json
+/// POST /admin/query
+/// Content-Type: application/json
+/// Authorization: Bearer <admin-token>
+///
+/// {
+///     "query": "SELECT * FROM users LIMIT 10"
+/// }
+/// ```
+///
+/// Successful response:
+/// ```json
+/// HTTP/1.1 200 OK
+/// Content-Type: application/json
+///
+/// {
+///     "columns": ["id", "name", "email"],
+///     "rows": [
+///         ["1", "John Doe", "john@example.com"],
+///         ["2", "Jane Smith", "jane@example.com"]
+///     ]
+/// }
+/// ```
 pub async fn execute_sql_query(
     State(state): State<AppState>,
     Json(payload): Json<SqlQueryRequest>,
