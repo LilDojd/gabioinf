@@ -1,6 +1,5 @@
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use oauth2::{basic::BasicErrorResponseType, RequestTokenError, StandardErrorResponse};
 use thiserror::Error;
 
 pub(crate) type BResult<T> = std::result::Result<T, BackendError>;
@@ -78,7 +77,7 @@ impl IntoResponse for BackendError {
     fn into_response(self) -> axum::response::Response {
         let response = match self {
             Self::SQLErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            Self::Unauthorized => (StatusCode::UNAUTHORIZED, format!("Unauthorized")),
+            Self::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
             Self::InternalErr => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),

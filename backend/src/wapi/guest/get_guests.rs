@@ -1,6 +1,6 @@
 use axum::{extract::State, response::IntoResponse, Json};
 
-use crate::{domain::models::Guest, errors::BResult, AppState};
+use crate::{domain::models::Guest, AppState};
 
 // TODO: Refactor
 pub async fn get_guests(

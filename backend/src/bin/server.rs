@@ -1,10 +1,9 @@
 use axum::response::Html;
 use axum::routing::get;
-use axum::{Extension, Router};
-use backend::domain::logic::{build_oauth_client, protected};
+use axum::Router;
+use backend::domain::logic::build_oauth_client;
 use backend::shuttle_utils::grab_secrets;
 use backend::{db::DbConnPool, wapi::api_router, AppState};
-use tower_http::services::{ServeDir, ServeFile};
 
 #[shuttle_runtime::main]
 async fn main(
@@ -44,12 +43,13 @@ async fn main(
 
 #[axum::debug_handler]
 async fn homepage() -> Html<String> {
-    Html(format!(
+    Html(
         r#"
         <p>Welcome!</p>
         <a href="http://localhost:8000/v1/auth/github">
             Click here to sign into Github!
         </a>
     "#
-    ))
+        .to_string(),
+    )
 }

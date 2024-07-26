@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{db::DbConnPool, domain::models::GuestbookEntry, errors::BResult};
+use crate::db::DbConnPool;
 
 #[derive(Clone, Debug)]
 pub struct GuestbookCrud {
