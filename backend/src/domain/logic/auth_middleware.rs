@@ -6,7 +6,7 @@ use axum::{
 use axum_extra::extract::PrivateCookieJar;
 
 use crate::{
-    errors::{BackendError, UseCase},
+    errors::{ApiError, BResult},
     AppState,
 };
 
@@ -15,23 +15,24 @@ pub async fn auth_middleware(
     jar: PrivateCookieJar,
     mut req: Request,
     next: Next,
-) -> Result<Response, BackendError> {
+) -> BResult<Response> {
     // Extract token from cookies
     let token = jar
         .get("sid")
-        .ok_or(BackendError::Unauthorized)?
+        .ok_or(ApiError::AuthorizationError(
+            "No authorization cookie".to_string(),
+        ))?
         .value()
         .to_string();
 
     tracing::debug!("Getting session info");
-    let (user_id, expires_at) = state
-        .guest_crud
-        .get_session(&token, UseCase::UserLogin)
-        .await?;
+    let (user_id, expires_at) = state.guest_crud.get_session(&token).await?;
 
     if chrono::Utc::now() > expires_at {
         state.guest_crud.invalidate_session(&token).await?;
-        return Err(BackendError::Unauthorized);
+        return Err(ApiError::AuthenticationError(
+            "Authentication token expired".to_string(),
+        ));
     }
     tracing::debug!(
         "Session info: user_id: {}, expires_at: {}",

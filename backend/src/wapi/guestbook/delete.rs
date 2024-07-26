@@ -5,7 +5,7 @@ use axum::{
 
 use crate::{
     domain::models::Guest,
-    errors::{BResult, BackendError},
+    errors::{ApiError, BResult},
     AppState,
 };
 
@@ -20,7 +20,7 @@ pub async fn delete_entry(
         state.guestbook_crud.delete_entry(id).await?;
         Ok(())
     } else {
-        Err(BackendError::Forbidden(
+        Err(ApiError::AuthorizationError(
             "You are not allowed to delete this entry".to_string(),
         ))
     }

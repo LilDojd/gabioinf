@@ -1,105 +1,85 @@
+//! Error types for the backend
+//!
+//! This module contains the error types for the backend in the [`ApiError`] enum.
+//!
+//! Additionaly, [`ApiError`] implements the [`IntoResponse`] trait, which allows it to be
+//! straitforwardly converted into an axum response.
+//!
+//! [`IntoResponse`]: axum::response::IntoResponse
+
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use thiserror::Error;
 
-pub(crate) type BResult<T> = std::result::Result<T, BackendError>;
-
-#[derive(Debug)]
-pub enum UseCase {
-    UserRegister,
-    UserLogin,
-    UpdateUser,
-    Placeholder,
-}
+pub(crate) type BResult<T> = std::result::Result<T, ApiError>;
 
 #[derive(Debug, Error)]
-pub enum BackendError {
-    #[error("SQL error: {0}")]
-    SQLErr(#[from] sqlx::Error),
+pub enum ApiError {
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] sqlx::Error),
 
-    #[error("Unauthorized")]
-    Unauthorized,
+    #[error("Authentication failed: {0}")]
+    AuthenticationError(String),
 
-    #[error("Forbidden: {0}")]
-    Forbidden(String),
+    #[error("Authorization failed: {0}")]
+    AuthorizationError(String),
 
-    #[error("Internal error")]
-    InternalErr,
+    #[error("Resource not found: {0}")]
+    NotFoundError(String),
 
-    #[error("{0} already exists")]
-    AlreadyExists(String),
+    #[error("Resource already exists: {0}")]
+    AlreadyExistsError(String),
 
-    #[error("{0} not found")]
-    NotFound(String),
+    #[error("Invalid input: {0}")]
+    ValidationError(String),
 
-    #[error("Unhandled error")]
-    UnhandledErr,
+    #[error("External service error: {0}")]
+    ExternalServiceError(String),
 
-    #[error("OAuth token error: {0}")]
-    TokenErr(String),
-
-    #[error("Reqwest HTTP error: {0}")]
-    ReqwestFetchErr(#[from] reqwest::Error),
-
-    #[error("Called Option::unwrap on None value")]
-    OptionErr,
+    #[error("Internal server error")]
+    InternalServerError,
 
     #[error("Encountered an error trying to convert an infallible value: {0}")]
     FromRequestPartsError(#[from] std::convert::Infallible),
+
+    #[error("Unhandled error: {0}")]
+    UnhandledError(String),
 }
 
-impl From<(sqlx::Error, UseCase)> for BackendError {
-    fn from(value: (sqlx::Error, UseCase)) -> Self {
-        tracing::debug!("from((sqlx::Error, UseCase)): value={:?}", value);
-        let (err, use_case) = value;
-        match use_case {
-            UseCase::UserRegister => {
-                let db_err = err.into_database_error();
-                match db_err {
-                    Some(e) => {
-                        e.code()
-                            .map_or(BackendError::InternalErr, |code| match code.as_ref() {
-                                "23505" => BackendError::AlreadyExists("User".to_string()),
-                                _ => BackendError::InternalErr,
-                            })
-                    }
-                    None => BackendError::InternalErr,
-                }
-            }
-            UseCase::UserLogin => match &err {
-                sqlx::Error::RowNotFound => BackendError::Unauthorized,
-                _ => BackendError::InternalErr,
-            },
-            UseCase::UpdateUser => todo!(),
-            _ => BackendError::UnhandledErr,
-        }
-    }
-}
-
-impl IntoResponse for BackendError {
+impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         let response = match self {
-            Self::SQLErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            Self::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
-            Self::Forbidden(msg) => (StatusCode::FORBIDDEN, msg),
-            Self::InternalErr => (
+            Self::DatabaseError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            Self::AuthenticationError(e) => (StatusCode::UNAUTHORIZED, e.to_string()),
+            Self::AuthorizationError(e) => (StatusCode::FORBIDDEN, e.to_string()),
+            Self::NotFoundError(e) => (StatusCode::NOT_FOUND, e.to_string()),
+            Self::AlreadyExistsError(e) => (StatusCode::CONFLICT, e.to_string()),
+            Self::ValidationError(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+            Self::ExternalServiceError(e) => (StatusCode::BAD_GATEWAY, e.to_string()),
+            Self::InternalServerError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),
             ),
-            Self::AlreadyExists(e) => (StatusCode::CONFLICT, format!("{} already exists", e)),
-            Self::NotFound(e) => (StatusCode::NOT_FOUND, format!("{} not found", e)),
-            Self::UnhandledErr => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Unhandled error".to_string(),
-            ),
-            Self::TokenErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            Self::ReqwestFetchErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            Self::OptionErr => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Called Option::unwrap on None value".to_string(),
-            ),
+            Self::UnhandledError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             Self::FromRequestPartsError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };
         response.into_response()
+    }
+}
+
+impl From<reqwest::Error> for ApiError {
+    fn from(e: reqwest::Error) -> Self {
+        Self::ExternalServiceError(e.to_string())
+    }
+}
+
+type WeirdOauthError = oauth2::RequestTokenError<
+    oauth2::reqwest::Error<reqwest::Error>,
+    oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
+>;
+
+impl From<WeirdOauthError> for ApiError {
+    fn from(e: WeirdOauthError) -> Self {
+        Self::ExternalServiceError(e.to_string())
     }
 }
