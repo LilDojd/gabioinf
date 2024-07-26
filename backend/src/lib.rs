@@ -12,3 +12,5 @@ pub mod domain;
 pub mod errors;
 
 pub mod shuttle_utils;
+
+pub mod config;

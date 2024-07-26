@@ -18,9 +18,11 @@ use oauth2::{
 };
 use serde::Deserialize;
 
-pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S) -> BasicClient {
-    let redirect_url = "http://localhost:8000/v1/auth/authorized".to_string();
-
+pub fn build_oauth_client<S: AsRef<str>>(
+    client_id: S,
+    client_secret: S,
+    oauth_redirect_uri: String,
+) -> BasicClient {
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .expect("Invalid authorization endpoint URL");
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
@@ -32,7 +34,7 @@ pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S) -> Basi
         auth_url,
         Some(token_url),
     )
-    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
+    .set_redirect_uri(RedirectUrl::new(oauth_redirect_uri).unwrap())
 }
 
 #[derive(Debug, Deserialize)]
