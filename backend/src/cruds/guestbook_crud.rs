@@ -5,7 +5,7 @@ use chrono::Utc;
 use crate::{
     db::DbConnPool,
     domain::models::{GuestId, GuestbookEntry},
-    errors::{BResult, BackendError},
+    errors::{ApiError, BResult},
 };
 
 #[derive(Clone, Debug)]
@@ -19,13 +19,12 @@ impl GuestbookCrud {
     }
 
     pub async fn get_entry(&self, id: i64) -> BResult<GuestbookEntry> {
-        let entry = sqlx::query_as::<_, GuestbookEntry>("SELECT * FROM guestbook WHERE id = $1")
-            .bind(id)
-            .fetch_one(self.db.as_ref())
-            .await
-            .map_err(BackendError::from)?;
-
-        Ok(entry)
+        Ok(
+            sqlx::query_as::<_, GuestbookEntry>("SELECT * FROM guestbook WHERE id = $1")
+                .bind(id)
+                .fetch_one(self.db.as_ref())
+                .await?,
+        )
     }
 
     pub async fn create_entry<S: AsRef<str>>(
@@ -33,40 +32,32 @@ impl GuestbookCrud {
         guest_id: &GuestId,
         message: S,
     ) -> BResult<GuestbookEntry> {
-        let entry = sqlx::query_as::<_, GuestbookEntry>(
+        Ok(sqlx::query_as::<_, GuestbookEntry>(
             "INSERT INTO guestbook (message, author_id) VALUES ($1, $2) RETURNING *",
         )
         .bind(message.as_ref())
         .bind(guest_id)
         .fetch_one(self.db.as_ref())
-        .await
-        .map_err(BackendError::from)?;
-
-        Ok(entry)
+        .await?)
     }
-    //
+
     pub async fn get_all_entries(&self) -> BResult<Vec<GuestbookEntry>> {
-        let entries =
+        Ok(
             sqlx::query_as::<_, GuestbookEntry>("SELECT * FROM guestbook ORDER BY created_at DESC")
                 .fetch_all(self.db.as_ref())
-                .await
-                .map_err(BackendError::from)?;
-
-        Ok(entries)
+                .await?,
+        )
     }
 
     pub async fn update_entry(&self, id: i64, message: &str) -> BResult<GuestbookEntry> {
-        let entry = sqlx::query_as::<_, GuestbookEntry>(
+        Ok(sqlx::query_as::<_, GuestbookEntry>(
             "UPDATE guestbook SET message = $1, updated_at = $2 WHERE id = $3 RETURNING *",
         )
         .bind(message)
         .bind(Utc::now())
         .bind(id)
         .fetch_one(self.db.as_ref())
-        .await
-        .map_err(BackendError::from)?;
-
-        Ok(entry)
+        .await?)
     }
 
     pub async fn delete_entry(&self, id: i64) -> BResult<()> {
@@ -74,33 +65,27 @@ impl GuestbookCrud {
             .bind(id)
             .execute(self.db.as_ref())
             .await
-            .map_err(BackendError::from)?;
+            .map_err(ApiError::from)?;
 
         Ok(())
     }
 
     pub async fn flag_as_naughty(&self, id: i64, reason: &str) -> BResult<GuestbookEntry> {
-        let entry = sqlx::query_as::<_, GuestbookEntry>(
+        Ok(sqlx::query_as::<_, GuestbookEntry>(
             "UPDATE guestbook SET is_naughty = true, naughty_reason = $1, updated_at = $2 WHERE id = $3 RETURNING *"
         )
         .bind(reason)
         .bind(Utc::now())
         .bind(id)
         .fetch_one(self.db.as_ref())
-        .await
-        .map_err(BackendError::from)?;
-
-        Ok(entry)
+        .await?)
     }
 
     pub async fn get_naughty_entries(&self) -> BResult<Vec<GuestbookEntry>> {
-        let entries = sqlx::query_as::<_, GuestbookEntry>(
+        Ok(sqlx::query_as::<_, GuestbookEntry>(
             "SELECT * FROM guestbook WHERE is_naughty = true ORDER BY created_at DESC",
         )
         .fetch_all(self.db.as_ref())
-        .await
-        .map_err(BackendError::from)?;
-
-        Ok(entries)
+        .await?)
     }
 }

@@ -1,9 +1,8 @@
 //! Handles OAuth flow, user auth and session management
 
-
 use crate::{
     domain::models::{GithubUser, Guest},
-    errors::{BResult, BackendError},
+    errors::{ApiError, BResult},
     AppState,
 };
 use axum::{
@@ -60,7 +59,7 @@ pub async fn github_callback(
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
         .await
-        .map_err(|err| BackendError::TokenErr(err.to_string()))?;
+        .map_err(|e| ApiError::ExternalServiceError(e.to_string()))?;
 
     let github_user = state
         .ctx
@@ -77,7 +76,12 @@ pub async fn github_callback(
 
     let guest = state.guest_crud.upsert_guest(&github_user).await?;
 
-    let expires_in = token.expires_in().ok_or(BackendError::OptionErr)?.as_secs();
+    let expires_in = token
+        .expires_in()
+        .ok_or(ApiError::ExternalServiceError(
+            "The authorization server did not provide token lifetime".to_string(),
+        ))?
+        .as_secs();
 
     let max_age = Local::now().to_utc() + Duration::seconds(expires_in as i64);
 

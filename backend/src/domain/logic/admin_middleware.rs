@@ -4,13 +4,13 @@ use axum::{
     response::Response,
 };
 
-use crate::{domain::models::Guest, errors::BackendError, AppState};
+use crate::{domain::models::Guest, errors::ApiError, AppState};
 
 pub async fn admin_middleware(
     State(_state): State<AppState>,
     req: Request,
     next: Next,
-) -> Result<Response, BackendError> {
+) -> Result<Response, ApiError> {
     let guest = req.extensions().get::<Guest>().cloned();
 
     match guest {
@@ -20,11 +20,12 @@ pub async fn admin_middleware(
         }
         Some(_) => {
             // User is authenticated but not an admin
-            Err(BackendError::Forbidden("Admin access required".to_string()))
+            Err(ApiError::AuthorizationError(
+                "Admin access required".to_string(),
+            ))
         }
-        None => {
-            // User is not authenticated
-            Err(BackendError::Unauthorized)
-        }
+        None => Err(ApiError::AuthenticationError(
+            "Login with github first".to_string(),
+        )),
     }
 }
