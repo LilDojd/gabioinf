@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use axum::extract::{FromRequest, FromRequestParts, Request};
-use axum_extra::extract::PrivateCookieJar;
-use chrono::NaiveDateTime;
+use axum::{
+    extract::FromRequestParts,
+    http::request::Parts,
+};
+use chrono::{DateTime, Utc};
 
 use crate::{
     db::DbConnPool,
@@ -29,7 +31,14 @@ impl GuestCrud {
             .map_err(|err| BackendError::from((err, usecase)))
     }
 
-    // More to follow..
+    pub async fn get_by_id(&self, id: i64) -> BResult<Guest> {
+        sqlx::query_as::<_, Guest>("SELECT * FROM guests WHERE id = $1")
+            .bind(id)
+            .fetch_one(self.db.as_ref())
+            .await
+            .map_err(BackendError::from)
+    }
+
     pub async fn upsert_guest(&self, github_user: &GithubUser) -> BResult<Guest> {
         let guest = sqlx::query_as::<_, Guest>(
             "INSERT INTO guests (github_id, name, username) 
@@ -47,27 +56,63 @@ impl GuestCrud {
         Ok(guest)
     }
 
-    pub async fn register_session(
-        &self,
-        guest: &Guest,
-        token_secret: &String,
-        max_age: NaiveDateTime,
-    ) -> BResult<()> {
-        match sqlx::query(
-            "INSERT INTO sessions (user_id, session_id, expires_at) 
-             VALUES ($1, $2, $3) 
-             ON CONFLICT (user_id) DO UPDATE 
-             SET session_id = EXCLUDED.session_id, expires_at = EXCLUDED.expires_at",
-        )
-        .bind(guest.id)
-        .bind(token_secret)
-        .bind(max_age)
-        .execute(self.db.as_ref())
-        .await
+    pub async fn promote_user_to_admin(&self, guest: &Guest) -> BResult<()> {
+        match sqlx::query("UPDATE guests SET is_admin = true WHERE id = $1")
+            .bind(guest.id)
+            .execute(self.db.as_ref())
+            .await
         {
             Ok(_) => Ok(()),
             Err(err) => Err(BackendError::from(err)),
         }
+    }
+
+    pub async fn register_session<S: AsRef<str>>(
+        &self,
+        guest: &Guest,
+        token_secret: S,
+        max_age: DateTime<Utc>,
+    ) -> BResult<()> {
+        sqlx::query(
+            "INSERT INTO sessions (user_id, token, expires_at) 
+             VALUES ($1, $2, $3) 
+             ON CONFLICT (user_id) DO UPDATE 
+             SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at",
+        )
+        .bind(guest.id)
+        .bind(token_secret.as_ref())
+        .bind(max_age)
+        .execute(self.db.as_ref())
+        .await
+        .map_err(BackendError::from)?;
+
+        Ok(())
+    }
+
+    pub async fn invalidate_session<S: AsRef<str>>(&self, token_secret: S) -> BResult<()> {
+        sqlx::query("DELETE FROM sessions WHERE token = $1")
+            .bind(token_secret.as_ref())
+            .execute(self.db.as_ref())
+            .await
+            .map_err(BackendError::from)?;
+
+        Ok(())
+    }
+
+    pub async fn get_session<S: AsRef<str>>(
+        &self,
+        token_secret: S,
+        usecase: UseCase,
+    ) -> BResult<(i64, DateTime<Utc>)> {
+        let (user_id, expires_at) = sqlx::query_as::<_, (i64, DateTime<Utc>)>(
+            "SELECT user_id, expires_at FROM sessions WHERE token = $1",
+        )
+        .bind(token_secret.as_ref())
+        .fetch_one(self.db.as_ref())
+        .await
+        .map_err(|err| BackendError::from((err, usecase)))?;
+
+        Ok((user_id, expires_at))
     }
 
     pub async fn get_guests(&self) -> BResult<Vec<Guest>> {
@@ -79,29 +124,17 @@ impl GuestCrud {
 }
 
 #[axum::async_trait]
-impl FromRequest<AppState> for Guest {
+impl FromRequestParts<AppState> for Guest {
     type Rejection = BackendError;
-    async fn from_request(req: Request, state: &AppState) -> Result<Self, Self::Rejection> {
-        let state = state.to_owned();
-        let (mut parts, _body) = req.into_parts();
-        let cookiejar: PrivateCookieJar =
-            PrivateCookieJar::from_request_parts(&mut parts, &state).await?;
 
-        let Some(cookie) = cookiejar.get("sid").map(|cookie| cookie.value().to_owned()) else {
-            tracing::debug!("No session cookie found. Cookiejar state: {:?}", cookiejar);
-            return Err(BackendError::Unauthorized);
-        };
-
-        let res = sqlx::query_as::<_, Guest>(
-            "SELECT * FROM sessions
-            LEFT JOIN GUESTS ON sessions.user_id = guests.id
-            WHERE sessions.session_id = $1
-            LIMIT 1",
-        )
-        .bind(cookie)
-        .fetch_one(state.db.as_ref())
-        .await?;
-
-        Ok(res)
+    async fn from_request_parts(
+        parts: &mut Parts,
+        _state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<Guest>()
+            .cloned()
+            .ok_or(BackendError::Unauthorized)
     }
 }

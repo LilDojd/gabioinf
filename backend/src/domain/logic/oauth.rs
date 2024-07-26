@@ -1,15 +1,13 @@
 //! Handles OAuth flow, user auth and session management
 
-use std::sync::Arc;
 
 use crate::{
-    cruds::GuestCrud,
     domain::models::{GithubUser, Guest},
     errors::{BResult, BackendError},
     AppState,
 };
 use axum::{
-    extract::{FromRequest, Query, State},
+    extract::{Query, State},
     response::{Html, IntoResponse, Redirect},
     Extension,
 };
@@ -21,7 +19,7 @@ use oauth2::{
 };
 use serde::Deserialize;
 
-pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
+pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S) -> BasicClient {
     let redirect_url = "http://localhost:8000/v1/auth/authorized".to_string();
 
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
@@ -30,8 +28,8 @@ pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClie
         .expect("Invalid token endpoint URL");
 
     BasicClient::new(
-        ClientId::new(client_id),
-        Some(ClientSecret::new(client_secret)),
+        ClientId::new(client_id.as_ref().to_owned()),
+        Some(ClientSecret::new(client_secret.as_ref().to_owned())),
         auth_url,
         Some(token_url),
     )
@@ -81,7 +79,7 @@ pub async fn github_callback(
 
     let expires_in = token.expires_in().ok_or(BackendError::OptionErr)?.as_secs();
 
-    let max_age = Local::now().naive_local() + Duration::seconds(expires_in as i64);
+    let max_age = Local::now().to_utc() + Duration::seconds(expires_in as i64);
 
     state
         .guest_crud
@@ -101,12 +99,39 @@ pub async fn github_callback(
     Ok((jar.add(cookie), Redirect::to("/v1/protected")))
 }
 
-pub async fn protected(guest: Guest) -> Html<String> {
-    let id = guest.username;
+pub async fn protected(guest: Guest) -> impl IntoResponse {
+    let guest_json = serde_json::to_string_pretty(&guest)
+        .unwrap_or_else(|_| "Error serializing guest data".to_string());
+
     Html(format!(
         r#"
-        <p>Ebanutsya!</p>
-        <p>Mister {id}, ВЫ В СИСТЕМЕ</p>
-    "#
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Protected Page</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }}
+                h1 {{ color: #333; }}
+                pre {{ background-color: #f4f4f4; padding: 10px; border-radius: 5px; }}
+                form {{ margin-top: 20px; }}
+                button {{ padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }}
+                button:hover {{ background-color: #0056b3; }}
+            </style>
+        </head>
+        <body>
+            <h1>Welcome to the Protected Page</h1>
+            <p>Hello, {name}! You are successfully authenticated.</p>
+            <h2>Your Guest Information:</h2>
+            <pre>{guest_json}</pre>
+            <form action="/v1/auth/logout" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </body>
+        </html>
+        "#,
+        name = guest.name,
+        guest_json = guest_json
     ))
 }

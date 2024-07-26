@@ -1,10 +1,10 @@
 use crate::{
-    domain::logic::{github_auth, github_callback, protected},
+    domain::logic::{auth_middleware, github_auth, github_callback, protected},
     AppState,
 };
 use axum::{
     http,
-    routing::{delete, get, patch, post},
+    routing::{get, post},
     Extension, Router,
 };
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
@@ -13,7 +13,7 @@ use http::Method;
 use oauth2::basic::BasicClient;
 use tower_http::cors::CorsLayer;
 
-use super::get_guests;
+use super::{get_guests, logout};
 
 pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
     let cors = CorsLayer::new()
@@ -30,9 +30,15 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
 
     let auth_router = Router::new()
         .route("/auth/github", get(github_auth))
-        .route("/auth/authorized", get(github_callback));
+        .route("/auth/authorized", get(github_callback))
+        .route("/auth/logout", post(logout));
 
-    let protected_router = Router::new().route("/protected", get(protected));
+    let protected_router = Router::new()
+        .route("/protected", get(protected))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ));
 
     let guests_router = Router::new().route("/all", get(get_guests));
 
