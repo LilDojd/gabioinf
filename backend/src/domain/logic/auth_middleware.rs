@@ -49,7 +49,13 @@ pub async fn auth_middleware(
         .session_repo
         .read(&SessionCriteria::WithToken(token.clone()))
         .await
-        .map_err(|_err| ApiError::AuthenticationError("You are not logged in".to_string()))?;
+        .map_err(|_| ApiError::AuthenticationError("You are not logged in".to_string()))?;
+
+    tracing::debug!(
+        "Session info: user_id: {:?}, expires_at: {:?}",
+        session.user_id,
+        session.expires_at
+    );
 
     // Check if the session has expired
     if chrono::Utc::now() > session.expires_at {
@@ -59,18 +65,25 @@ pub async fn auth_middleware(
         ));
     }
 
-    tracing::debug!(
-        "Session info: user_id: {:?}, expires_at: {:?}",
-        session.user_id,
-        session.expires_at
-    );
-
-    // Retrieve guest information and add it to request extensions
+    // Retrieve guest information
     let guest = state
         .guest_repo
         .read(&GuestCriteria::WithGuestId(session.user_id))
         .await?;
+
+    // Check if admin access is required
+    let requires_admin = req.extensions().get::<RequiresAdmin>().is_some();
+    if requires_admin && !guest.is_admin {
+        return Err(ApiError::AuthorizationError(
+            "Admin access required".to_string(),
+        ));
+    }
+
     req.extensions_mut().insert(guest);
 
     Ok(next.run(req).await)
 }
+
+/// Marker struct to indicate routes that require admin access
+#[derive(Debug, Clone)]
+pub struct RequiresAdmin;
