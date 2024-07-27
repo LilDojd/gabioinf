@@ -1,5 +1,6 @@
 use crate::{
     errors::{ApiError, BResult},
+    repos::{GuestCriteria, Repository, SessionCriteria},
     AppState,
 };
 use axum::{
@@ -44,24 +45,30 @@ pub async fn auth_middleware(
         .to_string();
 
     tracing::debug!("Getting session info");
-    let (user_id, expires_at) = state.guest_repo.get_session(&token).await?;
+    let session = state
+        .session_repo
+        .read(&SessionCriteria::WithToken(token.clone()))
+        .await?;
 
     // Check if the session has expired
-    if chrono::Utc::now() > expires_at {
-        state.guest_repo.invalidate_session(&token).await?;
+    if chrono::Utc::now() > session.expires_at {
+        state.session_repo.delete(&session).await?;
         return Err(ApiError::AuthenticationError(
             "Authentication token expired".to_string(),
         ));
     }
 
     tracing::debug!(
-        "Session info: user_id: {}, expires_at: {}",
-        user_id,
-        expires_at
+        "Session info: user_id: {:?}, expires_at: {:?}",
+        session.user_id,
+        session.expires_at
     );
 
     // Retrieve guest information and add it to request extensions
-    let guest = state.guest_repo.get_by_id(user_id).await?;
+    let guest = state
+        .guest_repo
+        .read(&GuestCriteria::WithGuestId(session.user_id))
+        .await?;
     req.extensions_mut().insert(guest);
 
     Ok(next.run(req).await)

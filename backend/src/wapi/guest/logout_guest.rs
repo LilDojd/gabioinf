@@ -5,6 +5,7 @@
 
 use crate::{
     errors::{ApiError, BResult},
+    repos::{Repository, SessionCriteria},
     AppState,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse};
@@ -61,8 +62,13 @@ pub async fn logout(
 ) -> BResult<impl IntoResponse> {
     if let Some(cookie) = jar.get("sid") {
         let token = cookie.value();
-        tracing::debug!("Invalidating user session");
-        state.guest_repo.invalidate_session(token).await?;
+        // Try to fetch from db
+        let session = state
+            .session_repo
+            .read(&SessionCriteria::WithToken(token.to_string()))
+            .await?;
+        tracing::debug!("Found user in db, invalidating user session");
+        state.session_repo.delete(&session).await?;
         tracing::debug!("Removing session cookie from jar");
         let jar = jar.remove(Cookie::from("sid"));
         Ok((StatusCode::OK, jar))

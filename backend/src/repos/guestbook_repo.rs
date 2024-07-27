@@ -1,91 +1,103 @@
-use std::sync::Arc;
+use super::{PgRepository, Repository};
+use crate::domain::models::{GuestId, GuestbookEntry, GuestbookId};
+use crate::errors::{ApiError, BResult};
+use serde::{Deserialize, Serialize};
 
-use chrono::Utc;
-
-use crate::{
-    db::DbConnPool,
-    domain::models::{GuestId, GuestbookEntry},
-    errors::{ApiError, BResult},
-};
-
-#[derive(Clone, Debug)]
-pub struct GuestbookRepo {
-    db: Arc<DbConnPool>,
+#[derive(Debug, Serialize, Deserialize)]
+pub enum GuestbookEntryCriteria {
+    WithId(GuestbookId),
+    WithAuthorId(GuestId),
+    Latest,
 }
 
-impl GuestbookRepo {
-    pub fn new(db: Arc<DbConnPool>) -> Self {
-        Self { db }
-    }
+#[axum::async_trait]
+impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
+    type Error = ApiError;
+    type Criteria = GuestbookEntryCriteria;
 
-    pub async fn get_entry(&self, id: i64) -> BResult<GuestbookEntry> {
-        Ok(
-            sqlx::query_as::<_, GuestbookEntry>("SELECT * FROM guestbook WHERE id = $1")
-                .bind(id)
-                .fetch_one(self.db.as_ref())
-                .await?,
+    async fn read_all(&self) -> BResult<Vec<GuestbookEntry>> {
+        let entries = sqlx::query_as!(
+            GuestbookEntry,
+            "SELECT * FROM guestbook ORDER BY created_at DESC"
         )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(entries)
     }
 
-    pub async fn create_entry<S: AsRef<str>>(
-        &self,
-        guest_id: &GuestId,
-        message: S,
-    ) -> BResult<GuestbookEntry> {
-        Ok(sqlx::query_as::<_, GuestbookEntry>(
-            "INSERT INTO guestbook (message, author_id) VALUES ($1, $2) RETURNING *",
+    async fn read(&self, criteria: &Self::Criteria) -> BResult<GuestbookEntry> {
+        let entry = match criteria {
+            GuestbookEntryCriteria::WithId(id) => {
+                sqlx::query_as!(
+                    GuestbookEntry,
+                    "SELECT * FROM guestbook WHERE id = $1",
+                    id.as_value()
+                )
+                .fetch_one(&self.pool)
+                .await?
+            }
+            GuestbookEntryCriteria::WithAuthorId(author_id) => {
+                sqlx::query_as!(
+                    GuestbookEntry,
+                    "SELECT * FROM guestbook WHERE author_id = $1",
+                    author_id.as_value()
+                )
+                .fetch_one(&self.pool)
+                .await?
+            }
+            GuestbookEntryCriteria::Latest => {
+                sqlx::query_as!(
+                    GuestbookEntry,
+                    "SELECT * FROM guestbook ORDER BY created_at DESC"
+                )
+                .fetch_one(&self.pool)
+                .await?
+            }
+        };
+        Ok(entry)
+    }
+
+    async fn create(&self, entry: &GuestbookEntry) -> BResult<GuestbookEntry> {
+        let created_entry = sqlx::query_as!(
+            GuestbookEntry,
+            r#"
+            INSERT INTO guestbook (message, signature, author_id)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            "#,
+            entry.message,
+            entry.signature,
+            entry.author_id.as_value(),
         )
-        .bind(message.as_ref())
-        .bind(guest_id)
-        .fetch_one(self.db.as_ref())
-        .await?)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(created_entry)
     }
 
-    pub async fn get_all_entries(&self) -> BResult<Vec<GuestbookEntry>> {
-        Ok(
-            sqlx::query_as::<_, GuestbookEntry>("SELECT * FROM guestbook ORDER BY created_at DESC")
-                .fetch_all(self.db.as_ref())
-                .await?,
+    async fn update(&self, entry: &GuestbookEntry) -> BResult<GuestbookEntry> {
+        let updated_entry = sqlx::query_as!(
+            GuestbookEntry,
+            r#"
+            UPDATE guestbook
+            SET message = $2, signature = $3, updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#,
+            entry.id.as_value(),
+            entry.message,
+            entry.signature,
         )
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(updated_entry)
     }
 
-    pub async fn update_entry(&self, id: i64, message: &str) -> BResult<GuestbookEntry> {
-        Ok(sqlx::query_as::<_, GuestbookEntry>(
-            "UPDATE guestbook SET message = $1, updated_at = $2 WHERE id = $3 RETURNING *",
-        )
-        .bind(message)
-        .bind(Utc::now())
-        .bind(id)
-        .fetch_one(self.db.as_ref())
-        .await?)
-    }
-
-    pub async fn delete_entry(&self, id: i64) -> BResult<()> {
-        sqlx::query("DELETE FROM guestbook WHERE id = $1")
-            .bind(id)
-            .execute(self.db.as_ref())
-            .await
-            .map_err(ApiError::from)?;
-
+    async fn delete(&self, entry: &GuestbookEntry) -> BResult<()> {
+        sqlx::query!("DELETE FROM guestbook WHERE id = $1", entry.id.as_value())
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
-
-    pub async fn flag_as_naughty(&self, id: i64, reason: &str) -> BResult<GuestbookEntry> {
-        Ok(sqlx::query_as::<_, GuestbookEntry>(
-            "UPDATE guestbook SET is_naughty = true, naughty_reason = $1, updated_at = $2 WHERE id = $3 RETURNING *"
-        )
-        .bind(reason)
-        .bind(Utc::now())
-        .bind(id)
-        .fetch_one(self.db.as_ref())
-        .await?)
-    }
-
-    pub async fn get_naughty_entries(&self) -> BResult<Vec<GuestbookEntry>> {
-        Ok(sqlx::query_as::<_, GuestbookEntry>(
-            "SELECT * FROM guestbook WHERE is_naughty = true ORDER BY created_at DESC",
-        )
-        .fetch_all(self.db.as_ref())
-        .await?)
-    }
 }
+
+impl PgRepository<GuestbookEntry> {}

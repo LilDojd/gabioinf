@@ -16,3 +16,7 @@ pub use guestbook_repo::*;
 /// Guest repository.
 mod guest_repo;
 pub use guest_repo::*;
+
+/// Sessions repositoty.
+mod session_repo;
+pub use session_repo::*;
