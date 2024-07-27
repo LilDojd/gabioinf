@@ -3,7 +3,6 @@
 //! This module defines the `AppState` struct, which holds shared resources and
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
-use std::sync::Arc;
 
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
@@ -11,7 +10,8 @@ use reqwest::Client as ReqwestClient;
 
 use crate::{
     db::DbConnPool,
-    repos::{GuestRepo, GuestbookRepo},
+    domain::models::{Guest, GuestbookEntry, Session},
+    repos::PgRepository,
 };
 
 /// Represents the shared state of the application.
@@ -20,14 +20,16 @@ use crate::{
 /// accessed throughout the application, particularly in request handlers.
 #[derive(Clone, Debug)]
 pub struct AppState {
-    /// The database connection pool, wrapped in an Arc for thread-safe sharing.
-    pub db: Arc<DbConnPool>,
+    /// The database connection pool.
+    pub db: DbConnPool,
     /// An HTTP client for making external requests.
     pub ctx: ReqwestClient,
     /// Repository for guest-related data.
-    pub guest_repo: Arc<GuestRepo>,
+    pub guest_repo: PgRepository<Guest>,
     /// Repository for guestbook-related data.
-    pub guestbook_repo: Arc<GuestbookRepo>,
+    pub guestbook_repo: PgRepository<GuestbookEntry>,
+    /// Repository for user sessions
+    pub session_repo: PgRepository<Session>,
     /// The domain name of the application.
     pub domain: String,
     /// A key used for signing and verifying cookies.
@@ -59,12 +61,12 @@ impl AppState {
     ///
     /// A new instance of `AppState`.
     pub fn new(db: DbConnPool, domain: String) -> Self {
-        let db = Arc::new(db);
         Self {
             db: db.clone(),
             ctx: ReqwestClient::new(),
-            guest_repo: Arc::new(GuestRepo::new(db.clone())),
-            guestbook_repo: Arc::new(GuestbookRepo::new(db)),
+            guest_repo: PgRepository::new(db.clone()),
+            guestbook_repo: PgRepository::new(db.clone()),
+            session_repo: PgRepository::new(db.clone()),
             domain,
             key: Key::generate(),
         }

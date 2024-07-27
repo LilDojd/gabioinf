@@ -2,7 +2,7 @@
 //!
 //! This module contains the handler function for retrieving all guests.
 
-use crate::{errors::BResult, AppState};
+use crate::{errors::BResult, repos::Repository, AppState};
 use axum::{extract::State, response::IntoResponse, Json};
 
 /// Handler for retrieving all guests.
@@ -59,6 +59,6 @@ use axum::{extract::State, response::IntoResponse, Json};
 /// ```
 pub async fn get_guests(State(state): State<AppState>) -> BResult<impl IntoResponse> {
     tracing::debug!("Retrieving all guests");
-    let guests = state.guest_repo.get_guests().await?;
+    let guests = state.guest_repo.read_all().await?;
     Ok((axum::http::StatusCode::OK, Json(guests)))
 }

@@ -6,6 +6,7 @@
 use crate::{
     domain::models::Guest,
     errors::{ApiError, BResult},
+    repos::{GuestbookEntryCriteria, Repository},
     AppState,
 };
 use axum::{
@@ -59,10 +60,13 @@ pub async fn delete_entry(
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Deleting guestbook entry with ID: {}", id);
 
-    let entry = state.guestbook_repo.get_entry(id).await?;
+    let entry = state
+        .guestbook_repo
+        .read(&GuestbookEntryCriteria::WithId(id.into()))
+        .await?;
 
     if entry.author_id == guest.id || guest.is_admin {
-        state.guestbook_repo.delete_entry(id).await?;
+        state.guestbook_repo.delete(&entry).await?;
         Ok(())
     } else {
         Err(ApiError::AuthorizationError(

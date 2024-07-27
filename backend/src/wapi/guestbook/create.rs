@@ -3,7 +3,12 @@
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
 
-use crate::{domain::models::Guest, errors::BResult, AppState};
+use crate::{
+    domain::models::{Guest, NewGuestbookEntry},
+    errors::BResult,
+    repos::Repository,
+    AppState,
+};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::Deserialize;
 
@@ -68,9 +73,15 @@ pub async fn create_entry(
     Json(payload): Json<CreateEntryRequest>,
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Creating new guestbook entry");
-    let entry = state
-        .guestbook_repo
-        .create_entry(&guest.id, &payload.message)
-        .await?;
+
+    let new_entry = NewGuestbookEntry {
+        author_id: guest.id,
+        message: payload.message.clone(),
+        // TODO: Change this
+        signature: None,
+    }
+    .into();
+
+    let entry = state.guestbook_repo.create(&new_entry).await?;
     Ok((StatusCode::CREATED, Json(entry)))
 }

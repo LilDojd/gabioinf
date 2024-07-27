@@ -2,7 +2,12 @@
 //!
 //! This module contains the handler function for promoting a user to admin status.
 
-use crate::{domain::models::Guest, errors::BResult, AppState};
+use crate::{
+    domain::models::Guest,
+    errors::BResult,
+    repos::{GuestCriteria, Repository},
+    AppState,
+};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -87,15 +92,35 @@ pub async fn promote_to_admin(
         return Ok((StatusCode::BAD_REQUEST, "Admins cannot promote themselves").into_response());
     }
 
-    let promoted_guest = state.guest_repo.promote_to_admin(guest_id).await?;
+    let mut guest = state
+        .guest_repo
+        .read(&GuestCriteria::WithGuestId(guest_id.into()))
+        .await?;
 
-    tracing::info!(
-        "User {:?} promoted to admin by admin {:?}",
-        guest_id,
-        admin.id
-    );
+    match guest.is_admin {
+        true => {
+            tracing::warn!(
+                "Admin {:?} attempted to promote another admin {:?}",
+                admin.id,
+                guest.id
+            );
+            Ok((
+                StatusCode::BAD_REQUEST,
+                "User is already an admin and cannot be promoted",
+            )
+                .into_response())
+        }
+        false => {
+            guest.is_admin = true;
+            let promoted_guest = state.guest_repo.update(&guest).await?;
 
-    // Here you might want to add code to notify other admins
+            tracing::info!(
+                "User {:?} promoted to admin by admin {:?}",
+                guest_id,
+                admin.id
+            );
 
-    Ok((StatusCode::OK, Json(promoted_guest)).into_response())
+            Ok((StatusCode::OK, Json(promoted_guest)).into_response())
+        }
+    }
 }

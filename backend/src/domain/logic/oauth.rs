@@ -1,8 +1,9 @@
 //! Handles OAuth flow, user auth and session management
 
 use crate::{
-    domain::models::{GithubUser, Guest},
+    domain::models::{Guest, NewGuest, Session},
     errors::{ApiError, BResult},
+    repos::Repository,
     AppState,
 };
 use axum::{
@@ -91,10 +92,10 @@ pub async fn github_callback(
         .header("User-Agent", "gabioinf-guestbook")
         .send()
         .await?
-        .json::<GithubUser>()
+        .json::<NewGuest>()
         .await?;
 
-    let guest = state.guest_repo.upsert_guest(&github_user).await?;
+    let guest = state.guest_repo.create(&github_user.into()).await?;
 
     let expires_in = token
         .expires_in()
@@ -105,10 +106,8 @@ pub async fn github_callback(
 
     let max_age = Local::now().to_utc() + Duration::seconds(expires_in as i64);
 
-    state
-        .guest_repo
-        .register_session(&guest, token.access_token().secret(), max_age)
-        .await?;
+    let new_session = Session::new(guest.id, token.access_token().secret(), max_age);
+    state.session_repo.create(&new_session).await?;
 
     // TODO: !!!
     let cookie = Cookie::build(("sid", token.access_token().secret().to_owned()))

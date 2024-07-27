@@ -3,7 +3,11 @@
 //! This module contains handler functions for updating guestbook entries
 //! and flagging entries as naughty.
 
-use crate::{errors::BResult, AppState};
+use crate::{
+    errors::BResult,
+    repos::{GuestCriteria, GuestbookEntryCriteria, Repository},
+    AppState,
+};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -45,10 +49,15 @@ pub async fn update_entry(
     Json(payload): Json<UpdateEntryRequest>,
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Updating guestbook entry with ID: {}", id);
-    let entry = state
+    let mut entry = state
         .guestbook_repo
-        .update_entry(id, &payload.message)
+        .read(&GuestbookEntryCriteria::WithId(id.into()))
         .await?;
+
+    entry.message = payload.message;
+
+    let entry = state.guestbook_repo.update(&entry).await?;
+
     Ok((StatusCode::OK, Json(entry)))
 }
 
@@ -71,9 +80,25 @@ pub async fn flag_as_naughty(
     Json(payload): Json<FlagNaughtyRequest>,
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Flagging guestbook entry with ID: {} as naughty", id);
+
     let entry = state
         .guestbook_repo
-        .flag_as_naughty(id, &payload.reason)
+        .read(&GuestbookEntryCriteria::WithId(id.into()))
         .await?;
+
+    let user = state
+        .guest_repo
+        .read(&GuestCriteria::WithGuestId(entry.author_id))
+        .await?;
+
+    if !user.is_naughty {
+        state
+            .guest_repo
+            .flag_as_naughty(user.id.into(), payload.reason)
+            .await?;
+    } else {
+        tracing::warn!("User with ID: {:?} is already flagged as naughty", user.id);
+    }
+
     Ok((StatusCode::OK, Json(entry)))
 }

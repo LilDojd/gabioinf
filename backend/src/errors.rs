@@ -52,6 +52,9 @@ pub enum ApiError {
     #[error("Encountered an error trying to convert an infallible value: {0}")]
     FromRequestPartsError(#[from] std::convert::Infallible),
 
+    #[error("Not implemented: {0}")]
+    NotImplementedErrpr(String),
+
     /// Represents unhandled errors
     #[error("Unhandled error: {0}")]
     UnhandledError(String),
@@ -68,22 +71,16 @@ impl IntoResponse for ApiError {
                 StatusCode::UNAUTHORIZED,
                 format!("AuthenticationError: {}", e),
             ),
-            Self::AuthorizationError(e) => (
-                StatusCode::FORBIDDEN,
-                format!("AuthorizationError: {}", e),
-            ),
-            Self::NotFoundError(e) => (
-                StatusCode::NOT_FOUND,
-                format!("NotFoundError: {}", e),
-            ),
-            Self::AlreadyExistsError(e) => (
-                StatusCode::CONFLICT,
-                format!("AlreadyExistsError: {}", e),
-            ),
-            Self::ValidationError(e) => (
-                StatusCode::BAD_REQUEST,
-                format!("ValidationError: {}", e),
-            ),
+            Self::AuthorizationError(e) => {
+                (StatusCode::FORBIDDEN, format!("AuthorizationError: {}", e))
+            }
+            Self::NotFoundError(e) => (StatusCode::NOT_FOUND, format!("NotFoundError: {}", e)),
+            Self::AlreadyExistsError(e) => {
+                (StatusCode::CONFLICT, format!("AlreadyExistsError: {}", e))
+            }
+            Self::ValidationError(e) => {
+                (StatusCode::BAD_REQUEST, format!("ValidationError: {}", e))
+            }
             Self::ExternalServiceError(e) => (
                 StatusCode::BAD_GATEWAY,
                 format!("ExternalServiceError: {}", e),
@@ -95,6 +92,10 @@ impl IntoResponse for ApiError {
             Self::UnhandledError(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("UnhandledError: {}", e),
+            ),
+            Self::NotImplementedErrpr(e) => (
+                StatusCode::NOT_IMPLEMENTED,
+                format!("NotImplementedError: {}", e),
             ),
             Self::FromRequestPartsError(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,

@@ -37,6 +37,7 @@ reqwest = { version = "0.12.5", features = ["json"] }
 shuttle-secrets = "0.42.0"
 tracing-subscriber = "0.3.18"
 config = "0.14.0"
+derive_more = "0.99.18"
 
 [dev-dependencies]
 axum-test = "15.3.0"

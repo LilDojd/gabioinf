@@ -89,10 +89,7 @@ pub async fn execute_sql_query(
     Json(payload): Json<SqlQueryRequest>,
 ) -> impl IntoResponse {
     // Execute the query
-    match sqlx::query(&payload.query)
-        .fetch_all(state.db.as_ref())
-        .await
-    {
+    match sqlx::query(&payload.query).fetch_all(&state.db).await {
         Ok(result) => {
             // Extract column names
             let columns: Vec<String> = if let Some(first_row) = result.first() {
