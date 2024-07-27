@@ -171,3 +171,70 @@ impl FromRequestParts<AppState> for Guest {
             ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::PgPool;
+
+    #[sqlx::test]
+    async fn test_create_and_read_guest(pool: PgPool) {
+        let repo = PgRepository::<Guest>::new(pool);
+        let guest = Guest {
+            github_id: GithubId(12345),
+            name: "Test User".to_string(),
+            username: "testuser".to_string(),
+            ..Default::default()
+        };
+
+        // Test create
+        let created_guest = repo.create(&guest).await.unwrap();
+        assert_eq!(created_guest.github_id, guest.github_id);
+        assert_eq!(created_guest.name, guest.name);
+
+        // Test read
+        let read_guest = repo
+            .read(&GuestCriteria::WithGithubId(guest.github_id))
+            .await
+            .unwrap();
+        assert_eq!(read_guest.id, created_guest.id);
+        assert_eq!(read_guest.github_id, guest.github_id);
+    }
+
+    #[sqlx::test]
+    async fn test_update_guest(pool: PgPool) {
+        let repo = PgRepository::<Guest>::new(pool);
+        let mut guest = Guest {
+            github_id: GithubId(67890),
+            name: "Update Test".to_string(),
+            username: "updatetest".to_string(),
+            ..Default::default()
+        };
+
+        let created_guest = repo.create(&guest).await.unwrap();
+        guest.id = created_guest.id;
+        guest.name = "Updated Name".to_string();
+
+        let updated_guest = repo.update(&guest).await.unwrap();
+        assert_eq!(updated_guest.name, "Updated Name");
+    }
+
+    #[sqlx::test]
+    async fn test_delete_guest(pool: PgPool) {
+        let repo = PgRepository::<Guest>::new(pool);
+        let guest = Guest {
+            github_id: GithubId(11111),
+            name: "Delete Test".to_string(),
+            username: "deletetest".to_string(),
+            ..Default::default()
+        };
+
+        let created_guest = repo.create(&guest).await.unwrap();
+        repo.delete(&created_guest).await.unwrap();
+
+        let result = repo
+            .read(&GuestCriteria::WithGithubId(guest.github_id))
+            .await;
+        assert!(result.is_err());
+    }
+}

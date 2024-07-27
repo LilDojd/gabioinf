@@ -110,3 +110,93 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
 }
 
 impl PgRepository<GuestbookEntry> {}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::utils::setup_guest;
+
+    use super::*;
+    use sqlx::PgPool;
+
+    #[sqlx::test]
+    #[should_panic]
+    async fn create_entry_without_user(pool: PgPool) {
+        let repo = PgRepository::<GuestbookEntry>::new(pool);
+        let entry = GuestbookEntry {
+            message: "Test message".to_string(),
+            signature: Some("Test signature".to_string()),
+            author_id: GuestId(0),
+            ..Default::default()
+        };
+
+        repo.create(&entry).await.unwrap();
+    }
+
+    #[sqlx::test]
+    async fn test_create_and_read_entry(pool: PgPool) {
+        setup_guest(&pool).await;
+        let repo = PgRepository::<GuestbookEntry>::new(pool.clone());
+
+        let entry = GuestbookEntry {
+            message: "Test message".to_string(),
+            signature: Some("Test signature".to_string()),
+            author_id: GuestId(1),
+            ..Default::default()
+        };
+
+        // Test create
+        let created_entry = repo.create(&entry).await.unwrap();
+        assert_eq!(created_entry.message, entry.message);
+        assert_eq!(created_entry.signature, entry.signature);
+
+        // Test read
+        let read_entry = repo
+            .read(&GuestbookEntryCriteria::WithId(created_entry.id))
+            .await
+            .unwrap();
+        assert_eq!(read_entry.id, created_entry.id);
+        assert_eq!(read_entry.message, entry.message);
+    }
+
+    #[sqlx::test]
+    async fn test_update_entry(pool: PgPool) {
+        setup_guest(&pool).await;
+
+        let repo = PgRepository::<GuestbookEntry>::new(pool);
+        let mut entry = GuestbookEntry {
+            message: "Original message".to_string(),
+            signature: Some("Original signature".to_string()),
+            author_id: GuestId(1),
+            ..Default::default()
+        };
+
+        let created_entry = repo.create(&entry).await.unwrap();
+        entry.id = created_entry.id;
+        entry.message = "Updated message".to_string();
+
+        let updated_entry = repo.update(&entry).await.unwrap();
+        assert_eq!(updated_entry.message, "Updated message");
+    }
+
+    #[sqlx::test]
+    async fn test_delete_entry(pool: PgPool) {
+        setup_guest(&pool).await;
+
+        let repo = PgRepository::<GuestbookEntry>::new(pool);
+        let entry = GuestbookEntry {
+            message: "Delete test".to_string(),
+            signature: None,
+            author_id: GuestId(1),
+            ..Default::default()
+        };
+
+        let created_entry = repo.create(&entry).await.unwrap();
+        repo.delete(&created_entry).await.unwrap();
+
+        let result = repo
+            .read(&GuestbookEntryCriteria::WithId(created_entry.id))
+            .await;
+        assert!(result.is_err());
+    }
+}

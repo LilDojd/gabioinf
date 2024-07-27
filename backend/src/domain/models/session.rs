@@ -10,9 +10,11 @@ use super::GuestId;
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with session IDs.
-#[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, sqlx::Type, From, Into)]
+#[derive(
+    Debug, Serialize, Deserialize, Default, Clone, Copy, sqlx::Type, From, Into, PartialEq,
+)]
 #[sqlx(transparent)]
-pub struct SessionId(i64);
+pub struct SessionId(pub(crate) i64);
 
 impl SessionId {
     pub fn as_value(&self) -> i64 {
