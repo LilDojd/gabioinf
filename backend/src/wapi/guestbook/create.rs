@@ -26,6 +26,7 @@ pub struct CreateEntryRequest {
         custom(function = "crate::utils::validate_not_offensive")
     )]
     message: String,
+    signature: String,
 }
 
 /// Handler for creating a new guestbook entry.
