@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM sessions",
+  "query": "SELECT * FROM sessions ORDER BY issued_at",
   "describe": {
     "columns": [
       {
@@ -40,5 +40,5 @@
       false
     ]
   },
-  "hash": "d130c416e56962ab334ee1b4ca77369a4c35dbc1cf31279f7ed4d418ed75aabb"
+  "hash": "6244aff17cbd8f9eb6c1d5265d8f093dcabf34dcdeac870025b07b1d004cc5b4"
 }
