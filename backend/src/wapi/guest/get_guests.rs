@@ -59,6 +59,6 @@ use axum::{extract::State, response::IntoResponse, Json};
 /// ```
 pub async fn get_guests(State(state): State<AppState>) -> BResult<impl IntoResponse> {
     tracing::debug!("Retrieving all guests");
-    let guests = state.guest_crud.get_guests().await?;
+    let guests = state.guest_repo.get_guests().await?;
     Ok((axum::http::StatusCode::OK, Json(guests)))
 }

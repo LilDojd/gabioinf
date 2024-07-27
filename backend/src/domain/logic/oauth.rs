@@ -94,7 +94,7 @@ pub async fn github_callback(
         .json::<GithubUser>()
         .await?;
 
-    let guest = state.guest_crud.upsert_guest(&github_user).await?;
+    let guest = state.guest_repo.upsert_guest(&github_user).await?;
 
     let expires_in = token
         .expires_in()
@@ -106,7 +106,7 @@ pub async fn github_callback(
     let max_age = Local::now().to_utc() + Duration::seconds(expires_in as i64);
 
     state
-        .guest_crud
+        .guest_repo
         .register_session(&guest, token.access_token().secret(), max_age)
         .await?;
 

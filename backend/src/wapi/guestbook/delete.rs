@@ -59,10 +59,10 @@ pub async fn delete_entry(
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Deleting guestbook entry with ID: {}", id);
 
-    let entry = state.guestbook_crud.get_entry(id).await?;
+    let entry = state.guestbook_repo.get_entry(id).await?;
 
     if entry.author_id == guest.id || guest.is_admin {
-        state.guestbook_crud.delete_entry(id).await?;
+        state.guestbook_repo.delete_entry(id).await?;
         Ok(())
     } else {
         Err(ApiError::AuthorizationError(

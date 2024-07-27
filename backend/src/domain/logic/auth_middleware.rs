@@ -44,11 +44,11 @@ pub async fn auth_middleware(
         .to_string();
 
     tracing::debug!("Getting session info");
-    let (user_id, expires_at) = state.guest_crud.get_session(&token).await?;
+    let (user_id, expires_at) = state.guest_repo.get_session(&token).await?;
 
     // Check if the session has expired
     if chrono::Utc::now() > expires_at {
-        state.guest_crud.invalidate_session(&token).await?;
+        state.guest_repo.invalidate_session(&token).await?;
         return Err(ApiError::AuthenticationError(
             "Authentication token expired".to_string(),
         ));
@@ -61,7 +61,7 @@ pub async fn auth_middleware(
     );
 
     // Retrieve guest information and add it to request extensions
-    let guest = state.guest_crud.get_by_id(user_id).await?;
+    let guest = state.guest_repo.get_by_id(user_id).await?;
     req.extensions_mut().insert(guest);
 
     Ok(next.run(req).await)
