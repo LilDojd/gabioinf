@@ -33,8 +33,8 @@ pub mod domain;
 /// Error handling and custom error types
 pub mod errors;
 
-/// Utilities for Shuttle deployment
-pub mod shuttle_utils;
+/// Utilities
+pub mod utils;
 
 /// Application configuration management
 pub mod config;

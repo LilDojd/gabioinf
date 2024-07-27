@@ -38,6 +38,8 @@ shuttle-secrets = "0.42.0"
 tracing-subscriber = "0.3.18"
 config = "0.14.0"
 derive_more = "0.99.18"
+validator = { version = "0.18.1", features = ["derive"] }
+rustrict = "0.7.26"
 
 [dev-dependencies]
 axum-test = "15.3.0"
