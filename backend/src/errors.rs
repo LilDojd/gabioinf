@@ -125,3 +125,9 @@ impl From<WeirdOauthError> for ApiError {
         Self::ExternalServiceError(e.to_string())
     }
 }
+
+impl From<anyhow::Error> for ApiError {
+    fn from(e: anyhow::Error) -> Self {
+        Self::UnhandledError(e.to_string())
+    }
+}

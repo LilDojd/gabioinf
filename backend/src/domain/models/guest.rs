@@ -85,11 +85,12 @@ pub struct Guest {
 }
 
 /// Represents a GitHub user as returned by the GitHub API.
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct NewGuest {
     /// The GitHub user ID.
     pub id: GithubId,
     /// The GitHub username (login).
+    #[serde(rename(deserialize = "login"))]
     pub username: String,
     /// The full name of the GitHub user, if available.
     pub name: Option<String>,
