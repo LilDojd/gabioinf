@@ -48,7 +48,8 @@ pub async fn auth_middleware(
     let session = state
         .session_repo
         .read(&SessionCriteria::WithToken(token.clone()))
-        .await?;
+        .await
+        .map_err(|_err| ApiError::AuthenticationError("You are not logged in".to_string()))?;
 
     // Check if the session has expired
     if chrono::Utc::now() > session.expires_at {
