@@ -62,7 +62,7 @@ pub async fn logout(
     if let Some(cookie) = jar.get("sid") {
         let token = cookie.value();
         tracing::debug!("Invalidating user session");
-        state.guest_crud.invalidate_session(token).await?;
+        state.guest_repo.invalidate_session(token).await?;
         tracing::debug!("Removing session cookie from jar");
         let jar = jar.remove(Cookie::from("sid"));
         Ok((StatusCode::OK, jar))

@@ -28,7 +28,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 /// This function will return an error if the database query fails.
 pub async fn get_all_entries(State(state): State<AppState>) -> BResult<impl IntoResponse> {
     tracing::debug!("Retrieving all guestbook entries");
-    let entries = state.guestbook_crud.get_all_entries().await?;
+    let entries = state.guestbook_repo.get_all_entries().await?;
     Ok((StatusCode::OK, Json(entries)))
 }
 
@@ -54,6 +54,6 @@ pub async fn get_all_entries(State(state): State<AppState>) -> BResult<impl Into
 /// This function will return an error if the database query fails.
 pub async fn get_naughty_entries(State(state): State<AppState>) -> BResult<impl IntoResponse> {
     tracing::debug!("Retrieving all naughty guestbook entries");
-    let entries = state.guestbook_crud.get_naughty_entries().await?;
+    let entries = state.guestbook_repo.get_naughty_entries().await?;
     Ok((StatusCode::OK, Json(entries)))
 }

@@ -87,7 +87,7 @@ pub async fn promote_to_admin(
         return Ok((StatusCode::BAD_REQUEST, "Admins cannot promote themselves").into_response());
     }
 
-    let promoted_guest = state.guest_crud.promote_to_admin(guest_id).await?;
+    let promoted_guest = state.guest_repo.promote_to_admin(guest_id).await?;
 
     tracing::info!(
         "User {:?} promoted to admin by admin {:?}",

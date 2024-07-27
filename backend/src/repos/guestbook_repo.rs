@@ -9,11 +9,11 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub struct GuestbookCrud {
+pub struct GuestbookRepo {
     db: Arc<DbConnPool>,
 }
 
-impl GuestbookCrud {
+impl GuestbookRepo {
     pub fn new(db: Arc<DbConnPool>) -> Self {
         Self { db }
     }

@@ -10,8 +10,8 @@ use axum_extra::extract::cookie::Key;
 use reqwest::Client as ReqwestClient;
 
 use crate::{
-    cruds::{GuestCrud, GuestbookCrud},
     db::DbConnPool,
+    repos::{GuestRepo, GuestbookRepo},
 };
 
 /// Represents the shared state of the application.
@@ -25,9 +25,9 @@ pub struct AppState {
     /// An HTTP client for making external requests.
     pub ctx: ReqwestClient,
     /// Repository for guest-related data.
-    pub guest_crud: Arc<GuestCrud>,
+    pub guest_repo: Arc<GuestRepo>,
     /// Repository for guestbook-related data.
-    pub guestbook_crud: Arc<GuestbookCrud>,
+    pub guestbook_repo: Arc<GuestbookRepo>,
     /// The domain name of the application.
     pub domain: String,
     /// A key used for signing and verifying cookies.
@@ -63,8 +63,8 @@ impl AppState {
         Self {
             db: db.clone(),
             ctx: ReqwestClient::new(),
-            guest_crud: Arc::new(GuestCrud::new(db.clone())),
-            guestbook_crud: Arc::new(GuestbookCrud::new(db)),
+            guest_repo: Arc::new(GuestRepo::new(db.clone())),
+            guestbook_repo: Arc::new(GuestbookRepo::new(db)),
             domain,
             key: Key::generate(),
         }

@@ -25,7 +25,7 @@ pub mod db;
 pub mod wapi;
 
 /// CRUD operations for data models
-pub mod cruds;
+pub mod repos;
 
 /// Core domain models and business logic
 pub mod domain;

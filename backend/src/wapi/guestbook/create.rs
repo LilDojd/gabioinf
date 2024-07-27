@@ -69,7 +69,7 @@ pub async fn create_entry(
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Creating new guestbook entry");
     let entry = state
-        .guestbook_crud
+        .guestbook_repo
         .create_entry(&guest.id, &payload.message)
         .await?;
     Ok((StatusCode::CREATED, Json(entry)))

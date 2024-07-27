@@ -46,7 +46,7 @@ pub async fn update_entry(
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Updating guestbook entry with ID: {}", id);
     let entry = state
-        .guestbook_crud
+        .guestbook_repo
         .update_entry(id, &payload.message)
         .await?;
     Ok((StatusCode::OK, Json(entry)))
@@ -72,7 +72,7 @@ pub async fn flag_as_naughty(
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Flagging guestbook entry with ID: {} as naughty", id);
     let entry = state
-        .guestbook_crud
+        .guestbook_repo
         .flag_as_naughty(id, &payload.reason)
         .await?;
     Ok((StatusCode::OK, Json(entry)))
