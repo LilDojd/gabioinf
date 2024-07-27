@@ -25,7 +25,7 @@ use derive_more::{From, Into};
     Into,
 )]
 #[sqlx(transparent)]
-pub struct GithubId(i64);
+pub struct GithubId(pub(crate) i64);
 
 impl GithubId {
     pub fn as_value(&self) -> i64 {
@@ -53,7 +53,7 @@ impl GithubId {
     Into,
 )]
 #[sqlx(transparent)]
-pub struct GuestId(i64);
+pub struct GuestId(pub(crate) i64);
 
 impl GuestId {
     pub fn as_value(&self) -> i64 {

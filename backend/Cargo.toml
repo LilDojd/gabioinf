@@ -22,7 +22,6 @@ sqlx = { version = "0.7", features = [
   "chrono",
   "macros",
   "runtime-tokio-rustls",
-  "uuid",
 ] }
 uuid = { version = "1.10.0", features = ["fast-rng", "v4"] }
 time = { version = "0.3.36", features = ["serde"] }
@@ -44,5 +43,3 @@ rustrict = "0.7.26"
 [dev-dependencies]
 axum-test = "15.3.0"
 once_cell = "1.19.0"
-testcontainers = { version = "0.20.1" }
-testcontainers-modules = { version = "0.8.0", features = ["postgres"] }

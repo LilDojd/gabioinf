@@ -72,8 +72,6 @@ impl Repository<Session> for PgRepository<Session> {
             Session,
             "INSERT INTO sessions (user_id, token, expires_at) 
              VALUES ($1, $2, $3) 
-             ON CONFLICT (user_id) DO UPDATE 
-             SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
              RETURNING *",
             session.user_id.as_value(),
             session.token,
@@ -101,3 +99,176 @@ impl Repository<Session> for PgRepository<Session> {
 }
 
 impl PgRepository<Session> {}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        domain::models::Guest,
+        utils::{setup_guest, setup_guests},
+    };
+
+    use super::*;
+    use chrono::{Duration, Utc};
+    use sqlx::PgPool;
+
+    #[sqlx::test]
+    async fn test_create_and_read_session(pool: PgPool) {
+        setup_guest(&pool).await;
+
+        let repo = PgRepository::<Session>::new(pool);
+        let session = Session {
+            user_id: GuestId(1),
+            token: "test_token".to_string(),
+            expires_at: Utc::now() + Duration::hours(1),
+            ..Default::default()
+        };
+
+        // Test create
+        let created_session = repo.create(&session).await.unwrap();
+        assert_eq!(created_session.user_id, session.user_id);
+        assert_eq!(created_session.token, session.token);
+
+        // Test read by ID
+        let read_session = repo
+            .read(&SessionCriteria::WithId(created_session.id))
+            .await
+            .unwrap();
+        assert_eq!(read_session.id, created_session.id);
+        assert_eq!(read_session.token, session.token);
+
+        // Test read by token
+        let read_session = repo
+            .read(&SessionCriteria::WithToken(session.token.clone()))
+            .await
+            .unwrap();
+        assert_eq!(read_session.id, created_session.id);
+        assert_eq!(read_session.user_id, session.user_id);
+    }
+
+    #[sqlx::test]
+    async fn test_create_session_no_conflict(pool: PgPool) {
+        let repo = PgRepository::<Session>::new(pool.clone());
+        setup_guests(2, &pool).await;
+
+        let session1 = Session {
+            user_id: GuestId(1),
+            token: "token1".to_string(),
+            expires_at: Utc::now() + Duration::hours(1),
+            ..Default::default()
+        };
+
+        let session2 = Session {
+            user_id: GuestId(2),
+            token: "token2".to_string(),
+            expires_at: Utc::now() + Duration::hours(2),
+            ..Default::default()
+        };
+
+        // Create first session
+        let created_session1 = repo.create(&session1).await.unwrap();
+
+        // Create second session with same user_id (should update)
+        let created_session2 = repo.create(&session2).await.unwrap();
+
+        assert_ne!(created_session1.id, created_session2.id);
+        assert_eq!(created_session2.token, "token2");
+        assert_eq!(created_session2.user_id, GuestId(2));
+    }
+
+    #[sqlx::test]
+    async fn test_delete_session(pool: PgPool) {
+        setup_guest(&pool).await;
+
+        let repo = PgRepository::<Session>::new(pool);
+        let session = Session {
+            user_id: GuestId(1),
+            token: "delete_token".to_string(),
+            expires_at: Utc::now() + Duration::hours(1),
+            ..Default::default()
+        };
+
+        let created_session = repo.create(&session).await.unwrap();
+        repo.delete(&created_session).await.unwrap();
+
+        let result = repo
+            .read(&SessionCriteria::WithId(created_session.id))
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[sqlx::test]
+    async fn test_update_session_not_implemented(pool: PgPool) {
+        setup_guest(&pool).await;
+
+        let repo = PgRepository::<Session>::new(pool);
+        let session = Session {
+            user_id: GuestId(1),
+            token: "update_token".to_string(),
+            expires_at: Utc::now() + Duration::hours(1),
+            ..Default::default()
+        };
+
+        let result = repo.update(&session).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ApiError::NotImplementedErrpr(_)
+        ));
+    }
+
+    #[sqlx::test]
+    async fn test_read_all_sessions_single_user(pool: PgPool) {
+        let repo = PgRepository::<Session>::new(pool.clone());
+
+        setup_guest(&pool).await;
+
+        // Create multiple sessions
+        for i in 1..=3 {
+            let session = Session {
+                user_id: GuestId(1),
+                token: format!("token{}", i),
+                expires_at: Utc::now() + Duration::hours(1),
+                ..Default::default()
+            };
+            repo.create(&session).await.unwrap();
+        }
+
+        let all_sessions = repo.read_all().await.unwrap();
+        assert!(all_sessions.len() == 3);
+    }
+
+    #[sqlx::test]
+    async fn test_read_all_sessions_multiple_users(pool: PgPool) {
+        let repo = PgRepository::<Session>::new(pool.clone());
+
+        setup_guests(3, &pool).await;
+
+        // Create multiple sessions
+        for i in 1..=3 {
+            let session = Session {
+                user_id: GuestId(i),
+                token: format!("token{}", i),
+                expires_at: Utc::now() + Duration::hours(1),
+                ..Default::default()
+            };
+            repo.create(&session).await.unwrap();
+        }
+
+        let all_sessions = repo.read_all().await.unwrap();
+        assert!(all_sessions.len() == 3);
+    }
+
+    #[sqlx::test]
+    #[should_panic]
+    async fn create_session_without_guest(pool: PgPool) {
+        let repo = PgRepository::<Session>::new(pool);
+        let session = Session {
+            user_id: GuestId(1),
+            token: "test_token".to_string(),
+            expires_at: Utc::now() + Duration::hours(1),
+            ..Default::default()
+        };
+
+        repo.create(&session).await.unwrap();
+    }
+}
