@@ -11,11 +11,20 @@ use crate::{
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::Deserialize;
+use validator::Validate;
 
 /// Request payload for creating a new guestbook entry.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Validate)]
 pub struct CreateEntryRequest {
     /// The message content of the new guestbook entry.
+    #[validate(
+        length(
+            min = 1,
+            max = 255,
+            message = "Message must be between 1 and 255 characters"
+        ),
+        custom(function = "crate::utils::validate_not_offensive")
+    )]
     message: String,
 }
 
@@ -76,7 +85,7 @@ pub async fn create_entry(
 
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
-        message: payload.message.clone(),
+        message: payload.message.trim().to_string(),
         // TODO: Change this
         signature: None,
     }

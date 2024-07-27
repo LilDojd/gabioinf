@@ -3,7 +3,7 @@ use axum::routing::get;
 use axum::Router;
 use backend::config::AppConfig;
 use backend::domain::logic::build_oauth_client;
-use backend::shuttle_utils::grab_secrets;
+use backend::utils::grab_secrets;
 use backend::{db::DbConnPool, wapi::api_router, AppState};
 
 #[shuttle_runtime::main]
