@@ -62,6 +62,8 @@ pub async fn github_auth(Extension(oauth_client): Extension<BasicClient>) -> imp
         .add_scope(Scope::new("identity".to_string()))
         .url();
 
+    tracing::debug!("Redirecting to GitHub for OAuth authorization");
+
     Redirect::to(authorize_url.as_ref())
 }
 
@@ -76,11 +78,14 @@ pub async fn github_callback(
     Query(query): Query<AuthRequest>,
     Extension(oauth_client): Extension<BasicClient>,
 ) -> BResult<impl IntoResponse> {
+    tracing::debug!("Received OAuth callback");
     let token = oauth_client
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
         .await
         .map_err(|e| ApiError::ExternalServiceError(e.to_string()))?;
+
+    tracing::debug!("Getting user data from GitHub API");
 
     let github_user = state
         .ctx
@@ -94,6 +99,8 @@ pub async fn github_callback(
         .await?
         .json::<NewGuest>()
         .await?;
+
+    tracing::debug!("Received user data from GitHub: {:?}", github_user);
 
     let guest = state.guest_repo.create(&github_user.into()).await?;
 
