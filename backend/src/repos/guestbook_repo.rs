@@ -3,10 +3,14 @@ use crate::domain::models::{GuestId, GuestbookEntry, GuestbookId};
 use crate::errors::{ApiError, BResult};
 use serde::{Deserialize, Serialize};
 
+/// Criteria for querying guestbook entries.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum GuestbookEntryCriteria {
+    /// Query by guestbook entry ID.
     WithId(GuestbookId),
+    /// Query by author ID.
     WithAuthorId(GuestId),
+    /// Query for the latest entry.
     Latest,
 }
 
@@ -15,6 +19,7 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
     type Error = ApiError;
     type Criteria = GuestbookEntryCriteria;
 
+    /// Retrieves all guestbook entries, ordered by creation date descending.
     async fn read_all(&self) -> BResult<Vec<GuestbookEntry>> {
         let entries = sqlx::query_as!(
             GuestbookEntry,
@@ -25,6 +30,7 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         Ok(entries)
     }
 
+    /// Retrieves a single guestbook entry based on the provided criteria.
     async fn read(&self, criteria: &Self::Criteria) -> BResult<GuestbookEntry> {
         let entry = match criteria {
             GuestbookEntryCriteria::WithId(id) => {
@@ -57,6 +63,7 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         Ok(entry)
     }
 
+    /// Creates a new guestbook entry.
     async fn create(&self, entry: &GuestbookEntry) -> BResult<GuestbookEntry> {
         let created_entry = sqlx::query_as!(
             GuestbookEntry,
@@ -74,6 +81,7 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         Ok(created_entry)
     }
 
+    /// Updates an existing guestbook entry.
     async fn update(&self, entry: &GuestbookEntry) -> BResult<GuestbookEntry> {
         let updated_entry = sqlx::query_as!(
             GuestbookEntry,
@@ -92,6 +100,7 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         Ok(updated_entry)
     }
 
+    /// Deletes a guestbook entry.
     async fn delete(&self, entry: &GuestbookEntry) -> BResult<()> {
         sqlx::query!("DELETE FROM guestbook WHERE id = $1", entry.id.as_value())
             .execute(&self.pool)
