@@ -3,7 +3,7 @@
 //! This module defines the routing structure for the entire API, including
 //! public routes, authenticated routes, and admin-only routes.
 use crate::{
-    domain::logic::{admin_middleware, auth_middleware, github_auth, github_callback, protected},
+    domain::logic::{auth_middleware, github_auth, github_callback, protected, RequiresAdmin},
     AppState,
 };
 use axum::{
@@ -61,12 +61,9 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
         .route("/:id", put(update_entry))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            admin_middleware,
-        ))
-        .route_layer(axum::middleware::from_fn_with_state(
-            state.clone(),
             auth_middleware,
-        ));
+        ))
+        .layer(Extension(RequiresAdmin));
 
     let admin_router = Router::new()
         .route("/admin", get(admin_dashboard))
@@ -75,12 +72,9 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
         .route("/admin/query", post(execute_sql_query))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            admin_middleware,
-        ))
-        .route_layer(axum::middleware::from_fn_with_state(
-            state.clone(),
             auth_middleware,
-        ));
+        ))
+        .layer(Extension(RequiresAdmin));
 
     let auth_router = Router::new()
         .route("/auth/github", get(github_auth))
