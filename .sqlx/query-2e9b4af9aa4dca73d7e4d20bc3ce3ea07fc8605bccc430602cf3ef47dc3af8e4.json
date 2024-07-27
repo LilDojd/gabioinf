@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM guests",
+  "query": "SELECT * FROM guests ORDER BY created_at DESC",
   "describe": {
     "columns": [
       {
@@ -64,5 +64,5 @@
       false
     ]
   },
-  "hash": "a8317fb6eb15a221ac350ba3234469e82a07b7b885cc5ae56ab9d9c5a9374a07"
+  "hash": "2e9b4af9aa4dca73d7e4d20bc3ce3ea07fc8605bccc430602cf3ef47dc3af8e4"
 }

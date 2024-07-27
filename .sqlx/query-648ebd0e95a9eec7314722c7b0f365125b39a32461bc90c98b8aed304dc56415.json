@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO sessions (user_id, token, issued_at, expires_at) \n             VALUES ($1, $2, NOW(), $3) \n             ON CONFLICT (user_id) DO UPDATE \n             SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at\n             RETURNING *",
+  "query": "SELECT * FROM sessions ORDER BY issued_at DESC",
   "describe": {
     "columns": [
       {
@@ -30,11 +30,7 @@
       }
     ],
     "parameters": {
-      "Left": [
-        "Int8",
-        "Varchar",
-        "Timestamptz"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -44,5 +40,5 @@
       false
     ]
   },
-  "hash": "11cdbccf8a83d2d75329d2d74499a265ef8292821b3a55be00a93c4c9d4669ad"
+  "hash": "648ebd0e95a9eec7314722c7b0f365125b39a32461bc90c98b8aed304dc56415"
 }
