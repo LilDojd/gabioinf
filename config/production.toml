@@ -1,2 +1,6 @@
-# TODO: Add endpoint
+[oauth]
 oauth_redirect_uri = ""
+
+[ratelimiting]
+requests_per_second = 10
+burst_size = 20

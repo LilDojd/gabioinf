@@ -34,6 +34,10 @@ pub struct AppState {
     pub domain: String,
     /// A key used for signing and verifying cookies.
     pub key: Key,
+    /// The client secret for the OAuth2 client.
+    pub client_secret: String,
+    /// The client ID for the OAuth2 client.
+    pub client_id: String,
 }
 
 /// Allows extracting the `Key` from `AppState`.
@@ -56,11 +60,13 @@ impl AppState {
     ///
     /// * `db` - The database connection pool.
     /// * `domain` - The domain name of the application.
+    /// * `client_secret` - The client secret for the OAuth2 client.
+    /// * `client_id` - The client ID for the OAuth2 client.
     ///
     /// # Returns
     ///
     /// A new instance of `AppState`.
-    pub fn new(db: DbConnPool, domain: String) -> Self {
+    pub fn new(db: DbConnPool, domain: String, client_secret: String, client_id: String) -> Self {
         Self {
             db: db.clone(),
             ctx: ReqwestClient::new(),
@@ -68,6 +74,8 @@ impl AppState {
             guestbook_repo: PgRepository::new(db.clone()),
             session_repo: PgRepository::new(db.clone()),
             domain,
+            client_secret,
+            client_id,
             key: Key::generate(),
         }
     }

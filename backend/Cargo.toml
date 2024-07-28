@@ -9,7 +9,10 @@ path = "src/bin/server.rs"
 
 [dependencies]
 axum = { version = "0.7", features = ["multipart", "macros"] }
-axum-extra = { version = "0.9.3", features = ["cookie-private"] }
+axum-extra = { version = "0.9.3", features = [
+  "cookie-private",
+  "typed-header",
+] }
 axum-macros = "0.4.1"
 tokio = { workspace = true }
 serde = { workspace = true }
@@ -39,6 +42,7 @@ config = "0.14.0"
 derive_more = "0.99.18"
 validator = { version = "0.18.1", features = ["derive"] }
 rustrict = "0.7.26"
+tower_governor = { version = "0.4.2", features = ["tracing"] }
 
 [dev-dependencies]
 axum-test = "15.3.0"

@@ -1,8 +1,8 @@
+
 use axum::response::Html;
 use axum::routing::get;
 use axum::Router;
 use backend::config::AppConfig;
-use backend::domain::logic::build_oauth_client;
 use backend::utils::grab_secrets;
 use backend::{db::DbConnPool, wapi::api_router, AppState};
 
@@ -17,17 +17,14 @@ async fn main(
         .await
         .expect("Failed to run migrations");
 
-    let config = AppConfig::new().expect("Failed to load local configuration");
+    let config = AppConfig::new_local().expect("Failed to load local configuration");
     tracing::debug!("Loaded config: {:?}", config);
 
     let (domain, client_id, client_secret) = grab_secrets(secrets);
 
-    let state = AppState::new(postgres, domain);
+    let state = AppState::new(postgres, domain, client_secret, client_id);
 
-    let oauth_client =
-        build_oauth_client(client_id.clone(), client_secret, config.oauth_redirect_uri);
-
-    let api_router = api_router(state, oauth_client);
+    let api_router = api_router(state, config);
 
     let homepage_router = Router::new().route("/", get(homepage));
 
