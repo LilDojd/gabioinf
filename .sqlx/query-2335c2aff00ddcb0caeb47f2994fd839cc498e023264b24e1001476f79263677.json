@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO guests (github_id, name, username) \n             VALUES ($1, $2, $3) \n             ON CONFLICT (github_id) DO UPDATE \n             SET name = EXCLUDED.name, username = EXCLUDED.username \n             RETURNING *",
+  "query": "INSERT INTO guests (github_id, name, username, access_token) \n             VALUES ($1, $2, $3, $4) \n             ON CONFLICT (github_id) DO UPDATE \n             SET access_token = excluded.access_token \n             RETURNING *",
   "describe": {
     "columns": [
       {
@@ -47,13 +47,19 @@
         "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "access_token",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
         "Int8",
         "Varchar",
-        "Varchar"
+        "Varchar",
+        "Text"
       ]
     },
     "nullable": [
@@ -65,8 +71,9 @@
       false,
       true,
       false,
+      false,
       false
     ]
   },
-  "hash": "a3724a2a6062d350b8d6b6401ddfc9904b78da8bf68220739c29445a36efdaad"
+  "hash": "2335c2aff00ddcb0caeb47f2994fd839cc498e023264b24e1001476f79263677"
 }

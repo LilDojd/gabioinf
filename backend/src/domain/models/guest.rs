@@ -1,3 +1,4 @@
+use axum_login::AuthUser;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -55,6 +56,12 @@ impl GithubId {
 #[sqlx(transparent)]
 pub struct GuestId(pub(crate) i64);
 
+impl std::fmt::Display for GuestId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl GuestId {
     pub fn as_value(&self) -> i64 {
         self.0
@@ -62,7 +69,7 @@ impl GuestId {
 }
 
 /// Represents a guest in the system.
-#[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
+#[derive(Serialize, Deserialize, FromRow, Clone, Default)]
 pub struct Guest {
     /// The unique identifier for the guest.
     pub id: GuestId,
@@ -82,6 +89,39 @@ pub struct Guest {
     pub created_at: DateTime<Utc>,
     /// The timestamp when the guest record was last updated.
     pub updated_at: DateTime<Utc>,
+    /// Access token for the guest.
+    pub access_token: String,
+}
+
+// Here we've implemented `Debug` manually to avoid accidentally logging the
+// access token.
+impl std::fmt::Debug for Guest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Guest")
+            .field("id", &self.id)
+            .field("github_id", &self.github_id)
+            .field("name", &self.name)
+            .field("username", &self.username)
+            .field("is_naughty", &self.is_naughty)
+            .field("is_admin", &self.is_admin)
+            .field("naughty_reason", &self.naughty_reason)
+            .field("created_at", &self.created_at)
+            .field("updated_at", &self.updated_at)
+            .field("access_token", &"********")
+            .finish()
+    }
+}
+
+impl AuthUser for Guest {
+    type Id = GuestId;
+
+    fn id(&self) -> Self::Id {
+        self.id
+    }
+
+    fn session_auth_hash(&self) -> &[u8] {
+        self.access_token.as_bytes()
+    }
 }
 
 /// Represents a GitHub user as returned by the GitHub API.

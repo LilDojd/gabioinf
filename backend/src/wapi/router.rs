@@ -57,8 +57,8 @@ pub fn api_router(state: AppState, config: AppConfig) -> Router {
         .route("/guestbook/naughty", get(get_naughty_entries));
 
     let auth_router = Router::new()
-        .route("/auth/github", get(github_auth))
-        .route("/auth/github/callback", get(github_callback))
+        // .route("/auth/github", get(github_auth))
+        // .route("/auth/github/callback", get(github_callback))
         .route("/auth/logout", post(logout));
 
     let authenticated_router = Router::new()

@@ -47,6 +47,11 @@
         "ordinal": 8,
         "name": "updated_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "access_token",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -60,6 +65,7 @@
       false,
       false,
       true,
+      false,
       false,
       false
     ]

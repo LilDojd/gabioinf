@@ -63,14 +63,15 @@ impl Repository<Guest> for PgRepository<Guest> {
     async fn create(&self, guest: &Guest) -> BResult<Guest> {
         let created_guest = sqlx::query_as!(
             Guest,
-            "INSERT INTO guests (github_id, name, username) 
-             VALUES ($1, $2, $3) 
+            "INSERT INTO guests (github_id, name, username, access_token) 
+             VALUES ($1, $2, $3, $4) 
              ON CONFLICT (github_id) DO UPDATE 
-             SET name = EXCLUDED.name, username = EXCLUDED.username 
+             SET access_token = excluded.access_token 
              RETURNING *",
             guest.github_id.as_value(),
             guest.name,
             guest.username,
+            guest.access_token
         )
         .fetch_one(&self.pool)
         .await?;
