@@ -43,6 +43,10 @@ derive_more = "0.99.18"
 validator = { version = "0.18.1", features = ["derive"] }
 rustrict = "0.7.26"
 tower_governor = { version = "0.4.2", features = ["tracing"] }
+tower-sessions = "0.12.2"
+tower-sessions-sqlx-store = { version = "0.12", features = ["postgres"] }
+axum-login = "0.15.3"
+axum-helmet = "0.1.0"
 
 [dev-dependencies]
 axum-test = "15.3.0"

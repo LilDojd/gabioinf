@@ -102,10 +102,7 @@ impl PgRepository<Session> {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        domain::models::Guest,
-        utils::{setup_guest, setup_guests},
-    };
+    use crate::utils::{setup_guest, setup_guests};
 
     use super::*;
     use chrono::{Duration, Utc};
