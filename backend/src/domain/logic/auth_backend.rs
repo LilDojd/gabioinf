@@ -102,39 +102,71 @@ impl AuthnBackend for AuthBackend {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum PermissionTarget {
-    Guestbook(GuestbookPermission),
-    Guests(GuestsPermission),
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+pub enum PermissionTargets {
+    AddSignature,
+    DeleteOwnSignature,
+    DeleteAnySignature,
+    EditOwnSignature,
+    MarkAsNaughty,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum GuestbookPermission {
-    Read,
-    Write,
-    Delete,
-    Update,
+impl Into<PermissionTargets> for String {
+    fn into(self) -> PermissionTargets {
+        match self.as_str() {
+            "leavesignature" => PermissionTargets::AddSignature,
+            "deletesignature" => PermissionTargets::DeleteOwnSignature,
+            "deleteanysignature" => PermissionTargets::DeleteAnySignature,
+            "editsignature" => PermissionTargets::EditOwnSignature,
+            "markasnaughty" => PermissionTargets::MarkAsNaughty,
+            _ => unreachable!(),
+        }
+    }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum GuestsPermission {
-    Create,
-    Delete,
-    Demote,
-    Promote,
-    MarkNaughty,
-    Dashboard,
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+struct Permission {
+    name: PermissionTargets,
 }
 
 #[axum::async_trait]
 impl AuthzBackend for AuthBackend {
-    type Permission = PermissionTarget;
+    type Permission = Permission;
 
-    async fn get_group_permissions(&self, user: &Self::User) -> BResult<HashSet<Self::Permission>> {
-        todo!()
-    }
+    // async fn get_user_permissions(
+    //     &self,
+    //     user: &Self::User,
+    // ) -> Result<HashSet<Self::Permission>, Self::Error> {
+    //     let conn = self.get()?;
+    //     let user = user.clone();
+    //
+    //     let permissions = conn.prepare(
+    //         "SELECT DISTINCT permissions.name FROM users, permissions, user_permissions WHERE users.id = ?1 AND users.id = user_permissions.userid AND user_permissions.permissionid = permissions.id",
+    //     )?
+    //         .query_map_into([user.id])?
+    //         .collect::<Result<HashSet<_>, _>>()?;
+    //     Ok(permissions)
+    // }
 
-    async fn get_user_permissions(&self, user: &Self::User) -> BResult<HashSet<Self::Permission>> {
-        todo!()
+    async fn get_group_permissions(
+        &self,
+        user: &Self::User,
+    ) -> Result<HashSet<Self::Permission>, Self::Error> {
+        let permissions = sqlx::query_as!(
+            Self::Permission,
+            "
+            SELECT DISTINCT permissions.name
+            FROM guests
+            JOIN guests_groups on guests.id = guests_groups.guest_id
+            JOIN groups_permissions on guests_groups.group_id = groups_permissions.group_id
+            JOIN permissions on groups_permissions.permission_id = permissions.id
+            WHERE guests.id = $1
+            ",
+            user.id.as_value()
+        )
+        .fetch_all(&self.repo.pool)
+        .await?;
+
+        Ok(permissions.into_iter().collect())
     }
 }
