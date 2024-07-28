@@ -2,8 +2,14 @@
 //!
 //! This module defines the routing structure for the entire API, including
 //! public routes, authenticated routes, and admin-only routes.
+use std::sync::Arc;
+
 use crate::{
-    domain::logic::{auth_middleware, github_auth, github_callback, protected, RequiresAdmin},
+    config::AppConfig,
+    domain::logic::{
+        auth_middleware, build_oauth_client, github_auth, github_callback, protected, RequiresAdmin,
+    },
+    headers::CookieExtractor,
     AppState,
 };
 use axum::{
@@ -14,13 +20,15 @@ use axum::{
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
 use http::HeaderValue;
 use http::Method;
-use oauth2::basic::BasicClient;
+use tower_governor::{
+    governor::GovernorConfigBuilder,
+    GovernorLayer,
+};
 use tower_http::cors::CorsLayer;
 
 use super::{
     admin_dashboard, create_entry, delete_entry, execute_sql_query, flag_as_naughty,
-    get_all_admins, get_all_entries, get_guests, get_naughty_entries, logout, promote_to_admin,
-    update_entry,
+    get_all_admins, get_all_entries, get_naughty_entries, logout, promote_to_admin, update_entry,
 };
 
 /// Configures and returns the main API router.
@@ -37,7 +45,22 @@ use super::{
 /// # Returns
 ///
 /// Returns a configured `Router` instance ready to be served.
-pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
+pub fn api_router(state: AppState, config: AppConfig) -> Router {
+    let oauth_client = build_oauth_client(
+        state.clone().client_id,
+        state.clone().client_secret,
+        config.oauth.oauth_redirect_uri,
+    );
+
+    let governor_conf = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(config.ratelimiting.requests_per_second)
+            .burst_size(config.ratelimiting.burst_size)
+            .key_extractor(CookieExtractor)
+            .finish()
+            .unwrap(),
+    );
+
     let cors = CorsLayer::new()
         .allow_credentials(true)
         .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])
@@ -57,6 +80,9 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
         .route("/guestbook", post(create_entry))
         .route("/guestbook/:id", delete(delete_entry))
         .route("/protected", get(protected))
+        .layer(GovernorLayer {
+            config: governor_conf,
+        })
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,

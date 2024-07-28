@@ -1,1 +1,6 @@
-oauth_redirect_uri = "http://localhost:8000/v1/auth/authorized"
+[oauth]
+oauth_redirect_uri = "http://localhost:8000/v1/auth/github/callback"
+
+[ratelimiting]
+requests_per_second = 5
+burst_size = 10
