@@ -62,30 +62,41 @@ INSERT INTO groups (name) VALUES ('naughty_guests');
 
 -- Guestbook entries permission
 INSERT INTO permissions (name) VALUES ('guestbook.read');
-INSERT INTO permissions (name) VALUES ('guestbook.write');
-INSERT INTO permissions (name) VALUES ('guestbook.delete');
+INSERT INTO permissions (name) VALUES ('guestbook.leavesignature');
+INSERT INTO permissions (name) VALUES ('guestbook.deleteown');
+INSERT INTO permissions (name) VALUES ('guestbook.deleteany');
 INSERT INTO permissions (name) VALUES ('guestbook.update');
 
 -- User-related permissions
 INSERT INTO permissions (name) VALUES ('guest.read');
-INSERT INTO permissions (name) VALUES ('guest.write');
+INSERT INTO permissions (name) VALUES ('guest.leavesignature');
 INSERT INTO permissions (name) VALUES ('guest.delete');
 INSERT INTO permissions (name) VALUES ('guest.promote');
 INSERT INTO permissions (name) VALUES ('guest.demote');
 INSERT INTO permissions (name) VALUES ('guest.marknauhgty');
 INSERT INTO permissions (name) VALUES ('guest.dashboard');
 
--- All guests can read entries
+-- All guests can read entries and leave their signature or delete their own entries
 INSERT INTO groups_permissions (group_id, permission_id) VALUES (
     (SELECT id FROM groups WHERE name = 'guests'),
     (SELECT id FROM permissions WHERE name = 'guestbook.read')
+);
+
+INSERT INTO groups_permissions (group_id, permission_id) VALUES (
+    (SELECT id FROM groups WHERE name = 'guests'),
+    (SELECT id FROM permissions WHERE name = 'guestbook.leavesignature')
+);
+
+INSERT INTO groups_permissions (group_id, permission_id) VALUES (
+    (SELECT id FROM groups WHERE name = 'guests'),
+    (SELECT id FROM permissions WHERE name = 'guestbook.deleteown')
 );
 
 -- Admins can do everything
 
 INSERT INTO groups_permissions (group_id, permission_id) VALUES (
     (SELECT id FROM groups WHERE name = 'admins'),
-    (SELECT id FROM permissions WHERE name = 'guestbook.delete')
+    (SELECT id FROM permissions WHERE name = 'guestbook.deleteany')
 );
 
 INSERT INTO groups_permissions (group_id, permission_id) VALUES (
