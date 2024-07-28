@@ -44,60 +44,42 @@ pub fn api_router(state: AppState, oauth_client: BasicClient) -> Router {
         .allow_headers(vec![ORIGIN, AUTHORIZATION, ACCEPT])
         .allow_origin(state.domain.parse::<HeaderValue>().unwrap());
 
-    let public_guestbook_router = Router::new()
-        .route("/", get(get_all_entries))
-        .route("/naughty", get(get_naughty_entries));
-
-    let guestbook_router = Router::new()
-        .route("/", post(create_entry))
-        .route("/:id", delete(delete_entry))
-        .route_layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware,
-        ));
-
-    let admin_guestbook_router = Router::new()
-        .route("/:id/flag", post(flag_as_naughty))
-        .route("/:id", put(update_entry))
-        .route_layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware,
-        ))
-        .layer(Extension(RequiresAdmin));
-
-    let admin_router = Router::new()
-        .route("/admin", get(admin_dashboard))
-        .route("/admin/promote/:guest_id", post(promote_to_admin))
-        .route("/admin/all", get(get_all_admins))
-        .route("/admin/query", post(execute_sql_query))
-        .route_layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware,
-        ))
-        .layer(Extension(RequiresAdmin));
+    let public_router = Router::new()
+        .route("/guestbook", get(get_all_entries))
+        .route("/guestbook/naughty", get(get_naughty_entries));
 
     let auth_router = Router::new()
         .route("/auth/github", get(github_auth))
-        .route("/auth/authorized", get(github_callback))
+        .route("/auth/github/callback", get(github_callback))
         .route("/auth/logout", post(logout));
 
-    let protected_router = Router::new()
+    let authenticated_router = Router::new()
+        .route("/guestbook", post(create_entry))
+        .route("/guestbook/:id", delete(delete_entry))
         .route("/protected", get(protected))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
         ));
 
-    let guests_router = Router::new().route("/all", get(get_guests));
+    let admin_router = Router::new()
+        .route("/guestbook/:id", put(update_entry))
+        .route("/guestbook/:id/flag", post(flag_as_naughty))
+        .route("/admin", get(admin_dashboard))
+        .route("/admins", get(get_all_admins))
+        .route("/admins/:id", post(promote_to_admin))
+        .route("/queries", post(execute_sql_query))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ))
+        .layer(Extension(RequiresAdmin));
 
     Router::new()
-        .nest("/guestbook", guestbook_router)
-        .nest("/guestbook", public_guestbook_router)
-        .nest("/admin/guestbook", admin_guestbook_router)
-        .nest("/", auth_router)
-        .nest("/guests", guests_router)
-        .nest("/", protected_router)
-        .nest("/", admin_router)
+        .merge(public_router)
+        .merge(auth_router)
+        .merge(authenticated_router)
+        .merge(admin_router)
         .with_state(state)
         .layer(cors)
         .layer(Extension(oauth_client))
