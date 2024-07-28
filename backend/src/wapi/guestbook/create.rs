@@ -26,7 +26,7 @@ pub struct CreateEntryRequest {
         custom(function = "crate::utils::validate_not_offensive")
     )]
     message: String,
-    signature: String,
+    signature: Option<String>,
 }
 
 /// Handler for creating a new guestbook entry.
@@ -87,8 +87,7 @@ pub async fn create_entry(
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
         message: payload.message.trim().to_string(),
-        // TODO: Change this
-        signature: None,
+        signature: payload.signature,
     }
     .into();
 
