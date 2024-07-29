@@ -8,30 +8,31 @@ use oauth2::{
     AuthorizationCode, CsrfToken, Scope, TokenResponse,
 };
 use reqwest::Url;
-use serde::Deserialize;
 
 use crate::{
-    domain::models::{Guest, NewGuest},
+    domain::models::{Credentials, Guest, NewGuest, PermissionTargets},
     errors::{ApiError, BResult},
-    repos::{GuestCriteria, PgRepository, Repository},
+    repos::{GroupsAndPermissionsRepo, GuestCriteria, PgRepository, Repository},
 };
 
 #[derive(Clone, Debug)]
 pub struct AuthBackend {
-    repo: PgRepository<Guest>,
+    guest_repo: PgRepository<Guest>,
+    gp_repo: GroupsAndPermissionsRepo,
     client: BasicClient,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct Credentials {
-    pub code: String,
-    pub old_state: CsrfToken,
-    pub new_state: CsrfToken,
-}
-
 impl AuthBackend {
-    pub fn new(repo: PgRepository<Guest>, client: BasicClient) -> Self {
-        Self { repo, client }
+    pub fn new(
+        guest_repo: PgRepository<Guest>,
+        gp_repo: GroupsAndPermissionsRepo,
+        client: BasicClient,
+    ) -> Self {
+        Self {
+            guest_repo,
+            gp_repo,
+            client,
+        }
     }
 
     pub fn authorize_url<I>(&self, scopes: I) -> (Url, CsrfToken)
@@ -58,9 +59,7 @@ impl AuthnBackend for AuthBackend {
     async fn authenticate(&self, creds: Self::Credentials) -> BResult<Option<Self::User>> {
         // Ensure the CSFR state matches
         if creds.old_state.secret() != creds.new_state.secret() {
-            return Err(Self::Error::AuthorizationError(
-                "CSRF state mismatch".to_string(),
-            ));
+            return Ok(None);
         }
 
         // Exchange code
@@ -70,7 +69,7 @@ impl AuthnBackend for AuthBackend {
             .exchange_code(AuthorizationCode::new(creds.code))
             .request_async(async_http_client)
             .await
-            .map_err(|e| Self::Error::ExternalServiceError(e.to_string()))?;
+            .map_err(|e| Self::Error::AuthenticationError(e.to_string()))?;
 
         // Request user info
         tracing::debug!("Getting user data from GitHub API");
@@ -89,84 +88,50 @@ impl AuthnBackend for AuthBackend {
         tracing::debug!("Received user data from GitHub: {:?}", github_user);
 
         // Add to db
-        let guest = self.repo.create(&github_user.into()).await?;
+        let guest = self.guest_repo.create(&github_user.into()).await?;
 
         Ok(Some(guest))
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> BResult<Option<Self::User>> {
-        self.repo
+        self.guest_repo
             .read(&GuestCriteria::WithGuestId(*user_id))
             .await
             .map(Some)
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-pub enum PermissionTargets {
-    AddSignature,
-    DeleteOwnSignature,
-    DeleteAnySignature,
-    EditOwnSignature,
-    MarkAsNaughty,
-}
-
-impl Into<PermissionTargets> for String {
-    fn into(self) -> PermissionTargets {
-        match self.as_str() {
-            "leavesignature" => PermissionTargets::AddSignature,
-            "deletesignature" => PermissionTargets::DeleteOwnSignature,
-            "deleteanysignature" => PermissionTargets::DeleteAnySignature,
-            "editsignature" => PermissionTargets::EditOwnSignature,
-            "markasnaughty" => PermissionTargets::MarkAsNaughty,
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-struct Permission {
-    name: PermissionTargets,
-}
-
 #[axum::async_trait]
 impl AuthzBackend for AuthBackend {
-    type Permission = Permission;
+    type Permission = PermissionTargets;
 
-    // async fn get_user_permissions(
-    //     &self,
-    //     user: &Self::User,
-    // ) -> Result<HashSet<Self::Permission>, Self::Error> {
-    //     let conn = self.get()?;
-    //     let user = user.clone();
-    //
-    //     let permissions = conn.prepare(
-    //         "SELECT DISTINCT permissions.name FROM users, permissions, user_permissions WHERE users.id = ?1 AND users.id = user_permissions.userid AND user_permissions.permissionid = permissions.id",
-    //     )?
-    //         .query_map_into([user.id])?
-    //         .collect::<Result<HashSet<_>, _>>()?;
-    //     Ok(permissions)
-    // }
+    async fn get_user_permissions(
+        &self,
+        user: &Self::User,
+    ) -> Result<HashSet<Self::Permission>, Self::Error> {
+        let perms = self.gp_repo.get_user_specific_permissions(user.id).await?;
+
+        Ok(perms.into_iter().collect())
+    }
 
     async fn get_group_permissions(
         &self,
         user: &Self::User,
     ) -> Result<HashSet<Self::Permission>, Self::Error> {
-        let permissions = sqlx::query_as!(
-            Self::Permission,
-            "
-            SELECT DISTINCT permissions.name
-            FROM guests
-            JOIN guests_groups on guests.id = guests_groups.guest_id
-            JOIN groups_permissions on guests_groups.group_id = groups_permissions.group_id
-            JOIN permissions on groups_permissions.permission_id = permissions.id
-            WHERE guests.id = $1
-            ",
-            user.id.as_value()
-        )
-        .fetch_all(&self.repo.pool)
-        .await?;
+        let perms = self.gp_repo.get_user_group_permissions(user.id).await?;
 
-        Ok(permissions.into_iter().collect())
+        Ok(perms.into_iter().collect())
+    }
+
+    async fn get_all_permissions(
+        &self,
+        user: &Self::User,
+    ) -> Result<HashSet<Self::Permission>, Self::Error> {
+        let perms = self.gp_repo.get_all_user_permissions(user.id).await?;
+
+        Ok(perms.into_iter().collect())
     }
 }
+
+// Shorthand alias for conveniece
+pub type AuthSession = axum_login::AuthSession<AuthBackend>;

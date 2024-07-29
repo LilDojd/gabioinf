@@ -16,3 +16,7 @@ pub use guestbook_repo::*;
 /// Guest repository.
 mod guest_repo;
 pub use guest_repo::*;
+
+/// Repo to handle user and group authorization scopes
+mod authorization_repo;
+pub use authorization_repo::*;

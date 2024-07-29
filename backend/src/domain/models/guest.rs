@@ -79,12 +79,6 @@ pub struct Guest {
     pub name: String,
     /// The username of the guest.
     pub username: String,
-    /// Indicates whether the guest is marked as naughty.
-    pub is_naughty: bool,
-    /// Indicates whether the guest has admin privileges.
-    pub is_admin: bool,
-    /// The reason for marking the guest as naughty, if applicable.
-    pub naughty_reason: Option<String>,
     /// The timestamp when the guest record was created.
     pub created_at: DateTime<Utc>,
     /// The timestamp when the guest record was last updated.
@@ -102,9 +96,6 @@ impl std::fmt::Debug for Guest {
             .field("github_id", &self.github_id)
             .field("name", &self.name)
             .field("username", &self.username)
-            .field("is_naughty", &self.is_naughty)
-            .field("is_admin", &self.is_admin)
-            .field("naughty_reason", &self.naughty_reason)
             .field("created_at", &self.created_at)
             .field("updated_at", &self.updated_at)
             .field("access_token", &"********")
