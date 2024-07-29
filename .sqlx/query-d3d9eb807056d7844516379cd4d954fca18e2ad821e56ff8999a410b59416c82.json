@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM guests WHERE is_naughty = true ORDER BY created_at DESC",
+  "query": "UPDATE guests\n            SET name = $2, username = $3, updated_at = NOW()\n            WHERE id = $1\n            RETURNING *",
   "describe": {
     "columns": [
       {
@@ -25,37 +25,26 @@
       },
       {
         "ordinal": 4,
-        "name": "is_naughty",
-        "type_info": "Bool"
-      },
-      {
-        "ordinal": 5,
-        "name": "is_admin",
-        "type_info": "Bool"
-      },
-      {
-        "ordinal": 6,
-        "name": "naughty_reason",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 8,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 9,
+        "ordinal": 6,
         "name": "access_token",
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Int8",
+        "Varchar",
+        "Varchar"
+      ]
     },
     "nullable": [
       false,
@@ -64,11 +53,8 @@
       false,
       false,
       false,
-      true,
-      false,
-      false,
       false
     ]
   },
-  "hash": "ba5a0a755fe1362570e71fa405d7f44a677c010095636f5fa979a769f5903f30"
+  "hash": "d3d9eb807056d7844516379cd4d954fca18e2ad821e56ff8999a410b59416c82"
 }
