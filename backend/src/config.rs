@@ -10,14 +10,7 @@ pub struct RateLimiting {
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
-pub struct OAuth {
-    pub oauth_redirect_uri: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
 pub struct AppConfig {
-    pub oauth: OAuth,
     pub ratelimiting: RateLimiting,
 }
 
@@ -51,10 +44,6 @@ mod tests {
     #[test]
     fn test_config() {
         let config = AppConfig::new("../").unwrap();
-        assert_eq!(
-            config.oauth.oauth_redirect_uri,
-            "http://localhost:8000/v1/auth/github/callback"
-        );
         assert_eq!(config.ratelimiting.requests_per_second, 5);
         assert_eq!(config.ratelimiting.burst_size, 10);
     }

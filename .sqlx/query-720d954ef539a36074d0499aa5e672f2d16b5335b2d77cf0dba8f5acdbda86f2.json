@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT p.id, p.name as \"name: PermissionTargets\"\n             FROM permissions p\n             JOIN groups_permissions grp ON p.id = grp.permission_id\n             JOIN guests_groups gg ON grp.group_id = gg.group_id\n             WHERE gg.guest_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 1,
+        "name": "name: PermissionTargets",
+        "type_info": {
+          "Custom": {
+            "name": "permissionvariant",
+            "kind": {
+              "Enum": [
+                "addsignature",
+                "deleteownsignature",
+                "deleteanysignature",
+                "editownsignature",
+                "deleteuser",
+                "markasnaughty",
+                "prodemoteuser",
+                "edituserpermissions"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "720d954ef539a36074d0499aa5e672f2d16b5335b2d77cf0dba8f5acdbda86f2"
+}

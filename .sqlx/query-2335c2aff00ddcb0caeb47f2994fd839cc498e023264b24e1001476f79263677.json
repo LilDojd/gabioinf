@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE guests\n            SET is_naughty = true, naughty_reason = $2, updated_at = NOW()\n            WHERE id = $1\n            RETURNING *\n            ",
+  "query": "INSERT INTO guests (github_id, name, username, access_token) \n             VALUES ($1, $2, $3, $4) \n             ON CONFLICT (github_id) DO UPDATE \n             SET access_token = excluded.access_token \n             RETURNING *",
   "describe": {
     "columns": [
       {
@@ -25,34 +25,26 @@
       },
       {
         "ordinal": 4,
-        "name": "is_naughty",
-        "type_info": "Bool"
-      },
-      {
-        "ordinal": 5,
-        "name": "is_admin",
-        "type_info": "Bool"
-      },
-      {
-        "ordinal": 6,
-        "name": "naughty_reason",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 8,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "access_token",
+        "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
         "Int8",
-        "Varchar"
+        "Varchar",
+        "Varchar",
+        "Text"
       ]
     },
     "nullable": [
@@ -62,10 +54,8 @@
       false,
       false,
       false,
-      true,
-      false,
       false
     ]
   },
-  "hash": "23e64c7cb3b3a48aa1fe740d21811c5dc9f67d41ee0847ad4ffb08c8f6337c9f"
+  "hash": "2335c2aff00ddcb0caeb47f2994fd839cc498e023264b24e1001476f79263677"
 }

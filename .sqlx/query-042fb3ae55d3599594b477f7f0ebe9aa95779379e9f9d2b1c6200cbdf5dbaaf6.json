@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM guests_groups\n             WHERE guest_id = $1 AND group_id = (SELECT id FROM groups WHERE name = $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "groupvariant",
+            "kind": {
+              "Enum": [
+                "guests",
+                "admins",
+                "naughty_guests"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "042fb3ae55d3599594b477f7f0ebe9aa95779379e9f9d2b1c6200cbdf5dbaaf6"
+}

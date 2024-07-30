@@ -63,17 +63,19 @@ impl Repository<Guest> for PgRepository<Guest> {
     async fn create(&self, guest: &Guest) -> BResult<Guest> {
         let created_guest = sqlx::query_as!(
             Guest,
-            "INSERT INTO guests (github_id, name, username) 
-             VALUES ($1, $2, $3) 
+            "INSERT INTO guests (github_id, name, username, access_token) 
+             VALUES ($1, $2, $3, $4) 
              ON CONFLICT (github_id) DO UPDATE 
-             SET name = EXCLUDED.name, username = EXCLUDED.username 
+             SET access_token = excluded.access_token 
              RETURNING *",
             guest.github_id.as_value(),
             guest.name,
             guest.username,
+            guest.access_token
         )
         .fetch_one(&self.pool)
         .await?;
+
         Ok(created_guest)
     }
 
@@ -82,15 +84,12 @@ impl Repository<Guest> for PgRepository<Guest> {
         let updated_guest = sqlx::query_as!(
             Guest,
             "UPDATE guests
-            SET name = $2, username = $3, is_naughty = $4, is_admin = $5, naughty_reason = $6, updated_at = NOW()
+            SET name = $2, username = $3, updated_at = NOW()
             WHERE id = $1
             RETURNING *",
             guest.id.as_value(),
             guest.name,
             guest.username,
-            guest.is_naughty,
-            guest.is_admin,
-            guest.naughty_reason
         )
         .fetch_one(&self.pool)
         .await?;
@@ -106,48 +105,7 @@ impl Repository<Guest> for PgRepository<Guest> {
     }
 }
 
-impl PgRepository<Guest> {
-    /// Retrieves all guests with admin privileges.
-    pub async fn get_all_admins(&self) -> Result<Vec<Guest>, ApiError> {
-        let admins = sqlx::query_as!(Guest, "SELECT * FROM guests WHERE is_admin = true")
-            .fetch_all(&self.pool)
-            .await?;
-        Ok(admins)
-    }
-
-    /// Retrieves all guests marked as naughty, ordered by creation date descending.
-    pub async fn get_all_naughty_bois(&self) -> Result<Vec<Guest>, ApiError> {
-        let naughty_guests = sqlx::query_as!(
-            Guest,
-            "SELECT * FROM guests WHERE is_naughty = true ORDER BY created_at DESC"
-        )
-        .fetch_all(&self.pool)
-        .await?;
-        Ok(naughty_guests)
-    }
-
-    /// Flags a guest as naughty and sets the reason.
-    pub async fn flag_as_naughty<S: AsRef<str>>(
-        &self,
-        id: i64,
-        reason: S,
-    ) -> Result<Guest, ApiError> {
-        let flagged_guest = sqlx::query_as!(
-            Guest,
-            r#"
-            UPDATE guests
-            SET is_naughty = true, naughty_reason = $2, updated_at = NOW()
-            WHERE id = $1
-            RETURNING *
-            "#,
-            id,
-            reason.as_ref()
-        )
-        .fetch_one(&self.pool)
-        .await?;
-        Ok(flagged_guest)
-    }
-}
+impl PgRepository<Guest> {}
 
 #[axum::async_trait]
 impl FromRequestParts<AppState> for Guest {

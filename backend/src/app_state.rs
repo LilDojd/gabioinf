@@ -6,12 +6,13 @@
 
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
+use oauth2::basic::BasicClient;
 use reqwest::Client as ReqwestClient;
 
 use crate::{
     db::DbConnPool,
-    domain::models::{Guest, GuestbookEntry, Session},
-    repos::PgRepository,
+    domain::models::{Guest, GuestbookEntry},
+    repos::{GroupsAndPermissionsRepo, PgRepository},
 };
 
 /// Represents the shared state of the application.
@@ -28,16 +29,14 @@ pub struct AppState {
     pub guest_repo: PgRepository<Guest>,
     /// Repository for guestbook-related data.
     pub guestbook_repo: PgRepository<GuestbookEntry>,
-    /// Repository for user sessions
-    pub session_repo: PgRepository<Session>,
+    /// Repository for user and group permissions
+    pub gp_repo: GroupsAndPermissionsRepo,
     /// The domain name of the application.
     pub domain: String,
     /// A key used for signing and verifying cookies.
     pub key: Key,
-    /// The client secret for the OAuth2 client.
-    pub client_secret: String,
-    /// The client ID for the OAuth2 client.
-    pub client_id: String,
+    /// The client for OAuth2 requests.
+    pub client: BasicClient,
 }
 
 /// Allows extracting the `Key` from `AppState`.
@@ -60,22 +59,20 @@ impl AppState {
     ///
     /// * `db` - The database connection pool.
     /// * `domain` - The domain name of the application.
-    /// * `client_secret` - The client secret for the OAuth2 client.
-    /// * `client_id` - The client ID for the OAuth2 client.
+    /// * `client` - The client for the OAuth2 requests.
     ///
     /// # Returns
     ///
     /// A new instance of `AppState`.
-    pub fn new(db: DbConnPool, domain: String, client_secret: String, client_id: String) -> Self {
+    pub fn new(db: DbConnPool, domain: String, client: BasicClient) -> Self {
         Self {
             db: db.clone(),
             ctx: ReqwestClient::new(),
             guest_repo: PgRepository::new(db.clone()),
             guestbook_repo: PgRepository::new(db.clone()),
-            session_repo: PgRepository::new(db.clone()),
+            gp_repo: GroupsAndPermissionsRepo::new(db.clone()),
             domain,
-            client_secret,
-            client_id,
+            client,
             key: Key::generate(),
         }
     }
