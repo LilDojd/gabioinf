@@ -17,6 +17,6 @@ pub use guestbook_repo::*;
 mod guest_repo;
 pub use guest_repo::*;
 
-/// Sessions repositoty.
-mod session_repo;
-pub use session_repo::*;
+/// Repo to handle user and group authorization scopes
+mod authorization_repo;
+pub use authorization_repo::*;

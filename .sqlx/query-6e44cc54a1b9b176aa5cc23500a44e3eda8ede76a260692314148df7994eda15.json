@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO guests_permissions (guest_id, permission_id)\n             SELECT $1, id FROM permissions WHERE name = $2\n             ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "permissionvariant",
+            "kind": {
+              "Enum": [
+                "addsignature",
+                "deleteownsignature",
+                "deleteanysignature",
+                "editownsignature",
+                "deleteuser",
+                "markasnaughty",
+                "prodemoteuser",
+                "edituserpermissions"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6e44cc54a1b9b176aa5cc23500a44e3eda8ede76a260692314148df7994eda15"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO guests_groups (guest_id, group_id)\n             SELECT $1, id FROM groups WHERE name = $2\n             ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "groupvariant",
+            "kind": {
+              "Enum": [
+                "guests",
+                "admins",
+                "naughty_guests"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c6c530676c236db65ec2238fac07b70888c57b841c334aa7255ac21c1940bbc7"
+}

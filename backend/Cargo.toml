@@ -47,6 +47,8 @@ tower-sessions = "0.12.2"
 tower-sessions-sqlx-store = { version = "0.12", features = ["postgres"] }
 axum-login = "0.15.3"
 axum-helmet = "0.1.0"
+askama = { version = "0.12.1", features = ["with-axum"] }
+askama_axum = "0.4.0"
 
 [dev-dependencies]
 axum-test = "15.3.0"
