@@ -3,19 +3,19 @@
 //! This module defines the routing structure for the entire API, including
 //! public routes, authenticated routes, and admin-only routes.
 use crate::{
-    config::AppConfig, domain::logic::{protected, router, AuthBackend, AuthSession},
-    domain::models::PermissionTargets, AppState,
+    config::AppConfig,
+    domain::logic::{router, AuthBackend, AuthSession},
+    domain::models::PermissionTargets,
+    AppState,
 };
 use askama::Template;
 use askama_axum::IntoResponse;
-use axum::{http, routing::get, Json, Router};
-use axum_extra::extract::CookieJar;
-use axum_login::{login_required, permission_required};
+use axum::{http, routing::get, Router};
+use axum_login::permission_required;
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
 use http::HeaderValue;
 use http::Method;
 use reqwest::StatusCode;
-use serde_json::json;
 use tower_http::cors::CorsLayer;
 #[derive(Template)]
 #[template(path = "admin.html")]
@@ -50,11 +50,11 @@ pub fn api_router(state: AppState, config: AppConfig) -> Router {
     let oauth_router = router();
     let admin_router = Router::new()
         .route("/admin", get(admin))
-        .route_layer(
-            permission_required!(
-                AuthBackend, login_url = "/", PermissionTargets::MarkAsNaughty
-            ),
-        );
+        .route_layer(permission_required!(
+            AuthBackend,
+            login_url = "/",
+            PermissionTargets::MarkAsNaughty
+        ));
     Router::new()
         .route("/auth/status", get(auth_status))
         .merge(admin_router)
@@ -63,5 +63,9 @@ pub fn api_router(state: AppState, config: AppConfig) -> Router {
         .layer(CorsLayer::very_permissive())
 }
 async fn auth_status(auth_session: AuthSession) -> impl IntoResponse {
-    if auth_session.user.is_some() { StatusCode::OK } else { StatusCode::UNAUTHORIZED }
+    if auth_session.user.is_some() {
+        StatusCode::OK
+    } else {
+        StatusCode::UNAUTHORIZED
+    }
 }

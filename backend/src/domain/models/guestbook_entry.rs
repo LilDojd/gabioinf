@@ -9,16 +9,7 @@ use derive_more::{From, Into};
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with guestbook IDs.
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Default,
-    Clone,
-    Copy,
-    sqlx::Type,
-    From,
-    Into,
-    PartialEq,
+    Debug, Serialize, Deserialize, Default, Clone, Copy, sqlx::Type, From, Into, PartialEq,
 )]
 #[sqlx(transparent)]
 pub struct GuestbookId(pub(crate) i64);
