@@ -11,17 +11,15 @@ use crate::{
 };
 use askama::Template;
 use askama_axum::IntoResponse;
-use axum::{
-    http,
-    routing::get,
-    Router,
-};
+use axum::{http, routing::get, Json, Router};
+use axum_extra::extract::CookieJar;
 use axum_login::{login_required, permission_required};
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
 use http::HeaderValue;
 use http::Method;
+use reqwest::StatusCode;
+use serde_json::json;
 use tower_http::cors::CorsLayer;
-
 
 #[derive(Template)]
 #[template(path = "admin.html")]
@@ -84,20 +82,19 @@ pub fn api_router(state: AppState, config: AppConfig) -> Router {
         .route("/admin", get(admin))
         .route_layer(permission_required!(
             AuthBackend,
-            login_url = "/login",
+            login_url = "/",
             PermissionTargets::MarkAsNaughty
         ));
 
-    
-
     Router::new()
-        .route("/", get(protected))
-        .route_layer(login_required!(AuthBackend, login_url = "/login"))
+        // .route_layer(login_required!(AuthBackend, login_url = "/"))
+        .route("/auth/status", get(auth_status))
         .merge(admin_router)
         .merge(auth_router)
         .merge(oauth_router)
-        // .with_state(state)
-        .layer(cors)
+        .layer(CorsLayer::very_permissive())
+    // .with_state(state)
+    // .layer(cors)
     // Router::new()
     // .merge(public_router)
     // .merge(auth_router)
@@ -105,4 +102,16 @@ pub fn api_router(state: AppState, config: AppConfig) -> Router {
     // .merge(admin_router)
     // .with_state(state)
     // .layer(cors)
+}
+
+// In your backend router
+
+// Implement the handler
+async fn auth_status(auth_session: AuthSession) -> impl IntoResponse {
+    tracing::error!("{:?}", auth_session);
+    if auth_session.user.is_some() {
+        StatusCode::OK
+    } else {
+        StatusCode::UNAUTHORIZED
+    }
 }

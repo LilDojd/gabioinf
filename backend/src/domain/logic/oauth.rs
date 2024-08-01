@@ -87,7 +87,10 @@ mod get {
             state: new_state,
         }): Query<AuthzResp>,
     ) -> impl IntoResponse {
+        tracing::error!("Callback");
         let Ok(Some(old_state)) = session.get(CSRF_STATE_KEY).await else {
+            tracing::error!("CSRF issue");
+
             return StatusCode::BAD_REQUEST.into_response();
         };
 
@@ -100,6 +103,7 @@ mod get {
         let user = match auth_session.authenticate(creds).await {
             Ok(Some(user)) => user,
             Ok(None) => {
+                tracing::error!("CSRF issue 2");
                 return (
                     StatusCode::UNAUTHORIZED,
                     LoginTemplate {
@@ -107,7 +111,7 @@ mod get {
                         next: None,
                     },
                 )
-                    .into_response()
+                    .into_response();
             }
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         };
@@ -117,7 +121,7 @@ mod get {
         }
 
         if let Ok(Some(next)) = session.remove::<String>(NEXT_URL_KEY).await {
-            Redirect::to(&next).into_response()
+            Redirect::to("/").into_response()
         } else {
             Redirect::to("/").into_response()
         }
