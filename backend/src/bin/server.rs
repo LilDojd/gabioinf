@@ -25,6 +25,7 @@ use tower::timeout::error::Elapsed;
 use tower::{BoxError, Layer, ServiceBuilder};
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::GovernorLayer;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
 
@@ -113,43 +114,44 @@ async fn main(
 
     let api_router = api_router(state, config);
 
-    let mut router = Router::new().nest("/", api_router).layer(
-        ServiceBuilder::new()
-            .layer(GovernorLayer {
-                config: governor_conf,
-            })
-            .layer(HandleErrorLayer::new(|error: BoxError| async move {
-                if error.is::<Elapsed>() {
-                    return Ok(StatusCode::REQUEST_TIMEOUT);
-                }
-                Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Unhandled internal error: {error}"),
-                ))
-            }))
-            .timeout(Duration::from_secs(10))
-            .layer(auth_layer)
-            .layer(helmet_layer), // .map_response(|mut res: Response<Body>| {
-                                  //     if res.headers().get("content-security-policy").is_none() {
-                                  //         res.headers_mut().insert(
-                                  //             "content-security-policy",
-                                  //             generate_default_csp()
-                                  //                 .to_string()
-                                  //                 .parse()
-                                  //                 .unwrap_or_else(|_| {
-                                  //                     tracing::error!("Failed to parse default CSP");
-                                  //                     HeaderValue::from_static(fallback_static_str_csp())
-                                  //                 }),
-                                  //         );
-                                  //     }
-                                  //     res
-                                  // })
-                                  // .into_inner(),
-    );
-    // .nest_service(
-    //     "/",
-    //     ServeDir::new("dist").not_found_service(ServeFile::new("dist/index.html")),
-    // );
+    let mut router = Router::new()
+        .nest("/v1", api_router)
+        .layer(
+            ServiceBuilder::new()
+                .layer(GovernorLayer {
+                    config: governor_conf,
+                })
+                .layer(HandleErrorLayer::new(|error: BoxError| async move {
+                    if error.is::<Elapsed>() {
+                        return Ok(StatusCode::REQUEST_TIMEOUT);
+                    }
+                    Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        format!("Unhandled internal error: {error}"),
+                    ))
+                }))
+                .timeout(Duration::from_secs(10))
+                .layer(auth_layer), // .layer(helmet_layer), // .map_response(|mut res: Response<Body>| {
+                                    //     if res.headers().get("content-security-policy").is_none() {
+                                    //         res.headers_mut().insert(
+                                    //             "content-security-policy",
+                                    //             generate_default_csp()
+                                    //                 .to_string()
+                                    //                 .parse()
+                                    //                 .unwrap_or_else(|_| {
+                                    //                     tracing::error!("Failed to parse default CSP");
+                                    //                     HeaderValue::from_static(fallback_static_str_csp())
+                                    //                 }),
+                                    //         );
+                                    //     }
+                                    //     res
+                                    // })
+                                    // .into_inner(),
+        )
+        .nest_service(
+            "/",
+            ServeDir::new("dist").not_found_service(ServeFile::new("dist/index.html")),
+        );
 
     if cfg!(debug_assertions) {
         router = router.layer(tower_livereload::LiveReloadLayer::new());

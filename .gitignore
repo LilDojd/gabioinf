@@ -3,3 +3,4 @@ target/
 Secrets*.toml
 /target
 .shuttle-storage
+dist/

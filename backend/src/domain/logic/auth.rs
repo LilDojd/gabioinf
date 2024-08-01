@@ -1,7 +1,7 @@
 use askama::Template;
 use axum::{
     extract::Query,
-    http::StatusCode,
+    http::{Response, StatusCode},
     response::{IntoResponse, Redirect},
     routing::{get, post},
     Form, Router,
@@ -28,8 +28,8 @@ pub struct NextUrl {
 
 pub fn router() -> Router<()> {
     Router::new()
-        .route("/login", post(self::post::login))
-        .route("/login", get(self::get::login))
+        .route("/login", get(self::post::login))
+        // .route("/login", get(self::get::login))
         .route("/logout", get(self::get::logout))
 }
 
@@ -54,7 +54,7 @@ mod post {
             .await
             .expect("Serialization should not fail.");
 
-        Redirect::to(auth_url.as_str()).into_response()
+        Redirect::to(auth_url.as_str())
     }
 }
 
