@@ -4,12 +4,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 extern crate derive_more;
 use derive_more::{From, Into};
-
 /// Represents a GitHub user ID.
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with GitHub user IDs.
-// TODO: Strip
 #[derive(
     Debug,
     Serialize,
@@ -27,13 +25,11 @@ use derive_more::{From, Into};
 )]
 #[sqlx(transparent)]
 pub struct GithubId(pub(crate) i64);
-
 impl GithubId {
     pub fn as_value(&self) -> i64 {
         self.0
     }
 }
-
 /// Represents a guest ID in the system.
 ///
 /// This type is a wrapper around `i64` to provide type safety and clarity
@@ -55,19 +51,16 @@ impl GithubId {
 )]
 #[sqlx(transparent)]
 pub struct GuestId(pub(crate) i64);
-
 impl std::fmt::Display for GuestId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
-
 impl GuestId {
     pub fn as_value(&self) -> i64 {
         self.0
     }
 }
-
 /// Represents a guest in the system.
 #[derive(Serialize, Deserialize, FromRow, Clone, Default)]
 pub struct Guest {
@@ -86,9 +79,6 @@ pub struct Guest {
     /// Access token for the guest.
     pub access_token: String,
 }
-
-// Here we've implemented `Debug` manually to avoid accidentally logging the
-// access token.
 impl std::fmt::Debug for Guest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Guest")
@@ -102,19 +92,15 @@ impl std::fmt::Debug for Guest {
             .finish()
     }
 }
-
 impl AuthUser for Guest {
     type Id = GuestId;
-
     fn id(&self) -> Self::Id {
         self.id
     }
-
     fn session_auth_hash(&self) -> &[u8] {
         self.access_token.as_bytes()
     }
 }
-
 /// Represents a GitHub user as returned by the GitHub API.
 #[derive(Deserialize, Debug)]
 pub struct NewGuest {
@@ -126,7 +112,6 @@ pub struct NewGuest {
     /// The full name of the GitHub user, if available.
     pub name: Option<String>,
 }
-
 impl From<NewGuest> for Guest {
     fn from(val: NewGuest) -> Self {
         Guest {

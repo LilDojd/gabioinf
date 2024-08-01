@@ -1,10 +1,8 @@
 //! Guest retrieval handler.
 //!
 //! This module contains the handler function for retrieving all guests.
-
 use crate::{errors::BResult, repos::Repository, AppState};
 use axum::{extract::State, response::IntoResponse, Json};
-
 /// Handler for retrieving all guests.
 ///
 /// This function fetches all guests from the database.

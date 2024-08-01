@@ -1,5 +1,4 @@
 use serde::Deserialize;
-
 /// Represents the different types of user groups in the system.
 ///
 /// This enum is used both in the application logic and as a database type,
@@ -14,7 +13,6 @@ pub enum Group {
     /// Users who have been flagged for inappropriate behavior.
     NaughtyGuests,
 }
-
 /// Represents a group entry as stored in the database.
 ///
 /// This struct combines the group's unique identifier and its type.

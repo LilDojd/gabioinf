@@ -2,14 +2,9 @@
 //!
 //! This module contains the handler function for logging out a user,
 //! which involves invalidating their session and removing the session cookie.
-
-use crate::{
-    errors::BResult,
-    AppState,
-};
+use crate::{errors::BResult, AppState};
 use axum::{extract::State, response::IntoResponse};
 use axum_extra::extract::PrivateCookieJar;
-
 /// Handler for logging out a user.
 ///
 /// This function performs the following actions to log out a user:
@@ -59,22 +54,5 @@ pub async fn logout(
     State(state): State<AppState>,
     jar: PrivateCookieJar,
 ) -> BResult<impl IntoResponse> {
-    // if let Some(cookie) = jar.get("sid") {
-    //     let token = cookie.value();
-    //     // Try to fetch from db
-    //     let session = state
-    //         .session_repo
-    //         .read(&SessionCriteria::WithToken(token.to_string()))
-    //         .await?;
-    //     tracing::debug!("Found user in db, invalidating user session");
-    //     state.session_repo.delete(&session).await?;
-    //     tracing::debug!("Removing session cookie from jar");
-    //     let jar = jar.remove(Cookie::from("sid"));
-    //     Ok((StatusCode::OK, jar))
-    // } else {
-    //     Err(ApiError::AuthenticationError(
-    //         "Not authenticated".to_string(),
-    //     ))
-    // }
     Ok(())
 }
