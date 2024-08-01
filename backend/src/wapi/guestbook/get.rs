@@ -2,14 +2,11 @@
 //!
 //! This module contains handler functions for retrieving guestbook entries,
 //! including all entries and specifically naughty entries.
-
 use crate::{
-    errors::BResult,
-    repos::{GuestbookEntryCriteria, Repository},
+    errors::BResult, repos::{GuestbookEntryCriteria, Repository},
     AppState,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-
 /// Handler for retrieving all guestbook entries.
 ///
 /// This function fetches all guestbook entries from the database.
@@ -30,12 +27,13 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 /// # Errors
 ///
 /// This function will return an error if the database query fails.
-pub async fn get_all_entries(State(state): State<AppState>) -> BResult<impl IntoResponse> {
+pub async fn get_all_entries(
+    State(state): State<AppState>,
+) -> BResult<impl IntoResponse> {
     tracing::debug!("Retrieving all guestbook entries");
     let entries = state.guestbook_repo.read_all().await?;
     Ok((StatusCode::OK, Json(entries)))
 }
-
 /// Handler for retrieving all naughty guestbook entries.
 ///
 /// This function fetches all guestbook entries that have been flagged as naughty.
@@ -56,18 +54,20 @@ pub async fn get_all_entries(State(state): State<AppState>) -> BResult<impl Into
 /// # Errors
 ///
 /// This function will return an error if the database query fails.
-pub async fn get_naughty_entries(State(state): State<AppState>) -> BResult<impl IntoResponse> {
+pub async fn get_naughty_entries(
+    State(state): State<AppState>,
+) -> BResult<impl IntoResponse> {
     tracing::debug!("Retrieving all naughty guestbook entries");
     let naughty_users = state.guest_repo.get_all_naughty_bois().await?;
     let mut entries = Vec::with_capacity(naughty_users.len());
     for user in naughty_users {
-        entries.push(
-            state
-                .guestbook_repo
-                .read(&GuestbookEntryCriteria::WithAuthorId(user.id))
-                .await?,
-        )
+        entries
+            .push(
+                state
+                    .guestbook_repo
+                    .read(&GuestbookEntryCriteria::WithAuthorId(user.id))
+                    .await?,
+            )
     }
-
     Ok((StatusCode::OK, Json(entries)))
 }

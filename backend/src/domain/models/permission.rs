@@ -1,5 +1,4 @@
 use serde::Deserialize;
-
 /// Represents the different types of permissions available in the system.
 ///
 /// This enum is used both in the application logic and as a database type,
@@ -24,7 +23,6 @@ pub enum PermissionTargets {
     /// Permission to edit a user's permissions.
     EditUserPermissions,
 }
-
 /// Represents a permission entry as stored in the database.
 ///
 /// This struct combines the permission's unique identifier and its type.

@@ -3,18 +3,14 @@
 //! This module defines the `AppState` struct, which holds shared resources and
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
-
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
 use oauth2::basic::BasicClient;
 use reqwest::Client as ReqwestClient;
-
 use crate::{
-    db::DbConnPool,
-    domain::models::{Guest, GuestbookEntry},
+    db::DbConnPool, domain::models::{Guest, GuestbookEntry},
     repos::{GroupsAndPermissionsRepo, PgRepository},
 };
-
 /// Represents the shared state of the application.
 ///
 /// This struct holds various shared resources and configuration that can be
@@ -38,7 +34,6 @@ pub struct AppState {
     /// The client for OAuth2 requests.
     pub client: BasicClient,
 }
-
 /// Allows extracting the `Key` from `AppState`.
 ///
 /// This implementation is used by the Axum framework to extract the `Key`
@@ -48,7 +43,6 @@ impl FromRef<AppState> for Key {
         state.key.clone()
     }
 }
-
 impl AppState {
     /// Creates a new instance of `AppState`.
     ///

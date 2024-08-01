@@ -2,10 +2,8 @@
 //!
 //! This module contains the handler function for deleting a guestbook entry,
 //! including authorization checks to ensure only the author or an admin can delete an entry.
-
 use crate::{
-    domain::models::Guest,
-    errors::{ApiError, BResult},
+    domain::models::Guest, errors::{ApiError, BResult},
     repos::{GuestbookEntryCriteria, Repository},
     AppState,
 };
@@ -13,7 +11,6 @@ use axum::{
     extract::{Path, State},
     response::IntoResponse,
 };
-
 /// Handler for deleting a guestbook entry.
 ///
 /// This function attempts to delete a guestbook entry identified by its ID.
@@ -59,18 +56,18 @@ pub async fn delete_entry(
     Path(id): Path<i64>,
 ) -> BResult<impl IntoResponse> {
     tracing::debug!("Deleting guestbook entry with ID: {}", id);
-
     let entry = state
         .guestbook_repo
         .read(&GuestbookEntryCriteria::WithId(id.into()))
         .await?;
-
     if entry.author_id == guest.id || guest.is_admin {
         state.guestbook_repo.delete(&entry).await?;
         Ok(())
     } else {
-        Err(ApiError::AuthorizationError(
-            "You are not allowed to delete this entry".to_string(),
-        ))
+        Err(
+            ApiError::AuthorizationError(
+                "You are not allowed to delete this entry".to_string(),
+            ),
+        )
     }
 }
