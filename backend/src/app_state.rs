@@ -3,14 +3,15 @@
 //! This module defines the `AppState` struct, which holds shared resources and
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
+use crate::{
+    db::DbConnPool,
+    domain::models::{Guest, GuestbookEntry},
+    repos::{GroupsAndPermissionsRepo, PgRepository},
+};
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
 use oauth2::basic::BasicClient;
 use reqwest::Client as ReqwestClient;
-use crate::{
-    db::DbConnPool, domain::models::{Guest, GuestbookEntry},
-    repos::{GroupsAndPermissionsRepo, PgRepository},
-};
 /// Represents the shared state of the application.
 ///
 /// This struct holds various shared resources and configuration that can be

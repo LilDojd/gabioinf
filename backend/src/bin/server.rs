@@ -1,19 +1,14 @@
-use std::net::SocketAddr;
-use std::sync::Arc;
-use std::time::Duration;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::StatusCode;
 use axum::response::Html;
 use axum::Router;
 use axum_helmet::{
-    ContentSecurityPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet,
-    HelmetLayer, OriginAgentCluster, ReferrerPolicy, StrictTransportSecurity,
-    XContentTypeOptions, XDNSPrefetchControl, XDownloadOptions, XFrameOptions,
-    XPermittedCrossDomainPolicies, XXSSProtection,
+    ContentSecurityPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet, HelmetLayer,
+    OriginAgentCluster, ReferrerPolicy, StrictTransportSecurity, XContentTypeOptions,
+    XDNSPrefetchControl, XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies,
+    XXSSProtection,
 };
-use axum_login::tower_sessions::{
-    session_store, ExpiredDeletion, Expiry, SessionManagerLayer,
-};
+use axum_login::tower_sessions::{session_store, ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
 use backend::config::AppConfig;
 use backend::domain::logic::{build_oauth_client, AuthBackend};
@@ -21,6 +16,9 @@ use backend::extractors::CookieExtractor;
 use backend::utils::grab_secrets;
 use backend::{db::DbConnPool, wapi::api_router, AppState};
 use shuttle_runtime::CustomError;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::net::TcpListener;
 use tower::timeout::error::Elapsed;
 use tower::{BoxError, Layer, ServiceBuilder};
@@ -41,24 +39,26 @@ pub struct BackendService {
 impl shuttle_runtime::Service for BackendService {
     async fn bind(mut self, addr: SocketAddr) -> Result<(), shuttle_runtime::Error> {
         axum::serve(
-                TcpListener::bind(addr).await.map_err(CustomError::new)?,
-                self.router.into_make_service_with_connect_info::<SocketAddr>(),
-            )
-            .await
-            .map_err(CustomError::new)?;
+            TcpListener::bind(addr).await.map_err(CustomError::new)?,
+            self.router
+                .into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .map_err(CustomError::new)?;
         let _deletion = tokio::join!(self.deletion_task);
         Ok(())
     }
 }
 #[shuttle_runtime::main]
 async fn main(
-    #[shuttle_shared_db::Postgres]
-    postgres: DbConnPool,
-    #[shuttle_runtime::Secrets]
-    secrets: shuttle_runtime::SecretStore,
+    #[shuttle_shared_db::Postgres] postgres: DbConnPool,
+    #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
 ) -> Result<BackendService, shuttle_runtime::Error> {
     tracing::info!("Running database migration..");
-    sqlx::migrate!().run(&postgres).await.expect("Failed to run migrations");
+    sqlx::migrate!()
+        .run(&postgres)
+        .await
+        .expect("Failed to run migrations");
     let config = AppConfig::new_local().expect("Failed to load local configuration");
     tracing::debug!("Loaded config: {:?}", config);
     let (domain, client_id, client_secret) = grab_secrets(secrets);
@@ -75,11 +75,7 @@ async fn main(
         .with_secure(false)
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
-    let backend = AuthBackend::new(
-        state.guest_repo.clone(),
-        state.gp_repo.clone(),
-        client,
-    );
+    let backend = AuthBackend::new(state.guest_repo.clone(), state.gp_repo.clone(), client);
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
@@ -106,17 +102,15 @@ async fn main(
                 .layer(GovernorLayer {
                     config: governor_conf,
                 })
-                .layer(
-                    HandleErrorLayer::new(|error: BoxError| async move {
-                        if error.is::<Elapsed>() {
-                            return Ok(StatusCode::REQUEST_TIMEOUT);
-                        }
-                        Err((
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            format!("Unhandled internal error: {error}"),
-                        ))
-                    }),
-                )
+                .layer(HandleErrorLayer::new(|error: BoxError| async move {
+                    if error.is::<Elapsed>() {
+                        return Ok(StatusCode::REQUEST_TIMEOUT);
+                    }
+                    Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        format!("Unhandled internal error: {error}"),
+                    ))
+                }))
                 .timeout(Duration::from_secs(10))
                 .layer(auth_layer),
         )
@@ -141,7 +135,7 @@ async fn homepage() -> Html<String> {
             Click here to sign into Github!
         </a>
     "#
-            .to_string(),
+        .to_string(),
     )
 }
 /// Returns a default configuration of http security headers.
@@ -151,7 +145,11 @@ fn generate_general_helmet_headers() -> Helmet {
         .add(CrossOriginResourcePolicy::same_origin())
         .add(OriginAgentCluster::new(true))
         .add(ReferrerPolicy::no_referrer())
-        .add(StrictTransportSecurity::new().max_age(15_552_000).include_sub_domains())
+        .add(
+            StrictTransportSecurity::new()
+                .max_age(15_552_000)
+                .include_sub_domains(),
+        )
         .add(XContentTypeOptions::nosniff())
         .add(XDNSPrefetchControl::off())
         .add(XDownloadOptions::noopen())

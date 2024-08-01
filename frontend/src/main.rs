@@ -1,12 +1,12 @@
 use dioxus::prelude::*;
 mod components;
 mod pages;
+use components::layout::NavFooter;
 use reqwest::{
     header::{CONTENT_TYPE, SET_COOKIE, X_CONTENT_TYPE_OPTIONS},
     Client,
 };
 const _TAILWIND_URL: &str = manganis::mg!(file("assets/tailwind.css"));
-
 #[derive(Clone, Debug)]
 pub enum AuthState {
     LoggedIn,
@@ -31,7 +31,7 @@ pub async fn check_auth_status() -> AuthState {
 }
 #[derive(Routable, PartialEq, Clone)]
 enum Route {
-    #[layout(crate::components::Navbar)]
+    #[layout(NavFooter)]
     #[route("/")]
     #[redirect("/:..segments", |segments:Vec<String>|Route::HomePage{})]
     HomePage {},
@@ -43,9 +43,7 @@ enum Route {
 }
 fn app() -> Element {
     rsx! {
-        div {
-            Router::<Route> {}
-        }
+        Router::<Route> {}
     }
 }
 fn main() {
