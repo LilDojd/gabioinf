@@ -1,15 +1,17 @@
-use std::collections::HashSet;
-use axum_login::{AuthnBackend, AuthzBackend, UserId};
-use oauth2::{
-    basic::BasicClient, http::header::{AUTHORIZATION, USER_AGENT},
-    reqwest::async_http_client, AuthorizationCode, CsrfToken, Scope, TokenResponse,
-};
-use reqwest::Url;
 use crate::{
     domain::models::{Credentials, Guest, NewGuest, PermissionTargets},
     errors::{ApiError, BResult},
     repos::{GroupsAndPermissionsRepo, GuestCriteria, PgRepository, Repository},
 };
+use axum_login::{AuthnBackend, AuthzBackend, UserId};
+use oauth2::{
+    basic::BasicClient,
+    http::header::{AUTHORIZATION, USER_AGENT},
+    reqwest::async_http_client,
+    AuthorizationCode, CsrfToken, Scope, TokenResponse,
+};
+use reqwest::Url;
+use std::collections::HashSet;
 #[derive(Clone, Debug)]
 pub struct AuthBackend {
     guest_repo: PgRepository<Guest>,
@@ -32,7 +34,10 @@ impl AuthBackend {
     where
         I: IntoIterator<Item = Scope>,
     {
-        self.client.authorize_url(CsrfToken::new_random).add_scopes(scopes).url()
+        self.client
+            .authorize_url(CsrfToken::new_random)
+            .add_scopes(scopes)
+            .url()
     }
     pub fn authorize_url_unscoped(&self) -> (Url, CsrfToken) {
         self.client.authorize_url(CsrfToken::new_random).url()
@@ -43,10 +48,7 @@ impl AuthnBackend for AuthBackend {
     type User = Guest;
     type Credentials = Credentials;
     type Error = ApiError;
-    async fn authenticate(
-        &self,
-        creds: Self::Credentials,
-    ) -> BResult<Option<Self::User>> {
+    async fn authenticate(&self, creds: Self::Credentials) -> BResult<Option<Self::User>> {
         if creds.old_state.secret() != creds.new_state.secret() {
             return Ok(None);
         }
@@ -74,7 +76,10 @@ impl AuthnBackend for AuthBackend {
         Ok(Some(guest))
     }
     async fn get_user(&self, user_id: &UserId<Self>) -> BResult<Option<Self::User>> {
-        self.guest_repo.read(&GuestCriteria::WithGuestId(*user_id)).await.map(Some)
+        self.guest_repo
+            .read(&GuestCriteria::WithGuestId(*user_id))
+            .await
+            .map(Some)
     }
 }
 #[axum::async_trait]

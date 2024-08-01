@@ -16,19 +16,19 @@
 /// Re-exports all items from the `app_state` module
 mod app_state;
 pub use app_state::*;
+/// Application configuration management
+pub mod config;
 /// Database-related functionality
 pub mod db;
-/// Web API implementation
-pub mod wapi;
-/// CRUD operations for data models
-pub mod repos;
 /// Core domain models and business logic
 pub mod domain;
 /// Error handling and custom error types
 pub mod errors;
-/// Utilities
-pub mod utils;
-/// Application configuration management
-pub mod config;
 /// Extractors for rate limiting and other middleware
 pub mod extractors;
+/// CRUD operations for data models
+pub mod repos;
+/// Utilities
+pub mod utils;
+/// Web API implementation
+pub mod wapi;

@@ -1,11 +1,11 @@
-use axum::{extract::FromRequestParts, http::request::Parts};
-use serde::{Deserialize, Serialize};
+use super::{PgRepository, Repository};
 use crate::{
     domain::models::{GithubId, Guest, GuestId},
     errors::{ApiError, BResult},
     AppState,
 };
-use super::{PgRepository, Repository};
+use axum::{extract::FromRequestParts, http::request::Parts};
+use serde::{Deserialize, Serialize};
 /// Criteria for querying guest data.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum GuestCriteria {
@@ -31,19 +31,18 @@ impl Repository<Guest> for PgRepository<Guest> {
     async fn read(&self, criteria: &Self::Criteria) -> BResult<Guest> {
         let guest = match criteria {
             GuestCriteria::WithGuestId(id) => {
-                sqlx::query_as!(
-                    Guest, "SELECT * FROM guests WHERE id = $1", id.as_value()
-                )
+                sqlx::query_as!(Guest, "SELECT * FROM guests WHERE id = $1", id.as_value())
                     .fetch_one(&self.pool)
                     .await?
             }
             GuestCriteria::WithGithubId(github_id) => {
                 sqlx::query_as!(
-                    Guest, "SELECT * FROM guests WHERE github_id = $1", github_id
-                    .as_value()
+                    Guest,
+                    "SELECT * FROM guests WHERE github_id = $1",
+                    github_id.as_value()
                 )
-                    .fetch_one(&self.pool)
-                    .await?
+                .fetch_one(&self.pool)
+                .await?
             }
             GuestCriteria::Latest => {
                 sqlx::query_as!(Guest, "SELECT * FROM guests ORDER BY created_at DESC")
@@ -62,10 +61,13 @@ impl Repository<Guest> for PgRepository<Guest> {
              ON CONFLICT (github_id) DO UPDATE 
              SET access_token = excluded.access_token 
              RETURNING *",
-            guest.github_id.as_value(), guest.name, guest.username, guest.access_token
+            guest.github_id.as_value(),
+            guest.name,
+            guest.username,
+            guest.access_token
         )
-            .fetch_one(&self.pool)
-            .await?;
+        .fetch_one(&self.pool)
+        .await?;
         Ok(created_guest)
     }
     /// Updates an existing guest's information.
@@ -76,10 +78,12 @@ impl Repository<Guest> for PgRepository<Guest> {
             SET name = $2, username = $3, updated_at = NOW()
             WHERE id = $1
             RETURNING *",
-            guest.id.as_value(), guest.name, guest.username,
+            guest.id.as_value(),
+            guest.name,
+            guest.username,
         )
-            .fetch_one(&self.pool)
-            .await?;
+        .fetch_one(&self.pool)
+        .await?;
         Ok(updated_guest)
     }
     /// Deletes a guest from the database.
@@ -107,7 +111,9 @@ impl FromRequestParts<AppState> for Guest {
             .extensions
             .get::<Guest>()
             .cloned()
-            .ok_or(ApiError::AuthorizationError("User is not authenticated".to_string()))
+            .ok_or(ApiError::AuthorizationError(
+                "User is not authenticated".to_string(),
+            ))
     }
 }
 #[cfg(test)]
@@ -159,7 +165,9 @@ mod tests {
         };
         let created_guest = repo.create(&guest).await.unwrap();
         repo.delete(&created_guest).await.unwrap();
-        let result = repo.read(&GuestCriteria::WithGithubId(guest.github_id)).await;
+        let result = repo
+            .read(&GuestCriteria::WithGithubId(guest.github_id))
+            .await;
         assert!(result.is_err());
     }
 }

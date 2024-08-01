@@ -1,13 +1,14 @@
+use crate::domain::logic::{AuthSession, CSRF_STATE_KEY};
 use askama::Template;
 use axum::{
-    extract::Query, http::{Response, StatusCode},
+    extract::Query,
+    http::StatusCode,
     response::{IntoResponse, Redirect},
-    routing::{get, post},
+    routing::get,
     Form, Router,
 };
 use axum_login::tower_sessions::Session;
 use serde::Deserialize;
-use crate::domain::logic::{AuthSession, CSRF_STATE_KEY};
 pub const NEXT_URL_KEY: &str = "auth.next-url";
 #[derive(Template)]
 #[template(path = "login.html")]
