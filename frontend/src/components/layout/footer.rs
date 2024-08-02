@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 pub fn Footer() -> Element {
     let current_year = chrono::Utc::now().year();
     rsx! {
-        footer { class: "bg-nasty-black text-white",
+        footer { class: "bg-nasty-black text-white fixed bottom-0 w-full dark:bg-grey-950 z-1000",
             div { class: "container mx-auto flex justify-between items-center",
                 a {
                     href: "https://www.linkedin.com/in/georgiy-andreev/",
@@ -14,7 +14,7 @@ pub fn Footer() -> Element {
                     img {
                         src: "/linkedin.svg",
                         alt: "LinkedIn link",
-                        class: "w-6 h-6"
+                        class: "w-4 h-4"
                     }
                 }
                 p { class: "text-sm", "{current_year}" }
