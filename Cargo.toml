@@ -2,19 +2,22 @@
 name = "gabioinf"
 version = "0.1.0"
 edition = "2021"
+authors = ["LilDojd <yawner@protonmail.com>"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.8"
-thiserror = "1.0.63"
-tracing = "0.1.40"
-serde = { version = "1.0.204", features = ["derive"] }
-serde_json = "1.0.120"
-reqwest = { version = "0.12.5", features = ["json"] }
-time = { version = "0.3.36", features = ["serde"] }
+anyhow = { version = "1.0.8" }
 chrono = { version = "0.4.38", features = ["clock", "serde"] }
-config = "0.14.0"
-derive_more = "0.99.18"
+
+tracing = { version = "0.1.40", optional = true }
+serde = { version = "1.0.204", features = ["derive"], optional = true }
+serde_json = { version = "1.0.122", optional = true }
+reqwest = { version = "0.12.5", features = ["json"], optional = true }
+time = { version = "0.3.36", features = ["serde"] }
+config = { version = "0.14.0", optional = true }
+derive_more = { version = "0.99.18", optional = true }
+thiserror = { version = "1.0.63", optional = true }
+
 
 # Backend
 axum = { version = "0.7", features = ["multipart", "macros"], optional = true }
@@ -28,7 +31,7 @@ axum-macros = { version = "0.4.1", optional = true }
 sqlx = { version = "0.7", features = [
   "chrono",
   "macros",
-  "runtime-tokio-rustls",
+  "runtime-tokio",
 ], optional = true }
 tower = { version = "0.4.13", optional = true, features = ["timeout"] }
 tower-http = { version = "0.5.2", features = ["cors", "fs"], optional = true }
@@ -44,10 +47,11 @@ axum-login = { version = "0.15.3", optional = true }
 axum-helmet = { version = "0.1.0", optional = true }
 
 # Dioxus
-dioxus = { version = "0.6.0-alpha.1", features = ["fullstack", "router"] }
-dioxus-fullstack = { version = "0.6.0-alpha.1" }
+dioxus = { version = "0.5", features = ["fullstack", "router"] }
+dioxus-fullstack = { version = "0.5" }
 tracing-wasm = { version = "0.2.1", optional = true }
-
+manganis = { version = "0.2.2", optional = true }
+dioxus-web = { version = "0.5", features = ["hydrate"], optional = true }
 
 # [dev-dependencies]
 # axum-test = "15.3.0"
@@ -55,23 +59,31 @@ tracing-wasm = { version = "0.2.1", optional = true }
 
 [features]
 default = []
+
 server = [
-  "axum",
+  "dep:axum",
+  "dep:tokio",
+  "dep:axum-extra",
+  "dep:axum-macros",
+  "dep:sqlx",
+  "dep:reqwest",
+  "dep:tower",
+  "dep:tower-http",
+  "dep:oauth2",
+  "dep:tracing-subscriber",
+  "dep:rustrict",
+  "dep:validator",
+  "dep:tower_governor",
+  "dep:tower-sessions",
+  "dep:tower-sessions-sqlx-store",
+  "dep:axum-login",
+  "dep:axum-helmet",
+  "dep:derive_more",
   "dioxus-fullstack/axum",
-  "tokio",
-  "axum-extra",
-  "axum-macros",
-  "sqlx",
-  "tower",
-  "tower-http",
-  "oauth2",
-  "tracing-subscriber",
-  "rustrict",
-  "tower_governor",
-  "tower-sessions",
-  "tower-sessions-sqlx-store",
-  "axum-login",
-  "axum-helmet",
-  "validator",
+  "dep:serde",
+  "dep:serde_json",
+  "dep:config",
+  "dep:thiserror",
+  "dep:tracing",
 ]
-web = ["tracing-wasm", "dioxus/web"]
+web = ["dep:tracing-wasm", "dioxus-web", "dep:manganis"]
