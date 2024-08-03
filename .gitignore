@@ -4,3 +4,4 @@ Secrets*.toml
 /target
 .shuttle-storage
 dist/
+.dioxus/
