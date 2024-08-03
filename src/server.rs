@@ -14,8 +14,11 @@ use axum_helmet::{
 };
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
+use dioxus::dioxus_core::VirtualDom;
 use dioxus::fullstack::prelude::*;
 use std::net::SocketAddr;
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
@@ -143,12 +146,13 @@ pub async fn serve() {
     // let api_router = api_router(state, config);
 
     let app = Router::new()
-        .serve_dioxus_application(ServeConfig::default(), app)
+        .serve_dioxus_application(ServeConfig::builder().build(), || VirtualDom::new(app))
+        .await
         .layer(
             ServiceBuilder::new()
-                .layer(GovernorLayer {
-                    config: governor_conf,
-                })
+                // .layer(GovernorLayer {
+                //     config: governor_conf,
+                // })
                 .layer(HandleErrorLayer::new(|error: BoxError| async move {
                     if error.is::<Elapsed>() {
                         Ok(StatusCode::REQUEST_TIMEOUT)
@@ -161,8 +165,8 @@ pub async fn serve() {
                 }))
                 .timeout(Duration::from_secs(10))
                 .layer(auth_layer),
-        )
-        .layer(helmet_layer);
+        );
+    // .layer(helmet_layer);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("Listening on {}", addr);
