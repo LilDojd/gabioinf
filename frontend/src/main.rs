@@ -4,10 +4,7 @@ mod pages;
 use pages::Home;
 
 use components::layout::NavFooter;
-use reqwest::{
-    header::{CONTENT_TYPE, SET_COOKIE, X_CONTENT_TYPE_OPTIONS},
-    Client,
-};
+use reqwest::Client;
 const _TAILWIND_URL: &str = manganis::mg!(file("assets/tailwind.css"));
 
 #[derive(Clone, Debug)]
@@ -48,7 +45,9 @@ fn app() -> Element {
 }
 fn main() {
     tracing_wasm::set_as_global_default();
-    launch(app);
+    LaunchBuilder::new()
+        .with_cfg(dioxus::static_site_generation::Config::new().github_pages())
+        .launch(app);
 }
 // #[component]
 // fn LoginPage() -> Element {
