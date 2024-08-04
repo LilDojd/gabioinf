@@ -24,16 +24,19 @@ impl GroupsAndPermissionsRepo {
     /// # Returns
     ///
     /// A `BResult<()>` indicating success or failure.
-    pub async fn add_user_to_group(&self, user_id: GuestId, group: Group) -> BResult<()> {
+    pub async fn add_user_to_group(
+        &self,
+        user_id: GuestId,
+        group: Group,
+    ) -> BResult<()> {
         sqlx::query!(
             "INSERT INTO guests_groups (guest_id, group_id)
              SELECT $1, id FROM groups WHERE name = $2
              ON CONFLICT DO NOTHING",
-            user_id.as_value(),
-            group as Group
+            user_id.as_value(), group as Group
         )
-        .execute(&self.pool)
-        .await?;
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
     /// Removes a user from a specified group.
@@ -46,15 +49,18 @@ impl GroupsAndPermissionsRepo {
     /// # Returns
     ///
     /// A `BResult<()>` indicating success or failure.
-    pub async fn remove_user_from_group(&self, user_id: GuestId, group: Group) -> BResult<()> {
+    pub async fn remove_user_from_group(
+        &self,
+        user_id: GuestId,
+        group: Group,
+    ) -> BResult<()> {
         sqlx::query!(
             "DELETE FROM guests_groups
              WHERE guest_id = $1 AND group_id = (SELECT id FROM groups WHERE name = $2)",
-            user_id.as_value(),
-            group as Group
+            user_id.as_value(), group as Group
         )
-        .execute(&self.pool)
-        .await?;
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
     /// Adds a specific permission to a user.
@@ -76,11 +82,10 @@ impl GroupsAndPermissionsRepo {
             "INSERT INTO guests_permissions (guest_id, permission_id)
              SELECT $1, id FROM permissions WHERE name = $2
              ON CONFLICT DO NOTHING",
-            user_id.as_value(),
-            permission as PermissionTargets
+            user_id.as_value(), permission as PermissionTargets
         )
-        .execute(&self.pool)
-        .await?;
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
     /// Removes a specific permission from a user.
@@ -101,11 +106,10 @@ impl GroupsAndPermissionsRepo {
         sqlx::query!(
             "DELETE FROM guests_permissions
              WHERE guest_id = $1 AND permission_id = (SELECT id FROM permissions WHERE name = $2)",
-            user_id.as_value(),
-            permission as PermissionTargets
+            user_id.as_value(), permission as PermissionTargets
         )
-        .execute(&self.pool)
-        .await?;
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
     /// Retrieves all groups a user belongs to.
@@ -126,11 +130,11 @@ impl GroupsAndPermissionsRepo {
              WHERE gg.guest_id = $1"#,
             user_id.as_value()
         )
-        .fetch_all(&self.pool)
-        .await?
-        .iter()
-        .map(|g| g.name.clone())
-        .collect();
+            .fetch_all(&self.pool)
+            .await?
+            .iter()
+            .map(|g| g.name.clone())
+            .collect();
         Ok(groups)
     }
     /// Retrieves permissions specifically assigned to a user.
@@ -154,11 +158,11 @@ impl GroupsAndPermissionsRepo {
              WHERE gp.guest_id = $1"#,
             user_id.as_value()
         )
-        .fetch_all(&self.pool)
-        .await?
-        .iter()
-        .map(|p| p.name.clone())
-        .collect();
+            .fetch_all(&self.pool)
+            .await?
+            .iter()
+            .map(|p| p.name.clone())
+            .collect();
         Ok(permissions)
     }
     /// Retrieves permissions a user has through their group memberships.
@@ -183,11 +187,11 @@ impl GroupsAndPermissionsRepo {
              WHERE gg.guest_id = $1"#,
             user_id.as_value()
         )
-        .fetch_all(&self.pool)
-        .await?
-        .iter()
-        .map(|p| p.name.clone())
-        .collect();
+            .fetch_all(&self.pool)
+            .await?
+            .iter()
+            .map(|p| p.name.clone())
+            .collect();
         Ok(permissions)
     }
     /// Retrieves all permissions a user has, both specific and group-based.
@@ -213,11 +217,11 @@ impl GroupsAndPermissionsRepo {
              WHERE gp.guest_id = $1 OR gg.guest_id = $1"#,
             user_id.as_value()
         )
-        .fetch_all(&self.pool)
-        .await?
-        .iter()
-        .map(|p| p.name.clone())
-        .collect();
+            .fetch_all(&self.pool)
+            .await?
+            .iter()
+            .map(|p| p.name.clone())
+            .collect();
         Ok(permissions)
     }
 }

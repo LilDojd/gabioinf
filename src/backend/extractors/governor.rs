@@ -34,10 +34,7 @@ impl KeyExtractor for CookieExtractor {
         jar.get("sid")
             .map(|cookie| cookie.value().to_string())
             .or_else(|| {
-                SmartIpKeyExtractor
-                    .extract(req)
-                    .ok()
-                    .map(|ip| ip.to_string())
+                SmartIpKeyExtractor.extract(req).ok().map(|ip| ip.to_string())
             })
             .ok_or(GovernorError::UnableToExtractKey)
     }

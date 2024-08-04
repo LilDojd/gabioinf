@@ -4,8 +4,7 @@ use crate::backend::domain::logic::AuthSession;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{
-    extract::Query,
-    response::{IntoResponse, Redirect},
+    extract::Query, response::{IntoResponse, Redirect},
     Router,
 };
 use oauth2::CsrfToken;
@@ -35,7 +34,9 @@ pub fn router() -> Router<()> {
 pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S) -> BasicClient {
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
+    let token_url = TokenUrl::new(
+            "https://github.com/login/oauth/access_token".to_string(),
+        )
         .expect("Invalid token endpoint URL");
     BasicClient::new(
         ClientId::new(client_id.as_ref().to_owned()),
@@ -50,10 +51,7 @@ mod get {
     pub async fn callback(
         mut auth_session: AuthSession,
         session: Session,
-        Query(AuthzResp {
-            code,
-            state: new_state,
-        }): Query<AuthzResp>,
+        Query(AuthzResp { code, state: new_state }): Query<AuthzResp>,
     ) -> impl IntoResponse {
         let Ok(Some(old_state)) = session.get(CSRF_STATE_KEY).await else {
             return StatusCode::BAD_REQUEST.into_response();
