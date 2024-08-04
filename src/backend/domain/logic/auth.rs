@@ -1,10 +1,7 @@
 use crate::backend::domain::logic::{AuthSession, CSRF_STATE_KEY};
 use axum::{
-    extract::Query,
-    http::StatusCode,
-    response::{IntoResponse, Redirect},
-    routing::get,
-    Form, Router,
+    extract::Query, http::StatusCode, response::{IntoResponse, Redirect},
+    routing::get, Form, Router,
 };
 use axum_login::tower_sessions::Session;
 use serde::Deserialize;

@@ -4,8 +4,7 @@
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
 use crate::backend::{
-    db::DbConnPool,
-    domain::models::{Guest, GuestbookEntry},
+    db::DbConnPool, domain::models::{Guest, GuestbookEntry},
     repos::{GroupsAndPermissionsRepo, PgRepository},
 };
 use axum::extract::FromRef;
