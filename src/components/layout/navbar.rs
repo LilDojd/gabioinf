@@ -10,10 +10,13 @@ pub fn Navbar() -> Element {
                         Link { to: Route::Home {}, class: "text-white hover:text-gray-300 text-lg", "home" }
                     }
                     li {
-                        Link { to: "/blog", class: "text-white hover:text-gray-300 text-lg", "blog" }
+                        Link { to: Route::Home {}, class: "text-white hover:text-gray-300 text-lg", "blog" }
                     }
                     li {
-                        Link { to: "/guestbook", class: "text-white hover:text-gray-300 text-lg", "guestbook" }
+                        Link { to: Route::AboutMe {}, class: "text-white hover:text-gray-300 text-lg", "about me" }
+                    }
+                    li {
+                        Link { to: Route::Home {}, class: "text-white hover:text-gray-300 text-lg", "guestbook" }
                     }
                 }
             }

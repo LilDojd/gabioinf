@@ -1,11 +1,11 @@
-use crate::app;
 use crate::backend::config::AppConfig;
 use crate::backend::domain::logic::{build_oauth_client, AuthBackend};
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::AppState;
+use crate::App;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::StatusCode;
-use axum::Router;
+use axum::{Router, ServiceExt};
 use axum_helmet::{
     ContentSecurityPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet, HelmetLayer,
     OriginAgentCluster, ReferrerPolicy, StrictTransportSecurity, XContentTypeOptions,
@@ -82,48 +82,40 @@ const fn fallback_static_str_csp() -> &'static str {
     upgrade-insecure-requests;
     "
 }
-
-pub async fn serve() {
-    let postgres = sqlx::PgPool::connect("postgres://postgres:postgres@localhost:15467/gabioinf")
+pub async fn serve(
+    cfg: impl Into<ServeConfig>,
+    build_virtual_dom: impl Fn() -> VirtualDom + Send + Sync + 'static,
+) {
+    let postgres = sqlx::PgPool::connect("postgres://postgres:postgres@localhost:18577/gabioinf")
         .await
         .unwrap();
-
     tracing::info!("Running database migration..");
-
     sqlx::migrate!()
         .run(&postgres)
         .await
         .expect("Failed to run migrations");
-
     let config = AppConfig::new_local().expect("Failed to load local configuration");
-
     tracing::debug!("Loaded config: {:?}", config);
-
     let (domain, client_id, client_secret) = (
-        "http://localhost:3000",
+        "http://localhost:8000",
         "Iv23lin2YpB54ptGvRA3",
         "085c4392fe2e2bfdf9e670ed1420893120874e28",
     );
     let client = build_oauth_client(client_id, client_secret);
     let state = AppState::new(postgres.clone(), domain.to_string(), client.clone());
-
     let session_store = PostgresStore::new(postgres.clone());
     session_store.migrate().await.unwrap();
-
     let _deletion_task = tokio::task::spawn(
         session_store
             .clone()
             .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
     );
-
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
-
     let backend = AuthBackend::new(state.guest_repo.clone(), state.gp_repo.clone(), client);
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
-
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
             .per_second(config.ratelimiting.requests_per_second)
@@ -142,17 +134,11 @@ pub async fn serve() {
     });
 
     let helmet_layer = HelmetLayer::new(generate_general_helmet_headers());
-
-    // let api_router = api_router(state, config);
-
     let app = Router::new()
-        .serve_dioxus_application(ServeConfig::builder().build(), || VirtualDom::new(app))
+        .serve_dioxus_application(cfg.into(), build_virtual_dom)
         .await
         .layer(
             ServiceBuilder::new()
-                // .layer(GovernorLayer {
-                //     config: governor_conf,
-                // })
                 .layer(HandleErrorLayer::new(|error: BoxError| async move {
                     if error.is::<Elapsed>() {
                         Ok(StatusCode::REQUEST_TIMEOUT)
@@ -166,14 +152,10 @@ pub async fn serve() {
                 .timeout(Duration::from_secs(10))
                 .layer(auth_layer),
         );
-    // .layer(helmet_layer);
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
     tracing::info!("Listening on {}", addr);
-    axum::serve(
-        TcpListener::bind(addr).await.unwrap(),
-        app.into_make_service(),
-    )
-    .await
-    .unwrap();
+    axum_server::bind(addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
