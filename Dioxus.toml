@@ -11,7 +11,7 @@ default_platform = "fullstack"
 out_dir = "dist"
 
 # resource (assets) file folder
-# asset_dir = "assets"
+asset_dir = "assets"
 
 [web.app]
 
