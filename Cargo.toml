@@ -56,7 +56,7 @@ tracing-wasm = { version = "0.2.1", optional = true }
 # once_cell = "1.19.0"
 
 [features]
-default = []
+default = ["dioxus/web"]
 
 server = [
   "dep:axum",
