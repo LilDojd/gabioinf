@@ -1,8 +1,5 @@
 body {
   background-color: #1a1a1a;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 #main {
@@ -11,8 +8,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-family: "Recursive", monospace;
-  flex-grow: 1;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 #links {
@@ -39,10 +35,6 @@ body {
   cursor: pointer;
 }
 
-footer {
-  margin-top: auto;
-}
-
-img {
-  color: #fff;
+#header {
+  max-width: 1200px;
 }

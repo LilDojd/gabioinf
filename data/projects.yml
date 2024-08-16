@@ -1,0 +1,28 @@
+- name: gabioinf
+  description: This website.
+  url: "https://github.com/LilDojd/gabioinf"
+
+- name: Alchemistry
+  description: SOTA Alchemical free energy calculations for drug discovery
+  url: "https://insilico.com/chemistry42#rec745522589"
+
+- name: ISM001-055
+  description: AI-discovered drug now in Phase 2 clinical trials for IPF
+  url: "https://www.forbes.com/sites/calumchace/2022/02/25/first-wholly-ai-developed-drug-enters-phase-1-trials/"
+
+- name: Generative Hit-Opt with Alchemistry
+  description: A diffusion-based generative model for small molecule design
+
+- name: Colabind
+  description: A Cloud-based approach for prediction of binding sites
+  url: "https://pubs.acs.org/doi/10.1021/acs.jpcb.3c07853"
+
+- name: YoungFace
+  description: Winners of LongHack 2022
+
+- name: NN-Enhanced ABFE
+  description: ML/MM for binding free energy
+
+- name: dioxus-spline
+  description: Spline scenes in Dioxus!
+  url: "https://crates.io/crates/dioxus-spline"

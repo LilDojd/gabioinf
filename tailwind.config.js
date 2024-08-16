@@ -11,8 +11,14 @@ module.exports = {
     extend: {
       colors: {
         "nasty-black": "#1a1a1a",
+        jet: "#292929",
+        onyx: "#3d3d3d",
+        "alien-green": "#c2f9bb",
+        white: "#f2f2f2",
+        coral: "#ef6f6c",
+        glaucolus: "#6b7fd7",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };

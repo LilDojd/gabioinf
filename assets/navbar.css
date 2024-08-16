@@ -1,0 +1,32 @@
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link {
+  z-index: 10;
+  display: inline-block;
+  color: white;
+  text-decoration: none;
+  transition: font-variation-settings 0.2s ease;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  font-family: "Recursive";
+  font-variation-settings:
+    "wght" 400,
+    "slnt" 0;
+}
+
+.nav-link:hover {
+  color: #c2f9bb;
+  font-variation-settings:
+    "wght" 600,
+    "slnt" -14;
+}
+
+.nav-link.active {
+  color: #c2f9bb;
+  font-variation-settings:
+    "wght" 600,
+    "slnt" -14;
+}
