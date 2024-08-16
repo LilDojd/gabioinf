@@ -8,7 +8,6 @@ mod backend;
 mod components;
 mod markdown;
 mod pages;
-
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
 const TAILWIND: &str = asset!("assets/tailwind.css");
@@ -18,14 +17,19 @@ const LINKS: &str = asset!("assets/alien_links.css");
 
 fn main() {
     dioxus_logger::init(Level::INFO).expect("failed to init logger");
-    info!("Starting server");
 
-    LaunchBuilder::fullstack()
-        .with_cfg(server_only!(ServeConfig::builder().incremental(
-            IncrementalRendererConfig::default()
-                .invalidate_after(std::time::Duration::from_secs(120)),
-        )))
-        .launch(App);
+    #[cfg(feature = "web")]
+    dioxus_web::launch::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+
+    #[cfg(feature = "server")]
+    {
+        info!("Starting server");
+        tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(
+                async move { backend::server::serve(ServeConfig::builder().build(), App).await },
+            );
+    }
 }
 
 #[derive(Routable, PartialEq, Clone)]
