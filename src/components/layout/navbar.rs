@@ -3,23 +3,29 @@ use dioxus::prelude::*;
 #[component]
 pub fn Navbar() -> Element {
     rsx! {
-        nav { class: "bg-nasty-black",
-            div { class: "container mx-auto flex justify-center items-center",
-                ul { class: "flex space-x-8",
-                    li {
-                        Link { to: Route::Home {}, class: "text-white hover:text-gray-300 text-lg", "home" }
-                    }
-                    li {
-                        Link { to: Route::Home {}, class: "text-white hover:text-gray-300 text-lg", "blog" }
-                    }
-                    li {
-                        Link { to: Route::AboutMe {}, class: "text-white hover:text-gray-300 text-lg", "about me" }
-                    }
-                    li {
-                        Link { to: Route::Home {}, class: "text-white hover:text-gray-300 text-lg", "guestbook" }
-                    }
-                }
+        aside { class: "mb-8 mt-2 md:mt-4 tracking-tight",
+            nav { class: "flex flex-row justify-center px-0 pb-0 overflow-visible  md:space-x-8",
+                NavItem { to: Route::Home {}, label: "home" }
+                NavItem { to: Route::Blog {}, label: "blog" }
+                NavItem { to: Route::Projects {}, label: "projects" }
+                NavItem { to: Route::AboutMe {}, label: "about me" }
+                NavItem { to: Route::Guestbook {}, label: "guestbook" }
             }
+        }
+    }
+}
+#[component]
+fn NavItem(to: Route, label: &'static str) -> Element {
+    let route: Route = use_route();
+    let is_active = route.to_string() == to.to_string();
+    rsx! {
+        Link {
+            to,
+            class: format!(
+                "nav-link flex items-center py-1 px-2 text-base md:text-lg {}",
+                if is_active { "active" } else { "" },
+            ),
+            "{label}"
         }
     }
 }
