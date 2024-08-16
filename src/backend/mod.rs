@@ -28,5 +28,9 @@ pub mod errors;
 pub mod extractors;
 /// CRUD operations for data models
 pub mod repos;
+/// Server
+pub mod server;
 /// Utilities
 pub mod utils;
+/// Web API implementation
+pub mod wapi;

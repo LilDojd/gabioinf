@@ -9,26 +9,21 @@ pub fn Guestbook() -> Element {
     let mut signed_in = use_signal(|| false);
     let mut show_signature_pad = use_signal(|| false);
     let mut messages = use_signal(Vec::<GuestbookEntry>::new);
-    let placeholder_messages = [
-        GuestbookEntry {
-            message: "Great website!".to_string(),
-            signature: "John Doe".to_string(),
-            date: "2024-08-15".to_string(),
-            username: "johndoe".to_string(),
-        },
-    ];
+    let placeholder_messages = [GuestbookEntry {
+        message: "Great website!".to_string(),
+        signature: "John Doe".to_string(),
+        date: "2024-08-15".to_string(),
+        username: "johndoe".to_string(),
+    }];
     let mut user_signature = use_signal(|| None::<GuestbookEntry>);
     let close_popup = move |_| show_signature_pad.set(false);
     let submit_signature = move |(message, signature): (String, String)| {
-        user_signature
-            .set(
-                Some(GuestbookEntry {
-                    message,
-                    signature,
-                    date: chrono::Local::now().format("%b %d, %Y %I %p").to_string(),
-                    username: "Current User".to_string(),
-                }),
-            );
+        user_signature.set(Some(GuestbookEntry {
+            message,
+            signature,
+            date: chrono::Local::now().format("%b %d, %Y %I %p").to_string(),
+            username: "Current User".to_string(),
+        }));
         messages.push(user_signature.read().as_ref().unwrap().clone());
         show_signature_pad.set(false);
     };
