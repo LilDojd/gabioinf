@@ -1,66 +1,130 @@
-use crate::Route;
+use crate::{components::Hr, markdown::Markdown, Route};
 use dioxus::prelude::*;
 #[component]
 pub fn AboutMe() -> Element {
     rsx! {
-        div { class: "min-h-screen bg-nasty-black text-white p-8",
-            div { class: "max-w-3xl mx-auto",
-                h1 { class: "text-4xl font-bold mb-8", "About Me" }
-                section { class: "mb-12",
-                    h2 { class: "text-2xl font-semibold mb-4", "Hello, I'm George" }
-                    p { class: "mb-4",
-                        "I'm a bioinformatician turned developer, blending the worlds of biology and technology to create innovative solutions."
+        div { class: "container mx-auto px-4 py-8",
+            article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg !max-w-none",
+                h1 { "about me" }
+                p {
+                    "Hey, I'm George. I've been studying Bioengineering and Bioinformatics at "
+                    Link {
+                        to: "https://fbb.msu.ru/",
+                        class: "alien-link",
+                        new_tab: true,
+                        "FBB MSU"
                     }
-                    p { class: "mb-4",
-                        "My journey from analyzing genomes to crafting code has been an exciting adventure, driven by my passion for both sciences and programming."
+                    ". Now, I live in UAE with my wonderful wife (she drew the alien, btw.) and a cat named "
+                    Link {
+                        to: "https://teamsesh.bigcartel.com/",
+                        class: "alien-link",
+                        new_tab: true,
+                        "Sesh"
+                    }
+                    " ↓"
+                }
+                figure { class: "max-w-prose ml-auto mr-auto block",
+                    img {
+                        class: "w-full",
+                        src: asset!("assets/sesh.JPG"),
+                        alt: "Sesh the cat",
+                    }
+                    figcaption { "yes, he is a pirate" }
+                }
+                Markdown { value: r#"I like learning new stuff, playing videogames competitively, scientific illustrations and renders, and I __*love*__ traveling and eating local foods."# }
+                p {
+                    r#"This site is my digital garden.
+                   I don't intend to put up paywalls, collect your data, or track your actions. 
+                   It is merely a place for self-expression and experimentation. If you DO want me to collect your data,
+                   please leave a signature in my "#
+                    Link { to: Route::Guestbook {}, class: "alien-link", "guestbook" }
+                    ". Enjoy <3"
+                }
+                h3 { "contacts" }
+                ul {
+                    li { "Email: yawner@pm.me" }
+                    li {
+                        Link {
+                            to: "https://www.linkedin.com/in/georgiy-andreev/",
+                            class: "alien-link",
+                            new_tab: true,
+                            "LinkedIn"
+                        }
+                    }
+                    li {
+                        Link {
+                            to: "https://github.com/LilDojd",
+                            class: "alien-link",
+                            new_tab: true,
+                            "GitHub"
+                        }
                     }
                 }
-                section { class: "mb-12",
-                    h2 { class: "text-2xl font-semibold mb-4", "My Background" }
-                    p { class: "mb-4",
-                        "With a strong foundation in bioinformatics, I've spent years working with complex biological data, developing algorithms, and creating tools to analyze genetic information."
-                    }
-                    p { class: "mb-4",
-                        "This unique background has given me a different perspective on problem-solving and data analysis, which I now apply to various domains in software development."
-                    }
+                h2 { "what i'm up to" }
+                Hr { comment: "aug 2024".to_string() }
+                Markdown { value: r#"
+                I currently work full-time as a software engineer at [InSilico Medicine](https://insilico.com/). 
+                We do some cool drug design-related stuff that involves a lot of AI. I am particularly proud
+                of my contribution to the development of [INS018_055](https://www.eurekalert.org/news-releases/1048870) for the 
+                treatment of IPF. I hope it gets to patients soon! Also, there is [Alchemistry](https://insilico.com/chemistry42#rec745522589).
+
+                Also:
+                - tinkering with this website
+                - trying to build a molecular dynamics engine in Rust🦀
+                - mastering Tusk pos 4
+                - planning a trip to Tbilisi
+                "# }
+                h2 { "what i'm using" }
+                Hr {}
+                h3 { "software" }
+                Markdown { value: r#"
+                                This website is built with [Dioxus](https://github.com/DioxusLabs/dioxus) and 
+                                [axum](https://github.com/tokio-rs/axum), and is deployed on 
+                                [Fly.io](https://fly.io/).
+                                
+                                - python stuff in [VSCode](https://code.visualstudio.com/)
+                                - everything else in [neovim](https://neovim.io/)
+                                - notes: [Obsidian](https://obsidian.md/)
+                                - terminal: [kitty](https://github.com/kovidgoyal/kitty)
+                                
+                                I try to keep my dotfiles up-to-date [here](https://github.com/LilDojd/dotfiles).
+            "# }
+                h3 { "hardware" }
+                Markdown {
+                    value: r#"
+                                - Macbook: M1 MacBook Pro 16" 2021, 32GB RAM
+                                - PC:
+                                    - CPU: [AMD Ryzen 9 7950X](https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-9-7950x.html)
+                                    - MB: [ROG STRIX X670E-E](https://rog.asus.com/motherboards/rog-strix/rog-strix-x670e-e-gaming-wifi-model/)
+                                    - Memory: [4xDDR5 16GB 6200MHz](https://www.corsair.com/us/en/p/memory/cmt32gx5m2x6200c36w/dominatora-platinum-rgb-32gb-2x16gb-ddr5-dram-6200mhz-c36-memory-kit-a-white-cmt32gx5m2x6200c36w) - yeah, 4x16Gb I know. but they were cheap when I was building my PC.
+                                    - Storage: [SSD 980 Pro 2TB M.2](https://www.samsung.com/us/computing/memory-storage/solid-state-drives/980-pro-pcie-4-0-nvme-ssd-2tb-mz-v8p2t0b-am/) + 4Tb HDD
+                                    - GPU: [Zotac RTX 4090](https://www.zotac.com/us/product/graphics_card/zotac-gaming-geforce-rtx-4090-amp-extreme-airo)
+                                    - PSU: [ASUS ROG Thor 1200W Platinum](https://rog.asus.com/power-supply-units/rog-thor/rog-thor-1200p-model/)
+                                    - Case: [Lian Li O11 Dynamic Evo](https://lian-li.com/product/o11-dynamic-evo/)
+                                - Peripheral:
+                                    - Keys: [Logitech G915 LIGHTSPEED](https://www.logitechg.com/en-ae/products/gaming-keyboards/g915-low-profile-wireless-mechanical-gaming-keyboard.html)
+                                    - Monitors: [LG 32UN880-B 32](https://www.lg.com/ae/consumer-monitors/lg-32un880-b) and [LG 27GP950-B](https://www.lg.com/ae/consumer-monitors/lg-27gp950-b)
+                                    - Headphones: [Sony WH-1000XM3](https://www.sony.com/en-ae/electronics/headband-headphones/wh-1000xm3)
+            "#,
                 }
-                section { class: "mb-12",
-                    h2 { class: "text-2xl font-semibold mb-4", "Skills & Expertise" }
-                    ul { class: "list-disc list-inside space-y-2",
-                        li { "Programming Languages: Python, R, Rust, JavaScript" }
-                        li { "Web Development: HTML, CSS, React, Dioxus" }
-                        li { "Data Analysis & Visualization" }
-                        li { "Machine Learning & Bioinformatics Algorithms" }
-                        li { "Database Management: SQL, MongoDB" }
-                        li { "Version Control: Git" }
+                h2 { "other" }
+                Hr {}
+                ul {
+                    li {
+                        Link {
+                            to: asset!("assets/CV_Georgy_Andreev_barebones.pdf"),
+                            class: "alien-link",
+                            new_tab: true,
+                            r#""Professional" CV"#
+                        }
                     }
-                }
-                section { class: "mb-12",
-                    h2 { class: "text-2xl font-semibold mb-4", "Current Focus" }
-                    p { class: "mb-4",
-                        "I'm currently exploring the intersection of web development and data science, building interactive applications that make complex data accessible and understandable."
-                    }
-                    p { class: "mb-4",
-                        "My goal is to bridge the gap between cutting-edge research and practical, user-friendly software solutions."
-                    }
-                }
-                section { class: "mb-12",
-                    h2 { class: "text-2xl font-semibold mb-4", "Beyond Coding" }
-                    p { class: "mb-4", "When I'm not immersed in code, you can find me:" }
-                    ul { class: "list-disc list-inside space-y-2",
-                        li { "Reading sci-fi novels and scientific papers" }
-                        li { "Experimenting with new programming languages and frameworks" }
-                        li { "Hiking and photographing nature" }
-                        li { "Contributing to open-source projects" }
-                    }
-                }
-                section { class: "mt-12",
-                    p { class: "text-lg",
-                        "Interested in collaborating or just want to chat? Feel free to reach out!"
-                    }
-                    div { class: "mt-4 space-x-4",
-                        Link { to: Route::Home {}, class: "underline", "Contact Me" }
-                        Link { to: Route::Home {}, class: "underline", "View My Projects" }
+                    li {
+                        Link {
+                            to: "https://lildojd.github.io/cv-pretty/en",
+                            class: "alien-link",
+                            new_tab: true,
+                            "CV"
+                        }
                     }
                 }
             }
