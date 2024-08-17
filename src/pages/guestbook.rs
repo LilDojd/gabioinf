@@ -45,10 +45,8 @@ pub fn Guestbook() -> Element {
                                 text: "Sign out",
                                 variant: ButtonVariant::Secondary,
                                 onclick: move |_| async move {
-                                    if let Ok(Some(_user)) = get_user().await {
-                                        logout().await.unwrap();
-                                        user.restart();
-                                    }
+                                    logout().await.unwrap();
+                                    user.restart();
                                 },
                                 icon: Some(LOGOUT.to_string()),
                             }
