@@ -24,15 +24,15 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
     let postgres = sqlx::PgPool::connect("postgres://postgres:postgres@localhost:18577/gabioinf")
         .await
         .unwrap();
-    tracing::info!("Running database migration..");
+    dioxus_logger::tracing::info!("Running database migration..");
     sqlx::migrate!()
         .run(&postgres)
         .await
         .expect("Failed to run migrations");
     let config = AppConfig::new_local().expect("Failed to load local configuration");
-    tracing::debug!("Loaded config: {:?}", config);
+    dioxus_logger::tracing::debug!("Loaded config: {:?}", config);
     let (domain, client_id, client_secret) = (
-        "http://localhost:3000",
+        "http://localhost:8000",
         "Iv23lin2YpB54ptGvRA3",
         "085c4392fe2e2bfdf9e670ed1420893120874e28",
     );
@@ -63,7 +63,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
     tokio::task::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            tracing::info!("rate limiting storage size: {}", governor_limiter.len());
+            dioxus_logger::tracing::info!("rate limiting storage size: {}", governor_limiter.len());
             governor_limiter.retain_recent();
         }
     });
@@ -72,8 +72,8 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
         .serve_dioxus_application(cfg.into(), app)
         .nest("/v1/", api_router(state, config, governor_conf))
         .layer(auth_layer);
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::info!("Listening on {}", addr);
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
+    dioxus_logger::tracing::info!("Listening on {}", addr);
     axum_server::bind(addr)
         .serve(app.into_make_service())
         .await

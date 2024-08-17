@@ -7,10 +7,11 @@ pub use not_found::NotFound;
 mod projects;
 pub use projects::*;
 mod guestbook;
-use dioxus::prelude::*;
 pub use guestbook::*;
 mod under_construction;
+use dioxus::prelude::*;
 pub use under_construction::*;
+
 pub fn Blog() -> Element {
     rsx! {
         UnderConstruction {}

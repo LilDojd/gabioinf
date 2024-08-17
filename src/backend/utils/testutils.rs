@@ -1,6 +1,6 @@
-use crate::backend::{
-    domain::models::{GithubId, Guest},
-    repos::{PgRepository, Repository},
+use crate::{
+    backend::repos::{PgRepository, Repository},
+    shared::models::{GithubId, Guest},
 };
 use sqlx::PgPool;
 #[allow(dead_code)]

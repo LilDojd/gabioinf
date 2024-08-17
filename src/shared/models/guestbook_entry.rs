@@ -1,26 +1,16 @@
 use super::GuestId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+#[cfg(feature = "server")]
+use sqlx::{FromRow, Type};
 extern crate derive_more;
 use derive_more::{From, Into};
 /// Represents an ID of a guestbook entry
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with guestbook IDs.
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Default,
-    Clone,
-    Copy,
-    sqlx::Type,
-    From,
-    Into,
-    PartialEq,
-)]
-#[sqlx(transparent)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, From, Into, PartialEq)]
+#[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestbookId(pub(crate) i64);
 impl GuestbookId {
     pub fn as_value(&self) -> i64 {
@@ -28,7 +18,8 @@ impl GuestbookId {
     }
 }
 /// Represents an entry in the guestbook.
-#[derive(Debug, Serialize, FromRow, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct GuestbookEntry {
     /// The unique identifier for the guestbook entry.
     /// This field is not serialized when the struct is converted to JSON.
