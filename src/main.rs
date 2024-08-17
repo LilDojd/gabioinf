@@ -8,6 +8,7 @@ mod backend;
 mod components;
 mod markdown;
 mod pages;
+mod shared;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
 const TAILWIND: &str = asset!("assets/tailwind.css");

@@ -23,7 +23,7 @@ pub async fn ping_db(conn: &DbConnPool) -> bool {
     match z {
         Ok(_) => true,
         Err(e) => {
-            tracing::error!("Failed to ping the database: {e}");
+            dioxus_logger::tracing::error!("Failed to ping the database: {e}");
             false
         }
     }

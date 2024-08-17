@@ -1,20 +1,20 @@
-use crate::components::{
-    ButtonVariant, Card, CardType, GuestbookEntry, SignaturePopup, StyledButton,
+use crate::{
+    components::{ButtonVariant, Card, CardType, GuestbookEntry, SignaturePopup, StyledButton},
+    shared::models::Guest,
 };
+
+#[cfg(feature = "server")]
+use crate::backend::domain::logic::SessionWrapper;
+
 use dioxus::prelude::*;
 const GITHUB_ICON: &str = asset!("assets/github-mark-white.svg");
 const LOGOUT: &str = asset!("assets/logout.svg");
 #[component]
 pub fn Guestbook() -> Element {
-    let mut signed_in = use_signal(|| false);
+    let user = use_server_future(get_user)?;
+
     let mut show_signature_pad = use_signal(|| false);
     let mut messages = use_signal(Vec::<GuestbookEntry>::new);
-    let placeholder_messages = [GuestbookEntry {
-        message: "Great website!".to_string(),
-        signature: "John Doe".to_string(),
-        date: "2024-08-15".to_string(),
-        username: "johndoe".to_string(),
-    }];
     let mut user_signature = use_signal(|| None::<GuestbookEntry>);
     let close_popup = move |_| show_signature_pad.set(false);
     let submit_signature = move |(message, signature): (String, String)| {
@@ -34,13 +34,15 @@ pub fn Guestbook() -> Element {
             }
             div { class: "mb-6 flex w-full justify-between items-center",
                 {
-                    if !*signed_in.read() {
+                    if !user.read().is_some() {
                         rsx! {
-                            StyledButton {
-                                text: "Sign in with GitHub",
-                                variant: ButtonVariant::Primary,
-                                onclick: move |_| signed_in.set(true),
-                                icon: Some(GITHUB_ICON.to_string()),
+                            a { href: "/v1/login",
+                                StyledButton {
+                                    text: "Sign in with GitHub",
+                                    variant: ButtonVariant::Primary,
+                                    onclick: |_| (),
+                                    icon: Some(GITHUB_ICON.to_string()),
+                                }
                             }
                         }
                     } else {
@@ -53,9 +55,13 @@ pub fn Guestbook() -> Element {
                             StyledButton {
                                 text: "Sign out",
                                 variant: ButtonVariant::Secondary,
-                                onclick: move |_| {
-                                    signed_in.set(false);
+                                onclick: move |_| async move {
                                     show_signature_pad.set(false);
+                                    if let Ok(user) = get_user().await {
+                                        if user.is_some() {
+                                            logout().await.unwrap();
+                                        }
+                                    }
                                 },
                                 icon: Some(LOGOUT.to_string()),
                             }
@@ -91,4 +97,22 @@ pub fn Guestbook() -> Element {
             }
         }
     }
+}
+
+#[server(GetUserName)]
+pub async fn get_user() -> Result<Option<Guest>, ServerFnError> {
+    let session: SessionWrapper = extract().await?;
+
+    match session.session.user {
+        Some(user) => Ok(Some(user)),
+        None => Ok(None),
+    }
+}
+
+#[server(Logout)]
+pub async fn logout() -> Result<(), ServerFnError> {
+    let mut session: SessionWrapper = extract().await?;
+
+    session.session.logout().await?;
+    Ok(())
 }
