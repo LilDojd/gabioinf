@@ -62,6 +62,7 @@ pub fn api_router(
     let oauth_router = logic::oauth::router();
 
     let api_router = Router::new()
+        .with_state(state)
         .merge(auth_router)
         .merge(oauth_router)
         .layer(cors);

@@ -67,10 +67,22 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
             governor_limiter.retain_recent();
         }
     });
+    let cfg = cfg.into();
+    let ssr_state = SSRState::new(&cfg);
 
     let app = Router::new()
-        .serve_dioxus_application(cfg.into(), app)
-        .nest("/v1/", api_router(state, config, governor_conf))
+        .nest("/v1/", api_router(state.clone(), config, governor_conf))
+        .serve_static_assets()
+        .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
+            Box::new(state.clone())
+        })]))
+        .fallback(
+            axum::routing::get(render_handler).with_state(
+                RenderHandleState::new(app)
+                    .with_config(cfg)
+                    .with_ssr_state(ssr_state),
+            ),
+        )
         .layer(auth_layer);
     let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
     dioxus_logger::tracing::info!("Listening on {}", addr);
