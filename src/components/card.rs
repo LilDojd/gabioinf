@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 use serde::Deserialize;
+
+use crate::shared::models::GuestbookEntry;
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CardProps {
     card_type: CardType,
@@ -16,13 +18,6 @@ pub struct Project {
     pub name: String,
     pub description: String,
     pub url: Option<String>,
-}
-#[derive(Clone, PartialEq, Debug)]
-pub struct GuestbookEntry {
-    pub message: String,
-    pub signature: String,
-    pub date: String,
-    pub username: String,
 }
 #[component]
 pub fn Card(props: CardProps) -> Element {
@@ -74,13 +69,13 @@ pub fn Card(props: CardProps) -> Element {
                         div { class: "flex flex-col justify-end h-full text-sm text-stone-400",
                             p {
                                 "by "
-                                span { class: "font-bold", "{entry.username}" }
+                                span { class: "font-bold", "{entry.id:?}" }
                             }
-                            p { "{entry.date}" }
+                            p { "{entry.created_at:?}" }
                         }
                         img {
                             class: "w-[150px] max-h-[150px] -mb-4 -mr-4",
-                            src: "data:image/png;base64,{entry.signature}",
+                            src: "data:image/png;base64,{entry.signature:?}",
                             alt: "Signature",
                         }
                     }

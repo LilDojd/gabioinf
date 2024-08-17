@@ -1,32 +1,23 @@
 use crate::{
-    components::{ButtonVariant, Card, CardType, GuestbookEntry, SignaturePopup, StyledButton},
-    shared::models::Guest,
+    components::{ButtonVariant, Card, CardType, SignaturePopup, StyledButton},
+    shared::{
+        models::{Guest, GuestbookEntry},
+        server_fns,
+    },
+    MessageValid,
 };
-
-#[cfg(feature = "server")]
-use crate::backend::domain::logic::SessionWrapper;
 
 use dioxus::prelude::*;
 const GITHUB_ICON: &str = asset!("assets/github-mark-white.svg");
 const LOGOUT: &str = asset!("assets/logout.svg");
 #[component]
 pub fn Guestbook() -> Element {
-    let mut user = use_server_future(get_user)?;
+    let mut user = use_server_future(server_fns::get_user)?;
+    let mut message_valid = use_context::<Signal<MessageValid>>();
 
     let mut show_signature_pad = use_signal(|| false);
     let mut messages = use_signal(Vec::<GuestbookEntry>::new);
-    let mut user_signature = use_signal(|| None::<GuestbookEntry>);
     let close_popup = move |_| show_signature_pad.set(false);
-    let submit_signature = move |(message, signature): (String, String)| {
-        user_signature.set(Some(GuestbookEntry {
-            message,
-            signature,
-            date: chrono::Local::now().format("%b %d, %Y %I %p").to_string(),
-            username: "Current User".to_string(),
-        }));
-        messages.push(user_signature.read().as_ref().unwrap().clone());
-        show_signature_pad.set(false);
-    };
     rsx! {
         div { class: "container mx-auto px-4 py-8",
             article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
@@ -45,7 +36,7 @@ pub fn Guestbook() -> Element {
                                 text: "Sign out",
                                 variant: ButtonVariant::Secondary,
                                 onclick: move |_| async move {
-                                    logout().await.unwrap();
+                                    server_fns::logout().await.unwrap();
                                     user.restart();
                                 },
                                 icon: Some(LOGOUT.to_string()),
@@ -67,7 +58,32 @@ pub fn Guestbook() -> Element {
             {
                 if *show_signature_pad.read() {
                     rsx! {
-                        SignaturePopup { on_close: close_popup, on_submit: submit_signature }
+                        SignaturePopup {
+                            on_close: close_popup,
+                            on_submit: move |(message, signature): (String, String)| async move {
+                                if let Some(Ok(Some(guest))) = &*user.read() {
+                                    let entry_request = server_fns::CreateEntryRequest {
+                                        message,
+                                        signature: if signature.is_empty() { None } else { Some(signature) },
+                                    };
+                                    let resp = server_fns::submit_signature(entry_request, guest.clone()).await;
+                                    match resp {
+                                        Ok(Some(_entry)) => {
+                                            message_valid.write().0 = true;
+                                            show_signature_pad.set(false);
+                                        }
+                                        Ok(None) => {
+                                            message_valid.write().0 = false;
+                                        }
+                                        _ => {
+                                            show_signature_pad.set(false);
+                                        }
+                                    }
+                                } else {
+                                    show_signature_pad.set(false);
+                                }
+                            },
+                        }
                     }
                 } else {
                     rsx! {  }
@@ -92,23 +108,4 @@ pub fn Guestbook() -> Element {
             }
         }
     }
-}
-
-#[server(GetUserName)]
-pub async fn get_user() -> Result<Option<Guest>, ServerFnError> {
-    let session: SessionWrapper = extract().await?;
-
-    match session.session.user {
-        Some(user) => Ok(Some(user)),
-        None => Ok(None),
-    }
-}
-
-#[server(Logout)]
-pub async fn logout() -> Result<(), ServerFnError> {
-    let mut session: SessionWrapper = extract().await?;
-    dioxus_logger::tracing::info!("Logging out");
-
-    session.session.logout().await?;
-    Ok(())
 }

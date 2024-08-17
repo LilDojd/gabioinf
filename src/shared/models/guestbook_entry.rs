@@ -18,11 +18,10 @@ impl GuestbookId {
     }
 }
 /// Represents an entry in the guestbook.
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct GuestbookEntry {
     /// The unique identifier for the guestbook entry.
-    /// This field is not serialized when the struct is converted to JSON.
     pub id: GuestbookId,
     /// The message content of the guestbook entry.
     pub message: String,
