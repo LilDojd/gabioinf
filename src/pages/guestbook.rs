@@ -11,7 +11,7 @@ const GITHUB_ICON: &str = asset!("assets/github-mark-white.svg");
 const LOGOUT: &str = asset!("assets/logout.svg");
 #[component]
 pub fn Guestbook() -> Element {
-    let user = use_server_future(get_user)?;
+    let mut user = use_server_future(get_user)?;
 
     let mut show_signature_pad = use_signal(|| false);
     let mut messages = use_signal(Vec::<GuestbookEntry>::new);
@@ -34,19 +34,8 @@ pub fn Guestbook() -> Element {
             }
             div { class: "mb-6 flex w-full justify-between items-center",
                 {
-                    if !user.read().is_some() {
-                        rsx! {
-                            a { href: "/v1/login",
-                                StyledButton {
-                                    text: "Sign in with GitHub",
-                                    variant: ButtonVariant::Primary,
-                                    onclick: |_| (),
-                                    icon: Some(GITHUB_ICON.to_string()),
-                                }
-                            }
-                        }
-                    } else {
-                        rsx! {
+                    match &*user.read() {
+                        Some(Ok(Some(_user))) => rsx! {
                             StyledButton {
                                 text: "Sign Guestbook",
                                 variant: ButtonVariant::Primary,
@@ -56,16 +45,24 @@ pub fn Guestbook() -> Element {
                                 text: "Sign out",
                                 variant: ButtonVariant::Secondary,
                                 onclick: move |_| async move {
-                                    show_signature_pad.set(false);
-                                    if let Ok(user) = get_user().await {
-                                        if user.is_some() {
-                                            logout().await.unwrap();
-                                        }
+                                    if let Ok(Some(_user)) = get_user().await {
+                                        logout().await.unwrap();
+                                        user.restart();
                                     }
                                 },
                                 icon: Some(LOGOUT.to_string()),
                             }
-                        }
+                        },
+                        _ => rsx! {
+                            a { href: "/v1/login",
+                                StyledButton {
+                                    text: "Sign in with GitHub",
+                                    variant: ButtonVariant::Primary,
+                                    onclick: |_| (),
+                                    icon: Some(GITHUB_ICON.to_string()),
+                                }
+                            }
+                        },
                     }
                 }
             }
@@ -112,6 +109,7 @@ pub async fn get_user() -> Result<Option<Guest>, ServerFnError> {
 #[server(Logout)]
 pub async fn logout() -> Result<(), ServerFnError> {
     let mut session: SessionWrapper = extract().await?;
+    dioxus_logger::tracing::info!("Logging out");
 
     session.session.logout().await?;
     Ok(())
