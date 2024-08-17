@@ -16,6 +16,9 @@ const STYLE: &str = asset!("assets/main.css");
 const NAVBAR: &str = asset!("assets/navbar.css");
 const LINKS: &str = asset!("assets/alien_links.css");
 
+#[derive(Clone, Copy)]
+pub struct MessageValid(bool);
+
 fn main() {
     dioxus_logger::init(Level::INFO).expect("failed to init logger");
 
@@ -50,6 +53,9 @@ enum Route {
     NotFound { route: Vec<String> },
 }
 fn App() -> Element {
+    // Context providers
+    use_context_provider(|| Signal::new(MessageValid(true)));
+
     rsx! {
         head::Link { rel: "stylesheet", href: TAILWIND }
         head::Link { rel: "stylesheet", href: STYLE }

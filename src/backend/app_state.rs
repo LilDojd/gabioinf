@@ -8,8 +8,7 @@ use crate::{
         db::DbConnPool,
         repos::{GroupsAndPermissionsRepo, PgRepository},
     },
-    components::GuestbookEntry,
-    shared::models::Guest,
+    shared::models::{Guest, GuestbookEntry},
 };
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
@@ -39,14 +38,12 @@ pub struct AppState {
     pub client: BasicClient,
 }
 /// Allows extracting the `Key` from `AppState`.
-///
-/// This implementation is used by the Axum framework to extract the `Key`
-/// when it's needed in request handlers or middleware.
 impl FromRef<AppState> for Key {
     fn from_ref(state: &AppState) -> Self {
         state.key.clone()
     }
 }
+
 impl AppState {
     /// Creates a new instance of `AppState`.
     ///
