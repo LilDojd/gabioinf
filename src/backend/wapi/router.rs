@@ -14,6 +14,8 @@ use axum_helmet::{
     XDNSPrefetchControl, XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies,
     XXSSProtection,
 };
+use governor::clock::QuantaInstant;
+use governor::middleware::NoOpMiddleware;
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
 use http::HeaderValue;
 use http::Method;
@@ -26,6 +28,7 @@ use tower_http::cors::CorsLayer;
 
 use crate::backend::config::AppConfig;
 use crate::backend::domain::logic::{self, AuthBackend};
+use crate::backend::extractors::CookieExtractor;
 use crate::backend::AppState;
 
 /// Configures and returns the main API router.
@@ -42,10 +45,10 @@ use crate::backend::AppState;
 /// # Returns
 ///
 /// Returns a configured `Router` instance ready to be served.
-pub fn api_router<K: KeyExtractor, M: RateLimitingMidd>(
+pub fn api_router(
     state: AppState,
     config: AppConfig,
-    governor_conf: Arc<GovernorConfig<K, M>>,
+    governor_conf: Arc<GovernorConfig<CookieExtractor, NoOpMiddleware<QuantaInstant>>>,
 ) -> Router {
     let cors = CorsLayer::new()
         .allow_credentials(true)
@@ -61,14 +64,13 @@ pub fn api_router<K: KeyExtractor, M: RateLimitingMidd>(
     let api_router = Router::new()
         .merge(auth_router)
         .merge(oauth_router)
-        .layer(cors)
-        .layer(helmet_layer);
+        .layer(cors);
 
     Router::new().nest("/", api_router).layer(
         ServiceBuilder::new()
-            .layer(GovernorLayer {
-                config: governor_conf,
-            })
+            // .layer(GovernorLayer {
+            //     config: governor_conf,
+            // })
             .layer(HandleErrorLayer::new(|error: BoxError| async move {
                 if error.is::<Elapsed>() {
                     return Ok(StatusCode::REQUEST_TIMEOUT);
@@ -88,7 +90,7 @@ pub fn api_router<K: KeyExtractor, M: RateLimitingMidd>(
                             .to_string()
                             .parse()
                             .unwrap_or_else(|_| {
-                                tracing::error!("Failed to parse default CSP");
+                                dioxus_logger::tracing::error!("Failed to parse default CSP");
                                 HeaderValue::from_static(fallback_static_str_csp())
                             }),
                     );
