@@ -3,7 +3,7 @@ use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
 
 const SIGNATURES_PER_PAGE: usize = 8;
-const INTERSECTION_THRESHOLD: f64 = 0.8;
+const INTERSECTION_THRESHOLD: f64 = 0.5;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
@@ -15,10 +15,11 @@ pub enum SignatureListState {
 }
 
 #[component]
-pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
+pub fn SignatureList() -> Element {
     let load_state = use_signal(|| SignatureListState::default());
+    let user_entry = use_context::<Signal<Option<GuestbookEntry>>>();
     let endless_signatures = use_signal(|| vec![]);
-    let (load_next_batch, mut refresh) = use_signature_list(load_state, endless_signatures);
+    let load_next_batch = use_signature_list(load_state, endless_signatures);
 
     // Use the intersection observer
     let loader_ref = use_signal(|| format!("signature-loader-{}", rand::random::<u32>()));
@@ -73,25 +74,42 @@ pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
         }
     });
 
-    use_effect(move || {
-        let _ = refresh_trigger();
-        refresh();
-    });
-
     rsx! {
         div {
-            div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                {
-                    endless_signatures
-                        .read()
-                        .iter()
-                        .flatten()
-                        .map(|entry| rsx! {
-                            Card { card_type: CardType::Signature(entry.clone()) }
-                        })
+            {
+                if user_entry.read().is_some() {
+                    rsx! {
+                        div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+                            Card { card_type: CardType::Signature(user_entry.read().clone().unwrap()) }
+                            {
+                                endless_signatures
+                                    .read()
+                                    .iter()
+                                    .flatten()
+                                    .filter(|entry| entry.id != user_entry.read().as_ref().unwrap().id)
+                                    .map(|entry| rsx! {
+                                        Card { card_type: CardType::Signature(entry.clone()) }
+                                    })
+                            }
+                        }
+                    }
+                } else {
+                    rsx! {
+                        div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+                            {
+                                endless_signatures
+                                    .read()
+                                    .iter()
+                                    .flatten()
+                                    .map(|entry| rsx! {
+                                        Card { card_type: CardType::Signature(entry.clone()) }
+                                    })
+                            }
+                        }
+                    }
                 }
             }
-            div { id: "{loader_ref}", class: "h-5"}
+            div { id: "{loader_ref}", class: "h-5" }
             div {
                 match *load_state.read() {
                     SignatureListState::Initial | SignatureListState::Loading => {
@@ -108,9 +126,9 @@ pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
 }
 
 fn use_signature_list(
-    mut state: Signal<SignatureListState>,
-    mut batches: Signal<Vec<Vec<GuestbookEntry>>>,
-) -> (Coroutine<()>, impl FnMut()) {
+    state: Signal<SignatureListState>,
+    batches: Signal<Vec<Vec<GuestbookEntry>>>,
+) -> Coroutine<()> {
     use futures::StreamExt as _;
 
     let load_task = use_coroutine(|mut rx: UnboundedReceiver<Option<u32>>| {
@@ -153,62 +171,5 @@ fn use_signature_list(
         }
     });
 
-    let refresh = move || {
-        state.set(SignatureListState::Initial);
-        batches.write().clear();
-        next_task.send(());
-    };
-
-    (next_task, refresh)
-}
-
-pub fn use_intersection_observer(element_id: String, threshold: f64) -> Signal<bool> {
-    let is_intersecting = use_signal(|| false);
-
-    use_effect(move || {
-        // Create and run the Intersection Observer
-        let mut eval = eval(
-            format!(
-                r#"
-            const callback = (entries, observer) => {{
-                entries.forEach((entry) => {{
-                    if (entry.isIntersecting == true) {{
-                        console.log("Intersecting");
-                        console.log(entry);
-                        dioxus.send(entry.isIntersecting);
-                    }}
-                }});
-            }};
-
-            const options = {{ root: null, threshold: {threshold} }};
-            const observer = new IntersectionObserver(callback, options);
-
-            const target = document.getElementById('{element_id}');
-            console.log(target);
-            if (target) {{
-                observer.observe(target);
-            }}
-
-            // Cleanup function
-            () => {{
-                if (target) {{
-                    observer.unobserve(target);
-                }}
-            }}
-            "#
-            )
-            .as_ref(),
-        );
-
-        to_owned![is_intersecting];
-        spawn(async move {
-            while let Ok(is_intersecting_js) = eval.recv().await {
-                if let Some(value) = is_intersecting_js.as_bool() {
-                    is_intersecting.set(value);
-                }
-            }
-        });
-    });
-
-    is_intersecting
+    next_task
 }
