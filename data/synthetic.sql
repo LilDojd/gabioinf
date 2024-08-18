@@ -10,7 +10,18 @@ VALUES
 (1007, 'George Black', 'george_b', 'token_george'),
 (1008, 'Hannah Red', 'hannah_r', 'token_hannah'),
 (1009, 'Ian Blue', 'ian_b', 'token_ian'),
-(1010, 'Julia Yellow', 'julia_y', 'token_julia');
+(1010, 'Julia Yellow', 'julia_y1', 'token_julia'),
+(1101, 'Alice Johnson', 'alice_j1', 'token_alice'),
+(1102, 'Bob Smith', 'bob_s1', 'token_bob'),
+(1103, 'Charlie Brown', 'charlie_b1', 'token_charlie'),
+(1104, 'Diana Prince', 'diana_p1', 'token_diana'),
+(1105, 'Evan White', 'evan_w1', 'token_evan'),
+(1106, 'Fiona Green', 'fiona_g1', 'token_fiona'),
+(1107, 'George Black', 'george_b1', 'token_george'),
+(1108, 'Hannah Red', 'hannah_r1', 'token_hannah'),
+(1109, 'Ian Blue', 'ian_b1', 'token_ian'),
+(1110, 'Julia Yellow', 'julia_y1', 'token_julia');
+
 
 -- Insert fake guestbook entries with signatures
 INSERT INTO guestbook (message, signature, author_id, author_username)
@@ -24,7 +35,18 @@ VALUES
 ('Impressive site', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 7, 'george_b'),
 ('Thanks for sharing', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 8, 'hannah_r'),
 ('Looking forward to more', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 9, 'ian_b'),
-('Awesome content', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 10, 'julia_y');
+('Awesome content', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 10, 'julia_y'),
+('Test', 'Test', 11, 'alice_j1'),
+('Test', 'Test', 12, 'bob_s1'),
+('Test', 'Test', 13, 'charlie_b1'),
+('Test', 'Test', 14, 'diana_p1'),
+('Test', 'Test', 15, 'evan_w1'),
+('Test', 'Test', 16, 'fiona_g1'),
+('Test', 'Test', 17, 'george_b1'),
+('Test', 'Test', 18, 'hannah_r1'),
+('Test', 'Test', 19, 'ian_b1'),
+('Test', 'Test', 20, 'julia_y1');
+
 
 -- Assign guests to the 'guests' group
 INSERT INTO guests_groups (guest_id, group_id)
