@@ -1,7 +1,10 @@
 use dioxus::prelude::*;
 use serde::Deserialize;
 
-use crate::shared::models::GuestbookEntry;
+use crate::shared::{
+    models::{Guest, GuestbookEntry},
+    server_fns,
+};
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CardProps {
     card_type: CardType,
@@ -22,7 +25,7 @@ pub struct Project {
 #[component]
 pub fn Card(props: CardProps) -> Element {
     let base_class = "bg-jet rounded-lg shadow-lg p-6 border border-onyx ease-in-out transition-colors duration-200";
-    match &props.card_type {
+    match props.card_type {
         CardType::Project(project) => {
             rsx! {
                 div { class: "{base_class} {props.class} hover:border-alien-green flex flex-col h-full",
@@ -62,6 +65,9 @@ pub fn Card(props: CardProps) -> Element {
             }
         }
         CardType::Signature(entry) => {
+            let sigb64 = entry.signature.clone().unwrap_or_default();
+            let date = entry.created_at.format("%b %d, %Y %I %p").to_string();
+
             rsx! {
                 div { class: "{base_class} {props.class} flex flex-col justify-between space-y-3 h-full",
                     p { class: "text-stone-100 leading-6", "{entry.message}" }
@@ -69,13 +75,13 @@ pub fn Card(props: CardProps) -> Element {
                         div { class: "flex flex-col justify-end h-full text-sm text-stone-400",
                             p {
                                 "by "
-                                span { class: "font-bold", "{entry.id:?}" }
+                                span { class: "font-bold", "{entry.author_username}" }
                             }
-                            p { "{entry.created_at:?}" }
+                            p { "{date}" }
                         }
                         img {
                             class: "w-[150px] max-h-[150px] -mb-4 -mr-4",
-                            src: "data:image/png;base64,{entry.signature:?}",
+                            src: "data:image/png;base64,{sigb64}",
                             alt: "Signature",
                         }
                     }

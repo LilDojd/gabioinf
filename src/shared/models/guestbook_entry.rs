@@ -34,12 +34,16 @@ pub struct GuestbookEntry {
     pub updated_at: DateTime<Utc>,
     /// The ID of the guest who authored this entry.
     pub author_id: GuestId,
+    /// The username of the guest who authored this entry.
+    pub author_username: String,
 }
 /// Represents the data required to create a new guestbook entry.
 #[derive(Debug)]
 pub struct NewGuestbookEntry {
     /// The id of the guest creating the entry.
     pub author_id: GuestId,
+    /// The username of the guest creating the entry.
+    pub author_username: String,
     /// The message content for the new guestbook entry.
     pub message: String,
     /// An optional signature for the new guestbook entry.
@@ -52,6 +56,7 @@ impl From<NewGuestbookEntry> for GuestbookEntry {
             message: entry.message,
             signature: entry.signature,
             author_id: entry.author_id,
+            author_username: entry.author_username,
             ..Default::default()
         }
     }

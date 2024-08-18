@@ -13,15 +13,15 @@ pub struct AppConfig {
 }
 impl AppConfig {
     pub fn new<S: AsRef<str>>(base: S) -> Result<Self, ConfigError> {
-        let run_mode = if cfg!(debug_assertions) { "development" } else { "production" };
+        let run_mode = if cfg!(debug_assertions) {
+            "development"
+        } else {
+            "production"
+        };
         let base = base.as_ref();
         let s = Config::builder()
-            .add_source(
-                File::with_name(&format!("{base}/config/default")).required(true),
-            )
-            .add_source(
-                File::with_name(&format!("{base}/config/{}", run_mode)).required(false),
-            )
+            .add_source(File::with_name(&format!("{base}/config/default")).required(true))
+            .add_source(File::with_name(&format!("{base}/config/{}", run_mode)).required(false))
             .build()?;
         s.try_deserialize()
     }
@@ -34,7 +34,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_config() {
-        let config = AppConfig::new("../").unwrap();
+        let config = AppConfig::new("./").unwrap();
         assert_eq!(config.ratelimiting.requests_per_second, 5);
         assert_eq!(config.ratelimiting.burst_size, 10);
     }
