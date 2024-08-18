@@ -6,7 +6,7 @@ create table if not exists guestbook (
     created_at      TIMESTAMP WITH TIME ZONE    DEFAULT current_timestamp NOT NULL,
     updated_at      TIMESTAMP WITH TIME ZONE    DEFAULT current_timestamp NOT NULL,
     author_id       BIGSERIAL NOT NULL,
-    author_username VARCHAR(255) NOT NULL       UNIQUE REFERENCES guests(username),
+    author_username VARCHAR(255) NOT NULL       REFERENCES guests(username),
 
 
     CONSTRAINT sig_author_id    FOREIGN KEY(author_id)   REFERENCES guests(id),
