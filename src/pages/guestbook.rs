@@ -13,10 +13,10 @@ const LOGOUT: &str = asset!("assets/logout.svg");
 #[component]
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
+    let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
 
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
-    let mut should_refresh = use_signal(|| false);
 
     // Since we bubble up the suspense with `?`, the server will wait for the future to resolve before rendering
     let mut user = use_server_future(server_fns::get_user)?;
@@ -71,10 +71,10 @@ pub fn Guestbook() -> Element {
                                     };
                                     let resp = server_fns::submit_signature(entry_request, guest.clone()).await;
                                     match resp {
-                                        Ok(Some(_entry)) => {
+                                        Ok(Some(entry)) => {
                                             message_valid.write().0 = true;
                                             show_signature_pad.set(false);
-                                            should_refresh.toggle();
+                                            user_signature.set(Some(entry.clone()));
                                         }
                                         Ok(None) => {
                                             message_valid.write().0 = false;
@@ -93,17 +93,7 @@ pub fn Guestbook() -> Element {
                     rsx! {  }
                 }
             }
-            SignatureList { refresh_trigger: should_refresh }
+            SignatureList {}
         }
     }
-}
-
-fn is_near_bottom() -> bool {
-    let window = web_sys::window().unwrap();
-    let document = window.document().unwrap();
-    let scroll_top = document.document_element().unwrap().scroll_top();
-    let scroll_height = document.document_element().unwrap().scroll_height();
-    let client_height = document.document_element().unwrap().client_height();
-
-    scroll_top + client_height >= scroll_height - 200
 }
