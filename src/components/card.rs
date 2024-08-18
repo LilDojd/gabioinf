@@ -66,7 +66,7 @@ pub fn Card(props: CardProps) -> Element {
         }
         CardType::Signature(entry) => {
             let sigb64 = entry.signature.clone().unwrap_or_default();
-            let date = entry.created_at.format("%b %d, %Y %I %p").to_string();
+            let date = entry.created_at.format("%b %d, %Y, %l:%M %p").to_string();
 
             rsx! {
                 div { class: "{base_class} {props.class} flex flex-col justify-between space-y-3 h-full",

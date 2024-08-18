@@ -2,6 +2,7 @@
 
 use dioxus::prelude::*;
 use dioxus_logger::tracing::info;
+use shared::models::GuestbookEntry;
 use tracing::Level;
 #[cfg(feature = "server")]
 mod backend;
@@ -55,6 +56,8 @@ enum Route {
 fn App() -> Element {
     // Context providers
     use_context_provider(|| Signal::new(MessageValid(true)));
+    // Users own signature
+    use_context_provider(|| Signal::new(None::<GuestbookEntry>));
 
     rsx! {
         head::Link { rel: "stylesheet", href: TAILWIND }
