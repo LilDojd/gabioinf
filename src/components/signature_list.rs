@@ -2,7 +2,7 @@ use crate::components::{Card, CardType};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
 
-const SIGNATURES_PER_PAGE: usize = 10;
+const SIGNATURES_PER_PAGE: usize = 2;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
@@ -58,46 +58,49 @@ fn use_signature_list(
 ) -> (Coroutine<()>, impl FnMut()) {
     use futures::StreamExt as _;
 
-    let load_task = use_coroutine(|mut rx: UnboundedReceiver<Option<u32>>| async move {
-        while *state.read() != SignatureListState::Finished {
-            let Some(next_cursor) = rx.next().await else {
-                break;
-            };
+    let load_task = use_coroutine(|mut rx: UnboundedReceiver<Option<u32>>| {
+        to_owned![state, batches];
+        async move {
+            while let Some(next_cursor) = rx.next().await {
+                let original_state = *state.read();
+                state.set(SignatureListState::Loading);
 
-            let original_state = state.read().clone();
-            *state.write() = SignatureListState::Loading;
-
-            match server_fns::load_signatures(next_cursor.unwrap_or(1), SIGNATURES_PER_PAGE).await {
-                Ok(signatures) => {
-                    if signatures.is_empty() {
-                        *state.write() = SignatureListState::Finished;
-                    } else {
-                        let next_page = next_cursor.map_or(2, |c| c + 1);
-                        *state.write() = SignatureListState::MoreAvailable(next_page);
-                        batches.write().push(signatures);
+                match server_fns::load_signatures(next_cursor.unwrap_or(1), SIGNATURES_PER_PAGE)
+                    .await
+                {
+                    Ok(signatures) => {
+                        if signatures.is_empty() {
+                            state.set(SignatureListState::Finished);
+                        } else {
+                            let next_page = next_cursor.map_or(2, |c| c + 1);
+                            state.set(SignatureListState::MoreAvailable(next_page));
+                            batches.write().push(signatures);
+                        }
                     }
-                }
-                Err(error) => {
-                    dioxus_logger::tracing::error!("Could not load signatures: {:?}", error);
-                    *state.write() = original_state;
-                    continue;
+                    Err(error) => {
+                        dioxus_logger::tracing::error!("Could not load signatures: {:?}", error);
+                        state.set(original_state);
+                    }
                 }
             }
         }
     });
 
-    let next_task = use_coroutine(|mut rx: UnboundedReceiver<()>| async move {
-        load_task.send(None); // kick off loading the batches
-        while let Some(_) = rx.next().await {
-            match *state.read() {
-                SignatureListState::MoreAvailable(cursor) => load_task.send(Some(cursor)),
-                _ => break,
+    let next_task = use_coroutine(|mut rx: UnboundedReceiver<()>| {
+        to_owned![state, load_task];
+        async move {
+            load_task.send(None);
+            while rx.next().await.is_some() {
+                if let SignatureListState::MoreAvailable(cursor) = *state.read() {
+                    load_task.send(Some(cursor));
+                }
             }
         }
     });
 
     let refresh = move || {
-        *state.write() = SignatureListState::Initial;
+        state.set(SignatureListState::Initial);
+        batches.write().clear();
         next_task.send(());
     };
 
