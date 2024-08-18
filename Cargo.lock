@@ -1794,6 +1794,7 @@ dependencies = [
  "dioxus",
  "dioxus-logger",
  "dioxus-web",
+ "futures",
  "getrandom",
  "governor",
  "instant",

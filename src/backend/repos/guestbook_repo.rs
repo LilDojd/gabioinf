@@ -26,6 +26,7 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         .await?;
         Ok(entries)
     }
+
     /// Retrieves a single guestbook entry based on the provided criteria.
     async fn read(&self, criteria: &Self::Criteria) -> BResult<GuestbookEntry> {
         let entry = match criteria {
@@ -63,13 +64,14 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         let created_entry = sqlx::query_as!(
             GuestbookEntry,
             r#"
-            INSERT INTO guestbook (message, signature, author_id)
-            VALUES ($1, $2, $3)
+            INSERT INTO guestbook (message, signature, author_id, author_username)
+            VALUES ($1, $2, $3, $4)
             RETURNING *
             "#,
             entry.message,
             entry.signature,
             entry.author_id.as_value(),
+            entry.author_username,
         )
         .fetch_one(&self.pool)
         .await?;
@@ -101,7 +103,19 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         Ok(())
     }
 }
-impl PgRepository<GuestbookEntry> {}
+impl PgRepository<GuestbookEntry> {
+    pub async fn read_page(&self, page: u32, per_page: usize) -> BResult<Vec<GuestbookEntry>> {
+        let entries = sqlx::query_as!(
+            GuestbookEntry,
+            "SELECT * FROM guestbook ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            per_page as i64,
+            (page - 1) as i64 * per_page as i64
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(entries)
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,6 +129,7 @@ mod tests {
             message: "Test message".to_string(),
             signature: Some("Test signature".to_string()),
             author_id: GuestId(0),
+            author_username: "testuser".to_string(),
             ..Default::default()
         };
         repo.create(&entry).await.unwrap();
@@ -127,6 +142,7 @@ mod tests {
             message: "Test message".to_string(),
             signature: Some("Test signature".to_string()),
             author_id: GuestId(1),
+            author_username: "testuser".to_string(),
             ..Default::default()
         };
         let created_entry = repo.create(&entry).await.unwrap();
@@ -147,6 +163,7 @@ mod tests {
             message: "Original message".to_string(),
             signature: Some("Original signature".to_string()),
             author_id: GuestId(1),
+            author_username: "testuser".to_string(),
             ..Default::default()
         };
         let created_entry = repo.create(&entry).await.unwrap();
@@ -163,6 +180,7 @@ mod tests {
             message: "Delete test".to_string(),
             signature: None,
             author_id: GuestId(1),
+            author_username: "testuser".to_string(),
             ..Default::default()
         };
         let created_entry = repo.create(&entry).await.unwrap();
