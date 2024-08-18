@@ -1,9 +1,9 @@
-use crate::components::{Card, CardType};
+use crate::components::{Card, CardType, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
 
 const SIGNATURES_PER_PAGE: usize = 8;
-const INTERSECTION_THRESHOLD: f64 = 0.5;
+const INTERSECTION_THRESHOLD: f64 = 0.8;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
@@ -23,7 +23,7 @@ pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
     // Use the intersection observer
     let loader_ref = use_signal(|| format!("signature-loader-{}", rand::random::<u32>()));
 
-    let mut is_intersecting = use_signal(|| false);
+    let is_intersecting = use_signal(|| false);
 
     use_effect(move || {
         // Create and run the Intersection Observer
@@ -40,7 +40,6 @@ pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
             const observer = new IntersectionObserver(callback, options);
 
             const target = document.getElementById('{loader_ref}');
-            console.log(target);
             if (target) {{
                 observer.observe(target);
             }}
@@ -60,7 +59,6 @@ pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
         spawn(async move {
             while let Ok(is_intersecting_js) = eval.recv().await {
                 if let Some(value) = is_intersecting_js.as_bool() {
-                    dioxus_logger::tracing::info!("Set intersecting to {}", value);
                     is_intersecting.set(value);
                 }
             }
@@ -93,18 +91,16 @@ pub fn SignatureList(refresh_trigger: Signal<bool>) -> Element {
                         })
                 }
             }
-            div { id: "{loader_ref}", class: "h-10", "test" }
+            div { id: "{loader_ref}", class: "h-5"}
             div {
                 match *load_state.read() {
                     SignatureListState::Initial | SignatureListState::Loading => {
                         rsx! {
-                            div { class: "text-center py-4", "Loading signatures..." }
+                            Loading {}
                         }
                     }
                     SignatureListState::MoreAvailable(_) => rsx! {  },
-                    SignatureListState::Finished => rsx! {
-                        div { class: "text-center py-4", "No more signatures to load" }
-                    },
+                    SignatureListState::Finished => rsx! {  },
                 }
             }
         }
