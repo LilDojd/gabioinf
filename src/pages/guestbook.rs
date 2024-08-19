@@ -68,17 +68,31 @@ pub fn Guestbook() -> Element {
                                         message,
                                         signature: if signature.is_empty() { None } else { Some(signature) },
                                     };
+                                    dioxus_logger::tracing::info!("Submitting signature");
                                     let resp = server_fns::submit_signature(entry_request, guest.clone()).await;
                                     match resp {
                                         Ok(Some(entry)) => {
                                             message_valid.write().0 = true;
+                                            message_valid.write().1 = String::new();
                                             show_signature_pad.set(false);
                                             user_signature.set(Some(entry.clone()));
                                         }
-                                        Ok(None) => {
+                                        Err(e) => {
                                             message_valid.write().0 = false;
+                                            if let Some(error) = e
+                                                .to_string()
+                                                .strip_prefix("error running server function: message: ")
+                                            {
+                                                message_valid.write().1 = error.to_string();
+                                            } else {
+                                                message_valid.write().1 = "An internal error occurred"
+                                                    .to_string();
+                                            }
+                                            dioxus_logger::tracing::error!(
+                                                "Error submitting signature: {:?}", e
+                                            );
                                         }
-                                        _ => {
+                                        Ok(None) => {
                                             show_signature_pad.set(false);
                                         }
                                     }

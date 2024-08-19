@@ -26,8 +26,10 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
             message.set(new_message.clone());
             char_count.set(new_message.chars().count());
             message_valid.write().0 = false;
+            message_valid.write().1 = "Too long".to_string();
         } else {
             message_valid.write().0 = false;
+            message_valid.write().1 = "Too long".to_string();
         }
     };
     rsx! {
@@ -50,6 +52,12 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                                 class: "absolute bottom-2 right-2 text-xs",
                                 class: if *char_count.read() == MAX_MESSAGE_LENGTH { "text-coral" } else { "text-stone-400" },
                                 "{char_count} / {MAX_MESSAGE_LENGTH}"
+                            }
+                            // Just beneath
+                            if !message_valid.read().0 {
+                                span { class: "absolute bottom-2 left-2 text-coral text-xs",
+                                    "{message_valid.read().1}"
+                                }
                             }
                         }
                     }
