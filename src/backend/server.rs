@@ -66,7 +66,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
     let ssr_state = SSRState::new(&cfg);
 
     let app = Router::new()
-        .nest("/v1/", api_router(state.clone(), config, governor_conf))
+        .nest("/v1/", api_router(state.clone(), governor_conf))
         .serve_static_assets()
         .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
             Box::new(state.clone())
@@ -80,7 +80,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
         )
         .layer(auth_layer);
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-    let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8000);
+    let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
     dioxus_logger::tracing::info!("Listening on {}", listen_address);
     axum_server::bind(listen_address)
         .serve(app.into_make_service())

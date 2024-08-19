@@ -8,6 +8,10 @@ default:
 serve:
     dx serve
 
+build:
+    dx build --features web
+    cargo build --features server
+
 # Format Rust code
 format:
     dx fmt --all-code

@@ -1841,6 +1841,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "validator",
+ "wasm-bindgen",
  "web-sys",
 ]
 

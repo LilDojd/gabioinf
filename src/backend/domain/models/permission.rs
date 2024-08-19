@@ -29,6 +29,7 @@ pub enum PermissionTargets {
 #[derive(Debug, Clone, Deserialize)]
 pub struct PermissionEntry {
     /// The unique identifier for the permission.
+    #[allow(dead_code)]
     pub id: i16,
     /// The type of the permission.
     pub name: PermissionTargets,

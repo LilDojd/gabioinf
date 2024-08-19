@@ -1,6 +1,5 @@
 use crate::backend::domain::logic::{oauth::CSRF_STATE_KEY, AuthSession};
 use axum::{
-    http::StatusCode,
     response::{IntoResponse, Redirect},
     routing::get,
     Form, Router,

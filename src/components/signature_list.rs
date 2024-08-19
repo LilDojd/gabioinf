@@ -16,9 +16,9 @@ pub enum SignatureListState {
 
 #[component]
 pub fn SignatureList() -> Element {
-    let load_state = use_signal(|| SignatureListState::default());
+    let load_state = use_signal(SignatureListState::default);
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
-    let mut endless_signatures = use_signal(|| vec![]);
+    let mut endless_signatures = use_signal(std::vec::Vec::new);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
 
     let mut is_intersecting = use_signal(|| false);
@@ -177,14 +177,12 @@ fn use_signature_list(
         }
     });
 
-    let next_task = use_coroutine(|mut rx: UnboundedReceiver<()>| async move {
+    use_coroutine(|mut rx: UnboundedReceiver<()>| async move {
         load_task.send(None);
         while rx.next().await.is_some() {
             if let SignatureListState::MoreAvailable(cursor) = *state.read() {
                 load_task.send(Some(cursor));
             }
         }
-    });
-
-    next_task
+    })
 }

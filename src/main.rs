@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_logger::tracing::info;
 use shared::models::GuestbookEntry;
 use tracing::Level;
 #[cfg(feature = "server")]
@@ -34,7 +33,7 @@ fn main() {
             ..Default::default()
         });
 
-        info!("Starting server");
+        dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
             .block_on(

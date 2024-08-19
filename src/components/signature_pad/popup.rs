@@ -18,18 +18,22 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
 
     let update_message = move |evt: Event<FormData>| {
         let new_message = evt.value();
-        if new_message.chars().count() < MAX_MESSAGE_LENGTH {
-            message.set(new_message.clone());
-            char_count.set(new_message.chars().count());
-            message_valid.write().0 = true;
-        } else if new_message.chars().count() == MAX_MESSAGE_LENGTH {
-            message.set(new_message.clone());
-            char_count.set(new_message.chars().count());
-            message_valid.write().0 = false;
-            message_valid.write().1 = "Too long".to_string();
-        } else {
-            message_valid.write().0 = false;
-            message_valid.write().1 = "Too long".to_string();
+        match new_message.chars().count() {
+            n if n < MAX_MESSAGE_LENGTH => {
+                message.set(new_message.clone());
+                char_count.set(n);
+                message_valid.write().0 = true;
+            }
+            MAX_MESSAGE_LENGTH => {
+                message.set(new_message.clone());
+                char_count.set(MAX_MESSAGE_LENGTH);
+                message_valid.write().0 = false;
+                message_valid.write().1 = "Too long".to_string();
+            }
+            _ => {
+                message_valid.write().0 = false;
+                message_valid.write().1 = "Too long".to_string();
+            }
         }
     };
     rsx! {

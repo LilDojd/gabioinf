@@ -4,7 +4,7 @@
 //! The rest is delegated to dioxus server functions
 use std::sync::Arc;
 
-use axum::body::{Body, HttpBody};
+use axum::body::Body;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Response, StatusCode};
 use axum::{http, Router};
@@ -22,12 +22,11 @@ use http::Method;
 use tower::timeout::error::Elapsed;
 use tower::{BoxError, ServiceBuilder};
 use tower_governor::governor::GovernorConfig;
-use tower_governor::key_extractor::KeyExtractor;
 use tower_governor::GovernorLayer;
 use tower_http::cors::CorsLayer;
 
-use crate::backend::config::AppConfig;
-use crate::backend::domain::logic::{self, AuthBackend};
+use crate::backend::db::ping_db;
+use crate::backend::domain::logic;
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::AppState;
 
@@ -47,7 +46,6 @@ use crate::backend::AppState;
 /// Returns a configured `Router` instance ready to be served.
 pub fn api_router(
     state: AppState,
-    config: AppConfig,
     governor_conf: Arc<GovernorConfig<CookieExtractor, NoOpMiddleware<QuantaInstant>>>,
 ) -> Router {
     let cors = CorsLayer::new()
@@ -62,6 +60,7 @@ pub fn api_router(
     let oauth_router = logic::oauth::router();
 
     let api_router = Router::new()
+        .route("/ping", axum::routing::get(ping_db))
         .with_state(state)
         .merge(auth_router)
         .merge(oauth_router)
@@ -69,9 +68,9 @@ pub fn api_router(
 
     Router::new().nest("/", api_router).layer(
         ServiceBuilder::new()
-            // .layer(GovernorLayer {
-            //     config: governor_conf,
-            // })
+            .layer(GovernorLayer {
+                config: governor_conf,
+            })
             .layer(HandleErrorLayer::new(|error: BoxError| async move {
                 if error.is::<Elapsed>() {
                     return Ok(StatusCode::REQUEST_TIMEOUT);

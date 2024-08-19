@@ -31,10 +31,13 @@ impl KeyExtractor for CookieExtractor {
     /// * `Err(GovernorError::UnableToExtractKey)` - If the 'sid' cookie is not found
     fn extract<B>(&self, req: &Request<B>) -> Result<Self::Key, GovernorError> {
         let jar = CookieJar::from_headers(req.headers());
-        jar.get("sid")
+        jar.get("id")
             .map(|cookie| cookie.value().to_string())
             .or_else(|| {
-                SmartIpKeyExtractor.extract(req).ok().map(|ip| ip.to_string())
+                SmartIpKeyExtractor
+                    .extract(req)
+                    .ok()
+                    .map(|ip| ip.to_string())
             })
             .ok_or(GovernorError::UnableToExtractKey)
     }

@@ -1,9 +1,6 @@
 use crate::{
-    components::{ButtonVariant, Card, CardType, SignatureList, SignaturePopup, StyledButton},
-    shared::{
-        models::{Guest, GuestbookEntry},
-        server_fns,
-    },
+    components::{ButtonVariant, SignatureList, SignaturePopup, StyledButton},
+    shared::{models::GuestbookEntry, server_fns},
     MessageValid,
 };
 

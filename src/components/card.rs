@@ -1,10 +1,7 @@
 use dioxus::prelude::*;
 use serde::Deserialize;
 
-use crate::shared::{
-    models::{Guest, GuestbookEntry},
-    server_fns,
-};
+use crate::shared::models::GuestbookEntry;
 
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CardProps {
