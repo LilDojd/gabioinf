@@ -58,7 +58,6 @@ fn LeftColumn() -> Element {
                 }
             }
             task::sleep(std::time::Duration::from_millis(200)).await;
-            dioxus_logger::tracing::info!("Typing animation done");
             animate.set(true);
             let blink_start = instant::Instant::now();
             while blink_start.elapsed().as_millis() < BLINK_MILLIS as u128 {

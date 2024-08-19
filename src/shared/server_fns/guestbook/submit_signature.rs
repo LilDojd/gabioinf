@@ -26,7 +26,10 @@ pub struct CreateEntryRequest {
                 max = 255,
                 message = "Message must be between 1 and 255 characters"
             ),
-            custom(function = "crate::backend::utils::validate_not_offensive")
+            custom(
+                function = "crate::backend::utils::validate_not_offensive",
+                message = "Message is offensive"
+            )
         )
     )]
     pub message: String,
@@ -39,12 +42,7 @@ pub async fn submit_signature(
     payload: CreateEntryRequest,
     guest: Guest,
 ) -> Result<Option<GuestbookEntry>, ServerFnError> {
-    match payload.validate() {
-        Ok(_) => {}
-        Err(_) => {
-            return Ok(None);
-        }
-    }
+    payload.validate()?;
 
     let FromContext(state): FromContext<AppState> = extract().await?;
 
