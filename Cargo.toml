@@ -14,7 +14,7 @@ serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.122", optional = true }
 reqwest = { version = "0.12.5", features = ["json"], optional = true }
 time = { version = "0.3.36", features = ["serde"] }
-config = { version = "0.14.0", optional = true }
+config = { version = "0.14.0", features = ["convert-case"], optional = true }
 derive_more = { version = "0.99.18" }
 thiserror = { version = "1.0.63", optional = true }
 
@@ -32,6 +32,7 @@ sqlx = { version = "0.7", features = [
   "chrono",
   "macros",
   "runtime-tokio",
+  "tls-rustls",
 ], optional = true }
 tower = { version = "0.4.13", optional = true, features = ["timeout"] }
 tower-http = { version = "0.5.2", features = ["cors", "fs"], optional = true }
@@ -73,7 +74,9 @@ web-sys = { version = "0.3.63", features = [
   "ImageData",
   "Path2d",
 ] }
-futures = "0.3.30"
+futures = { version = "0.3.30" }
+
+sentry = { version = "0.34.0", optional = true }
 
 [features]
 default = []
@@ -101,6 +104,7 @@ server = [
   "dep:serde_json",
   "dep:config",
   "dep:thiserror",
+  "dep:sentry",
   "dioxus/axum",
 ]
 web = ["chrono/wasmbind", "dep:getrandom", "dep:dioxus-web"]

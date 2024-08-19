@@ -15,7 +15,9 @@ use tower_governor::governor::GovernorConfigBuilder;
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
 pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
-    let postgres = sqlx::PgPool::connect("postgres://postgres:postgres@localhost:18577/gabioinf")
+    let config = AppConfig::new_local().expect("Failed to load local configuration");
+    dioxus_logger::tracing::info!("Loaded config: {:?}", config);
+    let postgres = sqlx::PgPool::connect(config.database.url.as_str())
         .await
         .unwrap();
     dioxus_logger::tracing::info!("Running database migration..");
@@ -23,12 +25,11 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
         .run(&postgres)
         .await
         .expect("Failed to run migrations");
-    let config = AppConfig::new_local().expect("Failed to load local configuration");
-    dioxus_logger::tracing::debug!("Loaded config: {:?}", config);
+
     let (domain, client_id, client_secret) = (
-        "http://localhost:8000",
-        "Iv23lin2YpB54ptGvRA3",
-        "085c4392fe2e2bfdf9e670ed1420893120874e28",
+        config.domain.as_str(),
+        config.gabioinf.id.as_str(),
+        config.gabioinf.secret.as_str(),
     );
     let client = build_oauth_client(client_id, client_secret);
     let state = AppState::new(postgres.clone(), domain.to_string(), client.clone());

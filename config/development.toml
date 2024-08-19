@@ -1,3 +1,4 @@
+domain = "http://localhost:8000"
 [ratelimiting]
 requests_per_second = 5
 burst_size = 10

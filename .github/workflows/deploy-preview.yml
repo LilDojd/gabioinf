@@ -1,0 +1,56 @@
+name: Preview Deployment
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_run:
+    workflows: ["Build server and nextest"]
+    types:
+      - completed
+
+env:
+  NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  deploy-preview:
+    name: Deploy preview
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    concurrency:
+      group: pr-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get git branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v8
+      - id: create-branch
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ env.NEON_PROJECT_ID }}
+          username: "gabioinf_owner"
+          branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+      - run: |
+          echo "DATABASE_URL=${{ steps.create-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Migrate database
+        run: |
+          sudo apt-get install libpq-dev -y
+          cargo install sqlx-cli --no-default-features --features tls-rustls,postgres
+          sqlx migrate run
+      - id: deploy
+        uses: superfly/fly-pr-review-apps@1.2.1
+        with:
+          secrets: DATABASE_URL=$DATABASE_URL
+      - name: Comment on Pull Request
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          message: |
+            Fly Preview URL :balloon: : ${{ steps.deploy.outputs.url }}
+            Neon branch :elephant: : https://console.neon.tech/app/projects/${{ env.NEON_PROJECT_ID }}/branches/${{ steps.create-branch.outputs.branch_id }}

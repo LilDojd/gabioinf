@@ -1,3 +1,6 @@
+domain = "https://gabioinf.dev"
+[gabioinf]
+id = "Iv23lin2YpB54ptGvRA3"
 [ratelimiting]
 requests_per_second = 5
 burst_size = 10

@@ -87,8 +87,6 @@ pub fn SignatureList() -> Element {
                                                     server_fns::delete_signature(user_signature.read().clone().unwrap())
                                                         .await
                                                         .unwrap();
-
-                                                    // Force redraw
                                                     user_signature.set(None);
                                                     endless_signatures.write().clear();
                                                 });

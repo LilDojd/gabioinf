@@ -14,7 +14,7 @@ format:
     cargo clippy --fix
 
 # Format Dioxus code
-dioxusf-format:
+dioxus-format:
     dx fmt
 
 # Install required crates

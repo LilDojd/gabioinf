@@ -1,3 +1,4 @@
+#![allow(unused)]
 use super::{PgRepository, Repository};
 use crate::backend::{
     errors::{ApiError, BResult},

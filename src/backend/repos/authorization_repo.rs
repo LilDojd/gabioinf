@@ -1,3 +1,4 @@
+#![allow(unused)]
 //! This module provides functionality for managing groups and permissions for users.
 //!
 //! The `GroupsAndPermissionsRepo` struct offers methods to add or remove users from groups,

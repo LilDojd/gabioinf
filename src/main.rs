@@ -7,6 +7,7 @@ use tracing::Level;
 #[cfg(feature = "server")]
 mod backend;
 mod components;
+mod hide;
 mod markdown;
 mod pages;
 mod shared;
@@ -28,6 +29,11 @@ fn main() {
 
     #[cfg(feature = "server")]
     {
+        let _guard = sentry::init(sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        });
+
         info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
