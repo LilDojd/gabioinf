@@ -61,7 +61,7 @@ pub fn Guestbook() -> Element {
                             }
                         },
                         _ => rsx! {
-                            a { href: "/v1/login",
+                            a { href: "/v1/login?next=/guestbook",
                                 StyledButton {
                                     text: "Sign in with GitHub",
                                     variant: ButtonVariant::Primary,
