@@ -26,8 +26,8 @@ impl KeyExtractor for CookieExtractor {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - The value of the 'sid' cookie if present
-    /// * `Err(GovernorError::UnableToExtractKey)` - If the 'sid' cookie is not found
+    /// * `Ok(String)` - The value of the 'id' cookie if present
+    /// * `Err(GovernorError::UnableToExtractKey)` - If the 'id' cookie is not found
     fn extract<B>(&self, req: &Request<B>) -> Result<Self::Key, GovernorError> {
         let jar = CookieJar::from_headers(req.headers());
         jar.get("id")
@@ -39,6 +39,7 @@ impl KeyExtractor for CookieExtractor {
                     .map(|ip| ip.to_string())
             })
             .or_else(|| {
+                dioxus_logger::tracing::warn!("Unable to extract key from cookie or forwarded headers, falling back to peer IP address");
                 PeerIpKeyExtractor
                     .extract(req)
                     .ok()
