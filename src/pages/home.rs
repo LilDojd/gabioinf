@@ -34,7 +34,7 @@ fn LeftColumn() -> Element {
             );
         }
     });
-    let text_animation = move |_| {
+    let _text_animation = use_effect(move || {
         spawn(async move {
             let mut rng = rand::thread_rng();
             let mut current_index = 0;
@@ -58,6 +58,7 @@ fn LeftColumn() -> Element {
                 }
             }
             task::sleep(std::time::Duration::from_millis(200)).await;
+            dioxus_logger::tracing::info!("Typing animation done");
             animate.set(true);
             let blink_start = instant::Instant::now();
             while blink_start.elapsed().as_millis() < BLINK_MILLIS as u128 {
@@ -66,7 +67,7 @@ fn LeftColumn() -> Element {
             }
             hide_cursor.set(true);
         });
-    };
+    });
     let links = vec![
         (
             "https://www.linkedin.com/in/georgiy-andreev".to_string(),
@@ -87,9 +88,7 @@ fn LeftColumn() -> Element {
     ];
     rsx! {
         div { class: "w-full md:w-1/2 space-y-6",
-            h1 {
-                onmounted: text_animation,
-                class: "text-3xl sm:text-4xl md:text-5xl font-bold text-stone-100",
+            h1 { class: "text-3xl sm:text-4xl md:text-5xl font-bold text-stone-100",
                 "{visible_text}"
                 span {
                     class: "text-alien-green",
@@ -182,14 +181,21 @@ fn LinkButtons(props: LinkButtonsProps) -> Element {
 fn SaucerDivier(animate: Signal<bool>) -> Element {
     let random_id = rand::random::<u32>();
     rsx! {
-        object { data : format!("{}?r={}", asset!("assets/saucer_divider.svg"),
-        random_id), id : "divider-svg", alt : "Flying saucer divider", r#type :
-        "image/svg+xml", class : "h-4", onload : | _ | { _ =
-        eval(r#"var el = document.getElementById("divider-svg");
-                       if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                           var ks = el.contentDocument.defaultView.KeyshapeJS;
-                           ks.globalPause();
-                    }"#,)
-        }, }
+        object {
+            data: format!("{}?r={}", asset!("assets/saucer_divider.svg"), random_id),
+            id: "divider-svg",
+            alt: "Flying saucer divider",
+            r#type: "image/svg+xml",
+            class: "h-4",
+            onload: |_| {
+                _ = eval(
+                    r#"var el = document.getElementById("divider-svg");
+                               if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                   var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                   ks.globalPause();
+                            }"#,
+                )
+            },
+        }
     }
 }
