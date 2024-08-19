@@ -5,6 +5,7 @@ use crate::shared::{
     models::{Guest, GuestbookEntry},
     server_fns,
 };
+
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CardProps {
     card_type: CardType,
@@ -14,7 +15,10 @@ pub struct CardProps {
 #[derive(Clone, Debug, PartialEq)]
 pub enum CardType {
     Project(Project),
-    Signature(GuestbookEntry),
+    Signature {
+        entry: GuestbookEntry,
+        close_button: Element,
+    },
 }
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub struct Project {
@@ -64,14 +68,20 @@ pub fn Card(props: CardProps) -> Element {
                 }
             }
         }
-        CardType::Signature(entry) => {
+        CardType::Signature {
+            entry,
+            close_button,
+        } => {
             let sigb64 = entry.signature.clone().unwrap_or_default();
             let date = entry.created_at.format("%b %d, %Y, %l:%M %p").to_string();
 
             rsx! {
-                div { class: "{base_class} {props.class} flex flex-col justify-between space-y-3 h-full",
-                    p { class: "text-stone-100 leading-6", "{entry.message}" }
-                    div { class: "mt-auto flex items-center justify-between",
+                div { class: "{base_class} {props.class} flex flex-col justify-between h-full relative p-6",
+                    {close_button}
+                    div { class: "flex=grow",
+                        p { class: "text-stone-100 leading-6 mt-0", "{entry.message}" }
+                    }
+                    div { class: "mt-4 flex items-center justify-between",
                         div { class: "flex flex-col justify-end h-full text-sm text-stone-400",
                             p {
                                 "by "

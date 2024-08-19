@@ -20,6 +20,19 @@ pub fn Guestbook() -> Element {
 
     let mut user = use_resource(server_fns::get_user);
 
+    // Set user signature if present in DB
+    use_effect(move || {
+        let guest = user();
+        if let Some(Ok(Some(guest))) = guest {
+            spawn(async move {
+                dioxus_logger::tracing::debug!("Checking for user signature");
+                if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
+                    user_signature.set(Some(signature));
+                }
+            });
+        }
+    });
+
     rsx! {
         div { class: "container mx-auto px-4 py-8",
             article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
@@ -37,9 +50,12 @@ pub fn Guestbook() -> Element {
                             StyledButton {
                                 text: "Sign out",
                                 variant: ButtonVariant::Secondary,
-                                onclick: move |_| async move {
-                                    server_fns::logout().await.unwrap();
-                                    user.restart();
+                                onclick: move |_| {
+                                    spawn(async move {
+                                        server_fns::logout().await.unwrap();
+                                        user.restart();
+                                        user_signature.set(None);
+                                    });
                                 },
                                 icon: Some(LOGOUT.to_string()),
                             }
@@ -68,7 +84,7 @@ pub fn Guestbook() -> Element {
                                         message,
                                         signature: if signature.is_empty() { None } else { Some(signature) },
                                     };
-                                    dioxus_logger::tracing::info!("Submitting signature");
+                                    dioxus_logger::tracing::debug!("Submitting signature");
                                     let resp = server_fns::submit_signature(entry_request, guest.clone()).await;
                                     match resp {
                                         Ok(Some(entry)) => {

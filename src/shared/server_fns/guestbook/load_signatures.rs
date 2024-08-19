@@ -33,9 +33,15 @@ pub async fn load_user_signature(user: Guest) -> Result<Option<GuestbookEntry>, 
         .await;
 
     match signature {
-        Ok(signature) => Ok(Some(signature)),
+        Ok(signature) => {
+            dioxus_logger::tracing::info!("Found users signature");
+            Ok(Some(signature))
+        }
         Err(e) => match e {
-            ApiError::DatabaseError(sqlx::Error::RowNotFound) => Ok(None),
+            ApiError::DatabaseError(sqlx::Error::RowNotFound) => {
+                dioxus_logger::tracing::info!("User has not left a signature yet");
+                Ok(None)
+            }
             _ => Err(ServerFnError::ServerError(e.to_string())),
         },
     }
