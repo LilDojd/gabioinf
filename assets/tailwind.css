@@ -1327,10 +1327,6 @@ video {
   display: grid;
 }
 
-.h-10 {
-  height: 2.5rem;
-}
-
 .h-2 {
   height: 0.5rem;
 }
@@ -1643,10 +1639,6 @@ video {
   padding: 1.5rem;
 }
 
-.p-8 {
-  padding: 2rem;
-}
-
 .px-0 {
   padding-left: 0px;
   padding-right: 0px;
@@ -1798,11 +1790,6 @@ video {
 .text-stone-400 {
   --tw-text-opacity: 1;
   color: rgb(168 162 158 / var(--tw-text-opacity));
-}
-
-.text-white {
-  --tw-text-opacity: 1;
-  color: rgb(242 242 242 / var(--tw-text-opacity));
 }
 
 .opacity-25 {

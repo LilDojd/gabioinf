@@ -18,8 +18,7 @@ pub fn Guestbook() -> Element {
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
 
-    // Since we bubble up the suspense with `?`, the server will wait for the future to resolve before rendering
-    let mut user = use_server_future(server_fns::get_user)?;
+    let mut user = use_resource(server_fns::get_user);
 
     rsx! {
         div { class: "container mx-auto px-4 py-8",

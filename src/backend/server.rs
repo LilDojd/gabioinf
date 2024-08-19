@@ -4,20 +4,14 @@ use crate::backend::domain::logic::AuthBackend;
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::wapi::api_router;
 use crate::backend::AppState;
-use axum::error_handling::HandleErrorLayer;
-use axum::http::StatusCode;
-use axum::{Router, ServiceExt};
+use axum::Router;
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
-use dioxus::dioxus_core::{Element, VirtualDom};
+use dioxus::dioxus_core::Element;
 use dioxus::fullstack::prelude::*;
-use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use tower::timeout::error::Elapsed;
-use tower::{BoxError, Layer, ServiceBuilder};
 use tower_governor::governor::GovernorConfigBuilder;
-use tower_governor::GovernorLayer;
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
 pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
@@ -84,9 +78,10 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
             ),
         )
         .layer(auth_layer);
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
-    dioxus_logger::tracing::info!("Listening on {}", addr);
-    axum_server::bind(addr)
+    use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+    let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8000);
+    dioxus_logger::tracing::info!("Listening on {}", listen_address);
+    axum_server::bind(listen_address)
         .serve(app.into_make_service())
         .await
         .unwrap();
