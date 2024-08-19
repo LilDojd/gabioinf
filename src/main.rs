@@ -68,6 +68,16 @@ fn App() -> Element {
             rel: "stylesheet",
             href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..800,0..1,0..1,0..1&display=swap",
         }
-        Router::<Route> {}
+        ErrorBoundary {
+            handle_error: |errors: ErrorContext| {
+                match errors.show() {
+                    Some(view) => view,
+                    None => rsx! {
+                        pre { color: "#ef6f6c", "oops, we ran into an error\n{errors:#?}" }
+                    },
+                }
+            },
+            Router::<Route> {}
+        }
     }
 }

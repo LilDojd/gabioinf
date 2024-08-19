@@ -1,4 +1,4 @@
-use crate::components::{Card, CardType, Loading};
+use crate::components::{Card, CardType, CloseButton, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
 
@@ -17,8 +17,8 @@ pub enum SignatureListState {
 #[component]
 pub fn SignatureList() -> Element {
     let load_state = use_signal(|| SignatureListState::default());
-    let user_entry = use_context::<Signal<Option<GuestbookEntry>>>();
-    let endless_signatures = use_signal(|| vec![]);
+    let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
+    let mut endless_signatures = use_signal(|| vec![]);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
 
     let mut is_intersecting = use_signal(|| false);
@@ -73,18 +73,43 @@ pub fn SignatureList() -> Element {
     rsx! {
         div {
             {
-                if user_entry.read().is_some() {
+                if user_signature.read().is_some() {
                     rsx! {
                         div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                            Card { card_type: CardType::Signature(user_entry.read().clone().unwrap()) }
+                            Card {
+                                card_type: CardType::Signature {
+                                    entry: user_signature.read().clone().unwrap(),
+                                    close_button: rsx! {
+                                        CloseButton {
+                                            layout: "absolute top-2 right-2 w-6 h-6",
+                                            onclick: move |_| {
+                                                spawn(async move {
+                                                    server_fns::delete_signature(user_signature.read().clone().unwrap())
+                                                        .await
+                                                        .unwrap();
+
+                                                    // Force redraw
+                                                    user_signature.set(None);
+                                                    endless_signatures.write().clear();
+                                                });
+                                            },
+                                        }
+                                    },
+                                },
+                            }
                             {
                                 endless_signatures
                                     .read()
                                     .iter()
                                     .flatten()
-                                    .filter(|entry| entry.id != user_entry.read().as_ref().unwrap().id)
+                                    .filter(|entry| entry.id != user_signature.read().as_ref().unwrap().id)
                                     .map(|entry| rsx! {
-                                        Card { card_type: CardType::Signature(entry.clone()) }
+                                        Card {
+                                            card_type: CardType::Signature {
+                                                entry: entry.clone(),
+                                                close_button: rsx! {  },
+                                            },
+                                        }
                                     })
                             }
                         }
@@ -98,7 +123,12 @@ pub fn SignatureList() -> Element {
                                     .iter()
                                     .flatten()
                                     .map(|entry| rsx! {
-                                        Card { card_type: CardType::Signature(entry.clone()) }
+                                        Card {
+                                            card_type: CardType::Signature {
+                                                entry: entry.clone(),
+                                                close_button: rsx! {  },
+                                            },
+                                        }
                                     })
                             }
                         }
