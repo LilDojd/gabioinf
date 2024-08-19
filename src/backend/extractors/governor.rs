@@ -9,11 +9,10 @@
 use axum::http::Request;
 use axum_extra::extract::CookieJar;
 use tower_governor::{
-    key_extractor::{KeyExtractor, SmartIpKeyExtractor},
+    key_extractor::{KeyExtractor, PeerIpKeyExtractor, SmartIpKeyExtractor},
     GovernorError,
 };
 /// A key extractor that uses the 'sid' cookie for rate limiting
-/// and falls back to the client's IP address if the cookie is not found
 #[derive(Clone)]
 pub struct CookieExtractor;
 impl KeyExtractor for CookieExtractor {
@@ -35,6 +34,12 @@ impl KeyExtractor for CookieExtractor {
             .map(|cookie| cookie.value().to_string())
             .or_else(|| {
                 SmartIpKeyExtractor
+                    .extract(req)
+                    .ok()
+                    .map(|ip| ip.to_string())
+            })
+            .or_else(|| {
+                PeerIpKeyExtractor
                     .extract(req)
                     .ok()
                     .map(|ip| ip.to_string())

@@ -40,8 +40,11 @@ oauth2 = { version = "4.4.2", optional = true }
 tracing-subscriber = { version = "0.3.18", optional = true }
 rustrict = { version = "0.7.26", optional = true }
 governor = { version = "0.6.3", optional = true }
-tower_governor = { version = "0.4.2", features = ["tracing"], optional = true }
-tower-sessions = { version = "0.12.2", optional = true }
+tower_governor = { version = "0.4.2", features = [
+  "tracing",
+  "axum",
+], optional = true }
+tower-sessions = { version = "0.12.2", features = ["signed"], optional = true }
 tower-sessions-sqlx-store = { version = "0.12", features = [
   "postgres",
 ], optional = true }

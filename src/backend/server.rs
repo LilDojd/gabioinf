@@ -41,8 +41,9 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
             .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
     );
     let session_layer = SessionManagerLayer::new(session_store)
-        .with_secure(false)
-        .with_same_site(SameSite::Lax)
+        .with_secure(true)
+        .with_signed(state.clone().key)
+        .with_same_site(SameSite::Strict)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
     let backend = AuthBackend::new(state.guest_repo.clone(), state.gp_repo.clone(), client);
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
@@ -83,7 +84,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
     let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
     dioxus_logger::tracing::info!("Listening on {}", listen_address);
     axum_server::bind(listen_address)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
 }
