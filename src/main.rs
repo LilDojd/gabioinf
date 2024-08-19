@@ -17,8 +17,8 @@ const STYLE: &str = asset!("assets/main.css");
 const NAVBAR: &str = asset!("assets/navbar.css");
 const LINKS: &str = asset!("assets/alien_links.css");
 
-#[derive(Clone, Copy)]
-pub struct MessageValid(bool);
+#[derive(Clone, Debug)]
+pub struct MessageValid(bool, String);
 
 fn main() {
     dioxus_logger::init(Level::INFO).expect("failed to init logger");
@@ -55,7 +55,7 @@ enum Route {
 }
 fn App() -> Element {
     // Context providers
-    use_context_provider(|| Signal::new(MessageValid(true)));
+    use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     // Users own signature
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
 
