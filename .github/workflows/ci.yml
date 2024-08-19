@@ -1,13 +1,5 @@
 name: Build server and nextest
-on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+on: [push, pull_request]
 
 jobs:
   build-and-test:
