@@ -1,6 +1,9 @@
 name: Build server and nextest
 on: [push, pull_request]
 
+env:
+  DATABASE_URL: "postgres://postgres:postgres@localhost:5432/postgres"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -36,11 +39,8 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
       - name: Migrate database
         run: |
-          sudo apt-get install libpq-dev -y
-          cargo install sqlx-cli --no-default-features --features tls-rustls,postgres
+          cargo install sqlx-cli --no-default-features --features rustls,postgres
           sqlx migrate run
       - uses: taiki-e/install-action@nextest
       - name: Run tests
         run: cargo nextest run --features server
-        env:
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/postgres"
