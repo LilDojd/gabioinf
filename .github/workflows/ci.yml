@@ -1,5 +1,13 @@
 name: Build server and nextest
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 env:
   DATABASE_URL: "postgres://postgres:postgres@localhost:5432/postgres"
