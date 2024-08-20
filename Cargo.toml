@@ -44,6 +44,7 @@ tower_governor = { version = "0.4.2", features = [
   "tracing",
   "axum",
 ], optional = true }
+forwarded-header-value = { version = "0.1.1", optional = true }
 tower-sessions = { version = "0.12.2", features = ["signed"], optional = true }
 tower-sessions-sqlx-store = { version = "0.12", features = [
   "postgres",
@@ -101,6 +102,7 @@ server = [
   "dep:rustrict",
   "dep:validator",
   "dep:tower_governor",
+  "dep:forwarded-header-value",
   "dep:tower-sessions",
   "dep:tower-sessions-sqlx-store",
   "dep:axum-login",
