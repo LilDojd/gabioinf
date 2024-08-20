@@ -25,10 +25,10 @@ jobs:
     name: Setup
     runs-on: ubuntu-latest
     outputs:
-      branch: ${{ steps.branch_name.outputs.current_branch }}
+      branch: ${{ steps.setup.outputs.current_branch }}
     steps:
       - name: Get git branch name
-        id: branch-name
+        id: setup
         uses: tj-actions/branch-names@v8
   create_branch:
     name: Create Branch
