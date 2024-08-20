@@ -4,7 +4,7 @@ FROM rust:1.80 AS chef
 RUN cargo install cargo-chef
 RUN rustup target add wasm32-unknown-unknown
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-RUN cargo binstall --git https://github.com/dioxuslabs/dioxus dioxus-cli -y
+RUN cargo binstall --git https://github.com/dioxuslabs/dioxus dioxus-cli --locked -y
 WORKDIR /app
 
 FROM chef AS planner
@@ -29,8 +29,9 @@ RUN cargo build --release --features server
 
 FROM rust:1.80-slim-bookworm AS runtime
 WORKDIR /app
-COPY --from=builder /app/dist /usr/local/bin/dist
+COPY --from=builder /app/dist /usr/local/bin
 COPY --from=builder /app/target/release/gabioinf /usr/local/bin
+COPY --from=builder /app/config /app/config
 
 EXPOSE 8080
 
