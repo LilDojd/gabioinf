@@ -3,20 +3,11 @@ on:
   push:
     branches:
       - main
-  workflow_run:
-    workflows: ["Build server and nextest"]
-    types:
-      - completed
 
 jobs:
   deploy:
     name: Deploy app
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'success' && 
-       github.event.workflow_run.head_branch == 'main')
     concurrency:
       group: deploy-to-fly
       cancel-in-progress: true
