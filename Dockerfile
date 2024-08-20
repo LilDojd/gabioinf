@@ -1,4 +1,4 @@
-FROM rust:1.80 AS chef
+FROM rust:bookworm AS chef
 
 # Install build tools
 RUN cargo install cargo-chef
