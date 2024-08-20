@@ -31,7 +31,7 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v8
   create_branch:
-    name: Create Neon Branch
+    name: Create Branch
     outputs:
       db_url: ${{ steps.create_branch_encode.outputs.db_url }}
       db_url_with_pooler: ${{ steps.create_branch_encode.outputs.db_url_with_pooler }}
@@ -48,6 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create Neon branch
+        id: create_branch
         uses: neondatabase/create-branch-action@v5
         with:
           project_id: ${{ env.NEON_PROJECT_ID }}
