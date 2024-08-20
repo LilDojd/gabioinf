@@ -1,7 +1,7 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use sqlx::{FromRow, Type};
+use time::OffsetDateTime;
 extern crate derive_more;
 use derive_more::{From, Into};
 /// Represents a GitHub user ID.
@@ -9,18 +9,7 @@ use derive_more::{From, Into};
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with GitHub user IDs.
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    From,
-    Into,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
 )]
 pub struct GithubId(pub(crate) i64);
 impl GithubId {
@@ -33,18 +22,7 @@ impl GithubId {
 /// This type is a wrapper around `i64` to provide type safety and clarity
 /// when dealing with guest IDs.
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    From,
-    Into,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
 )]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestId(pub(crate) i64);
@@ -59,7 +37,7 @@ impl GuestId {
     }
 }
 /// Represents a guest in the system.
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct Guest {
     /// The unique identifier for the guest.
@@ -71,12 +49,27 @@ pub struct Guest {
     /// The username of the guest.
     pub username: String,
     /// The timestamp when the guest record was created.
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
     /// The timestamp when the guest record was last updated.
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: OffsetDateTime,
     /// Access token for the guest.
     pub access_token: String,
 }
+
+impl Default for Guest {
+    fn default() -> Self {
+        Self {
+            id: GuestId(0),
+            github_id: GithubId(0),
+            name: "".to_string(),
+            username: "".to_string(),
+            created_at: OffsetDateTime::now_utc(),
+            updated_at: OffsetDateTime::now_utc(),
+            access_token: "".to_string(),
+        }
+    }
+}
+
 impl std::fmt::Debug for Guest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Guest")

@@ -1,4 +1,4 @@
-domain = "https://gabioinf.dev"
+domain = "http://localhost:8080"
 [gabioinf]
 id = "Iv23lin2YpB54ptGvRA3"
 [ratelimiting]

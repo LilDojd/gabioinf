@@ -1,8 +1,8 @@
+use crate::use_mounted::use_mounted;
+use crate::use_resize_observer::use_resize;
 use canvas::Canvas;
 use dioxus::prelude::*;
 use dioxus::web::WebEventExt;
-use dioxus_resize_observer::use_resize;
-use dioxus_use_mounted::use_mounted;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
 mod canvas;
@@ -65,9 +65,9 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
     use_effect(move || {
         let size = canvas_resize();
         match size {
-            Some(_) => {}
+            Some(_) => (),
             None => {
-                return ();
+                return;
             }
         }
         canvas.write().as_mut().unwrap().on_resize();

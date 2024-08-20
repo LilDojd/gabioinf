@@ -9,6 +9,8 @@ mod hide;
 mod markdown;
 mod pages;
 mod shared;
+mod use_mounted;
+mod use_resize_observer;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
 
@@ -16,7 +18,6 @@ const TAILWIND: &str = asset!("public/tailwind.css");
 const STYLE: &str = asset!("public/main.css");
 const NAVBAR: &str = asset!("public/navbar.css");
 const LINKS: &str = asset!("public/alien_links.css");
-const FONT: &str = asset!("https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..800,0..1,0..1,0..1&display=swap");
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
 fn main() {
@@ -63,7 +64,7 @@ fn App() -> Element {
         head::Link { rel: "stylesheet", href: LINKS }
         head::Link {
             rel: "stylesheet",
-            href: FONT,
+            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap",
         }
         ErrorBoundary {
             handle_error: |errors: ErrorContext| {

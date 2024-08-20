@@ -1,6 +1,6 @@
+use crate::shared::models::GuestbookEntry;
 use dioxus::prelude::*;
 use serde::Deserialize;
-use crate::shared::models::GuestbookEntry;
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CardProps {
     card_type: CardType,
@@ -10,7 +10,10 @@ pub struct CardProps {
 #[derive(Clone, Debug, PartialEq)]
 pub enum CardType {
     Project(Project),
-    Signature { entry: GuestbookEntry, close_button: Element },
+    Signature {
+        entry: GuestbookEntry,
+        close_button: Element,
+    },
 }
 #[derive(Clone, PartialEq, Debug, Deserialize)]
 pub struct Project {
@@ -60,9 +63,19 @@ pub fn Card(props: CardProps) -> Element {
                 }
             }
         }
-        CardType::Signature { entry, close_button } => {
+        CardType::Signature {
+            entry,
+            close_button,
+        } => {
             let sigb64 = entry.signature.clone().unwrap_or_default();
-            let date = entry.created_at.format("%b %d, %Y, %l:%M %p").to_string();
+            let date = entry
+                .created_at
+                .format(time::macros::format_description!(
+                    "[day] [month repr:short], [year], [hour repr:12]:[minute] [period case:upper]"
+                ))
+                .unwrap()
+                .to_string();
+
             rsx! {
                 div { class: "{base_class} {props.class} flex flex-col justify-between h-full relative p-6",
                     {close_button}

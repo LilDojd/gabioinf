@@ -1,4 +1,3 @@
-domain = "http://localhost:8080"
 [ratelimiting]
 requests_per_second = 5
 burst_size = 10

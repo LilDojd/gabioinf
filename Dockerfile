@@ -8,7 +8,7 @@ FROM rust:bookworm AS chef
 RUN cargo install cargo-chef
 RUN rustup target add wasm32-unknown-unknown
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-RUN cargo binstall --git https://github.com/dioxuslabs/dioxus dioxus-cli --locked -y
+RUN cargo binstall --git https://github.com/dioxuslabs/dioxus dioxus-cli -y
 WORKDIR /app
 
 FROM chef AS planner
@@ -29,8 +29,8 @@ RUN cargo chef cook --release --recipe-path recipe.json --features server
 RUN cargo chef cook --release --recipe-path recipe.json --features web --target wasm32-unknown-unknown
 # Copy over the source code and build the project
 COPY . .
-RUN cargo update -p wasm-bindgen --precise 0.2.92 && dx build --release --platform fullstack
-# RUN cargo build --release --features server
+RUN cargo update -p wasm-bindgen --precise 0.2.92 && dx build --platform fullstack --release
+# RUN cargo build --features server --release
 
 FROM debian:bookworm-slim AS runtime
 
@@ -40,6 +40,7 @@ ARG APPNAME
 WORKDIR /usr/local/bin
 RUN apt-get update && apt-get install -y openssl && apt-get clean
 COPY --from=builder /app/$OUTDIR /usr/local/bin/
+COPY --from=builder /app/target/release/$APPNAME /usr/local/bin/server
 COPY --from=builder /app/config /usr/local/bin/config
 
 EXPOSE 8080

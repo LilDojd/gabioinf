@@ -7,16 +7,12 @@ publish = false
 
 [dependencies]
 anyhow = { version = "1.0.8" }
-chrono = { version = "0.4.38", features = ["clock", "serde"] }
 
 tracing = { version = "0.1.40" }
+time = { version = "0.3", features = ["macros", "formatting", "serde"] }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.122", optional = true }
-reqwest = { version = "0.12.5", features = [
-  "json",
-  "rustls-tls",
-], optional = true }
-time = { version = "0.3.36", features = ["serde"] }
+reqwest = { version = "0.12.5", features = ["json"], optional = true }
 config = { version = "0.14.0", features = ["convert-case"], optional = true }
 derive_more = { version = "0.99.18" }
 thiserror = { version = "1.0.63", optional = true }
@@ -31,13 +27,13 @@ axum-extra = { version = "0.9.3", features = [
   "typed-header",
 ], optional = true }
 axum-macros = { version = "0.4.1", optional = true }
-sqlx = { version = "0.7", features = [
-  "chrono",
+sqlx = { version = "0.8", features = [
+  "time",
+  "postgres",
   "macros",
-  "runtime-tokio",
   "tls-rustls",
 ], optional = true }
-tower = { version = "0.4.13", optional = true, features = ["timeout"] }
+tower = { version = "0.5", optional = true, features = ["timeout", "util"] }
 tower-http = { version = "0.5.2", features = ["cors", "fs"], optional = true }
 oauth2 = { version = "4.4.2", optional = true }
 tracing-subscriber = { version = "0.3.18", optional = true }
@@ -48,8 +44,8 @@ tower_governor = { version = "0.4.2", features = [
   "axum",
 ], optional = true }
 forwarded-header-value = { version = "0.1.1", optional = true }
-tower-sessions = { version = "0.12.2", features = ["signed"], optional = true }
-tower-sessions-sqlx-store = { version = "0.12", features = [
+tower-sessions = { version = "0.12.3", features = ["signed"], optional = true }
+tower-sessions-sqlx-store = { version = "0.13", features = [
   "postgres",
 ], optional = true }
 axum-login = { version = "0.15.3", optional = true }
@@ -57,17 +53,15 @@ axum-helmet = { version = "0.1.0", optional = true }
 axum-server = { version = "0.7.1", optional = true }
 
 # Dioxus
-dioxus = { version = "0.6.0-alpha.2", features = [
+dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", features = [
   "fullstack",
   "router",
   "web",
 ] }
-dioxus-web = { version = "0.6.0-alpha.2", features = [
+dioxus-web = { git = "https://github.com/DioxusLabs/dioxus.git", features = [
   "hydrate",
 ], optional = true }
 dioxus-logger = { version = "0.5.1" }
-dioxus-resize-observer = { version = "0.3.0-alpha.1" }
-dioxus-use-mounted = { version = "0.3.0-alpha.1" }
 
 # Web
 
@@ -77,13 +71,19 @@ instant = { version = "0.1.13", features = ["inaccurate", "wasm-bindgen"] }
 rand = { version = "0.8.5" }
 getrandom = { version = "0.2.15", features = ["js"], optional = true }
 markdown = { version = "1.0.0-alpha.19" }
-wasm-bindgen = { version = "0.2.92" } # Pin for now
 web-sys = { version = "0.3.63", features = [
   "HtmlCanvasElement",
   "CanvasRenderingContext2d",
   "ImageData",
   "Path2d",
+  "ResizeObserver",
+  "ResizeObserverEntry",
+  "Element",
+  "DomRectReadOnly",
 ] }
+
+js-sys = { version = "0.3.7" }
+wasm-bindgen = { version = "0.2.92" }
 futures = { version = "0.3.30" }
 
 sentry = { version = "0.34.0", optional = true }
@@ -118,4 +118,4 @@ server = [
   "dep:sentry",
   "dioxus/axum",
 ]
-web = ["chrono/wasmbind", "dep:getrandom", "dep:dioxus-web"]
+web = ["time/wasm-bindgen", "dep:getrandom", "dep:dioxus-web"]
