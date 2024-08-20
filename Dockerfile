@@ -24,7 +24,8 @@ COPY --from=tailwind /app/assets/tailwind.css assets/tailwind.css
 RUN cargo chef cook --release --recipe-path recipe.json --features server
 # Copy over the source code and build the project
 COPY . .
-RUN dx build --release --features web && cargo build --release --features server
+RUN cargo update -p wasm-bindgen --precise 0.2.92 && dx build --release --features web
+RUN cargo build --release --features server
 
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
