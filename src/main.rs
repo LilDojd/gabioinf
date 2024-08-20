@@ -13,7 +13,6 @@ mod use_mounted;
 mod use_resize_observer;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
-
 const TAILWIND: &str = asset!("public/tailwind.css");
 const STYLE: &str = asset!("public/main.css");
 const NAVBAR: &str = asset!("public/navbar.css");
@@ -33,9 +32,9 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(
-                async move { backend::server::serve(ServeConfig::builder().build(), App).await },
-            );
+            .block_on(async move {
+                backend::server::serve(ServeConfig::builder().build(), App).await
+            });
     }
 }
 #[derive(Routable, PartialEq, Clone)]

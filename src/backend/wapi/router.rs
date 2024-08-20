@@ -2,7 +2,10 @@
 //!
 //! This module defines the routing structure for the entire API for the authenticated routes.
 //! The rest is delegated to dioxus server functions
-use std::sync::Arc;
+use crate::backend::db::ping_db;
+use crate::backend::domain::logic;
+use crate::backend::extractors::CookieExtractor;
+use crate::backend::AppState;
 use axum::body::Body;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Response, StatusCode};
@@ -18,15 +21,12 @@ use governor::middleware::NoOpMiddleware;
 use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
 use http::HeaderValue;
 use http::Method;
+use std::sync::Arc;
 use tower::timeout::error::Elapsed;
 use tower::{BoxError, ServiceBuilder};
 use tower_governor::governor::GovernorConfig;
 use tower_governor::GovernorLayer;
 use tower_http::cors::CorsLayer;
-use crate::backend::db::ping_db;
-use crate::backend::domain::logic;
-use crate::backend::extractors::CookieExtractor;
-use crate::backend::AppState;
 /// Configures and returns the main API router.
 ///
 /// This function sets up all routes for the application, including public routes,

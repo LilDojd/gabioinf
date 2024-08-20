@@ -39,7 +39,9 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
         div { class: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50",
             div { class: "bg-nasty-black rounded-lg p-6 sm:max-w-lg w-full min-w-0 border border-onyx shadow-lg",
                 h2 { class: "text-xl font-bold mb-4 text-stone-100", "Sign guestbook" }
-                form { class: "space-y-4", onsubmit: move |evt| evt.prevent_default(),
+                form {
+                    class: "space-y-4",
+                    onsubmit: move |evt| evt.prevent_default(),
                     div {
                         label { class: "block text-stone-400 mb-2", "leave a message" }
                         div { class: "relative",

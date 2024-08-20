@@ -1,7 +1,7 @@
-use dioxus::prelude::*;
 #[cfg(feature = "server")]
 use crate::backend::domain::logic::SessionWrapper;
 use crate::shared::models::{Guest, GuestId};
+use dioxus::prelude::*;
 #[server(GetUserName)]
 pub async fn get_user() -> Result<Option<Guest>, ServerFnError> {
     let session: SessionWrapper = extract().await?;

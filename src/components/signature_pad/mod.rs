@@ -65,7 +65,7 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
     use_effect(move || {
         let size = canvas_resize();
         match size {
-            Some(_) => (),
+            Some(_) => {}
             None => {
                 return;
             }

@@ -1,5 +1,5 @@
-use axum_login::AuthUser;
 use crate::shared::models::{Guest, GuestId};
+use axum_login::AuthUser;
 impl AuthUser for Guest {
     type Id = GuestId;
     fn id(&self) -> Self::Id {

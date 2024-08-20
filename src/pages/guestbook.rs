@@ -18,7 +18,11 @@ pub fn Guestbook() -> Element {
         if let Some(Ok(Some(guest))) = guest {
             spawn(async move {
                 dioxus_logger::tracing::debug!("Checking for user signature");
-                if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
+                if let Ok(Some(signature)) = server_fns::load_user_signature(
+                        guest.clone(),
+                    )
+                    .await
+                {
                     user_signature.set(Some(signature));
                 }
             });

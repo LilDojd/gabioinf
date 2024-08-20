@@ -44,8 +44,9 @@ struct GridPropsBuilder<const I: usize, const J: usize> {
 }
 impl<const I: usize, const J: usize> GridPropsBuilder<I, J> {
     fn new() -> Self {
-        let arr: [[Option<GridElement>; J]; I] =
-            core::array::from_fn(|_| core::array::from_fn(|_| None));
+        let arr: [[Option<GridElement>; J]; I] = core::array::from_fn(|_| core::array::from_fn(|
+            _|
+        None));
         Self { grid: arr }
     }
     fn with(mut self, i: usize, j: usize, element: GridElement) -> Self {
@@ -66,9 +67,7 @@ impl<const I: usize, const J: usize> GridPropsBuilder<I, J> {
         self
     }
     fn build(self) -> GridProps<I, J> {
-        let grid = self
-            .grid
-            .map(|row| row.map(|cell| cell.unwrap_or_default()));
+        let grid = self.grid.map(|row| row.map(|cell| cell.unwrap_or_default()));
         GridProps { grid }
     }
 }

@@ -44,14 +44,21 @@ fn LeftColumn() -> Element {
                 task::sleep(std::time::Duration::from_millis(interval)).await;
                 if rng.gen_bool(ERROR_CHANCE) && current_index > 0 {
                     let mistake_char = (rng.gen_range(b'a'..=b'z') as char).to_string();
-                    visible_text.set(format!(
-                        "{}{}",
-                        full_text.chars().take(current_index).collect::<String>(),
-                        mistake_char,
-                    ));
-                    task::sleep(std::time::Duration::from_millis(rng.gen_range(100..300))).await;
+                    visible_text
+                        .set(
+                            format!(
+                                "{}{}",
+                                full_text.chars().take(current_index).collect::<String>(),
+                                mistake_char,
+                            ),
+                        );
+                    task::sleep(
+                            std::time::Duration::from_millis(rng.gen_range(100..300)),
+                        )
+                        .await;
                     visible_text.set(full_text.chars().take(current_index).collect());
-                    task::sleep(std::time::Duration::from_millis(rng.gen_range(20..100))).await;
+                    task::sleep(std::time::Duration::from_millis(rng.gen_range(20..100)))
+                        .await;
                 } else {
                     current_index += 1;
                     visible_text.set(full_text.chars().take(current_index).collect());
@@ -76,14 +83,8 @@ fn LeftColumn() -> Element {
             "https://github.com/LilDojd".to_string(),
             "i have some stuff on github".to_string(),
         ),
-        (
-            "https://buymeacoffee.com/yawner".to_string(),
-            "feeling generou$?".to_string(),
-        ),
-        (
-            "https://cal.com/yawner".to_string(),
-            "fancy a chat?".to_string(),
-        ),
+        ("https://buymeacoffee.com/yawner".to_string(), "feeling generou$?".to_string()),
+        ("https://cal.com/yawner".to_string(), "fancy a chat?".to_string()),
     ];
     rsx! {
         div { class: "w-full md:w-1/2 space-y-6",

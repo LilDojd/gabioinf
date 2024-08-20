@@ -37,7 +37,6 @@ pub struct GuestbookEntry {
     /// The username of the guest who authored this entry.
     pub author_username: String,
 }
-
 impl Default for GuestbookEntry {
     fn default() -> Self {
         Self {
@@ -51,7 +50,6 @@ impl Default for GuestbookEntry {
         }
     }
 }
-
 /// Represents the data required to create a new guestbook entry.
 #[derive(Debug)]
 pub struct NewGuestbookEntry {
