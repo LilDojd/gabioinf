@@ -63,6 +63,8 @@ dioxus-web = { version = "0.6.0-alpha.2", features = [
   "hydrate",
 ], optional = true }
 dioxus-logger = { version = "0.5.1" }
+dioxus-resize-observer = { version = "0.3.0-alpha.1" }
+dioxus-use-mounted = { version = "0.3.0-alpha.1" }
 
 # Web
 

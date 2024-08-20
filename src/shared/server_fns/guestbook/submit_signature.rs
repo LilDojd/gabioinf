@@ -2,12 +2,12 @@
 //!
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use crate::backend::repos::Repository;
 #[cfg(feature = "server")]
 use crate::backend::AppState;
-use crate::shared::models::{Guest, GuestbookEntry, NewGuestbookEntry};
+use crate::shared::models::{Guest, GuestbookEntry};
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use validator::Validate;
 /// Request payload for creating a new guestbook entry.
@@ -38,6 +38,7 @@ pub async fn submit_signature(
     payload: CreateEntryRequest,
     guest: Guest,
 ) -> Result<Option<GuestbookEntry>, ServerFnError> {
+    use crate::shared::models::NewGuestbookEntry;
     payload.validate()?;
     let FromContext(state): FromContext<AppState> = extract().await?;
     let new_entry = NewGuestbookEntry {

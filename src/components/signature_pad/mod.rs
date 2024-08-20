@@ -1,6 +1,8 @@
 use canvas::Canvas;
 use dioxus::prelude::*;
 use dioxus::web::WebEventExt;
+use dioxus_resize_observer::use_resize;
+use dioxus_use_mounted::use_mounted;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
 mod canvas;
@@ -23,7 +25,9 @@ pub struct SignaturePadProps {
 #[component]
 pub fn SignaturePad(props: SignaturePadProps) -> Element {
     let mut canvas = use_signal(|| None::<Canvas>);
-    let set_canvas = move |event: MountedEvent| {
+    let mounted = use_mounted();
+    let canvas_resize = use_resize(mounted);
+    let set_canvas = use_callback(move |event: MountedEvent| {
         let html_canvas = event
             .as_web_event()
             .clone()
@@ -32,7 +36,8 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
         let canvas_ref = Canvas::new(html_canvas);
         canvas_ref.beautify();
         canvas.set(Some(canvas_ref));
-    };
+        mounted.onmounted(event);
+    });
     let on_signature_change = move || {
         if let Some(c) = canvas.read().as_ref() {
             let signature_data = c.get_signature_data();
@@ -57,6 +62,16 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
             on_signature_change();
         }
     };
+    use_effect(move || {
+        let size = canvas_resize();
+        match size {
+            Some(_) => {}
+            None => {
+                return ();
+            }
+        }
+        canvas.write().as_mut().unwrap().on_resize();
+    });
     rsx! {
         div {
             class: format!(
@@ -65,7 +80,7 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                 if props.disabled { "pointer-events-none opacity-50" } else { "" },
             ),
             canvas {
-                onmounted: set_canvas,
+                onmounted: move |evt| set_canvas.call(evt),
                 class: format!("relative block {}", props.class),
                 style: "touch-action: none",
                 onpointerdown: on_pointer_down,

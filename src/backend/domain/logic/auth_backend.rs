@@ -38,7 +38,7 @@ impl AuthBackend {
         self.client.authorize_url(CsrfToken::new_random).add_scopes(scopes).url()
     }
     pub fn authorize_url_unscoped(&self) -> (Url, CsrfToken) {
-        self.client.authorize_url(CsrfToken::new_random).url()
+        self.authorize_url(std::iter::empty())
     }
 }
 #[axum::async_trait]

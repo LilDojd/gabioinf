@@ -1,5 +1,6 @@
 use super::{
-    point::Point, stroke::{get_stroke, CapOptions, StrokeOptions},
+    point::Point,
+    stroke::{get_stroke, CapOptions, StrokeOptions},
     utils::get_svg_path_from_stroke,
 };
 use crate::components::signature_pad::utils::PointExt;
@@ -65,10 +66,13 @@ impl Canvas {
         let image_data = ctx
             .get_image_data(0.0, 0.0, old_width as f64, old_height as f64)
             .unwrap();
-        self.current_canvas_width.swap(&RefCell::new((rect.width() * DPI) as u32));
-        self.current_canvas_height.swap(&RefCell::new((rect.height() * DPI) as u32));
+        self.current_canvas_width
+            .swap(&RefCell::new((rect.width() * DPI) as u32));
+        self.current_canvas_height
+            .swap(&RefCell::new((rect.height() * DPI) as u32));
         self.canvas.set_width(*self.current_canvas_width.borrow());
         self.canvas.set_height(*self.current_canvas_height.borrow());
+        self.beautify();
         ctx.put_image_data(&image_data, 0.0, 0.0).unwrap();
     }
     pub fn on_mouse_down(&self, event: &PointerEvent) {
@@ -96,7 +100,9 @@ impl Canvas {
         *self.is_pressed.borrow_mut() = false;
         let point = Point::from_event(event, &self.canvas);
         self.current_line.borrow_mut().push(point);
-        self.lines.borrow_mut().push(self.current_line.borrow().clone());
+        self.lines
+            .borrow_mut()
+            .push(self.current_line.borrow().clone());
         self.current_line.borrow_mut().clear();
         self.draw_lines()
     }
@@ -171,9 +177,7 @@ impl Canvas {
                     .map(|p| p.as_vector())
                     .collect::<Vec<_>>();
                 let path = get_svg_path_from_stroke(stroke, false);
-                ctx.fill_with_path_2d(
-                    &web_sys::Path2d::new_with_path_string(&path).unwrap(),
-                );
+                ctx.fill_with_path_2d(&web_sys::Path2d::new_with_path_string(&path).unwrap());
             }
         }
     }

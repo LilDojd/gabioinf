@@ -37,7 +37,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, app: fn() -> Element) {
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)
         .with_signed(state.clone().key)
-        .with_same_site(SameSite::Strict)
+        .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
     let backend = AuthBackend::new(
         state.guest_repo.clone(),

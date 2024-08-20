@@ -1309,6 +1309,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dioxus-resize-observer"
+version = "0.3.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1a5053a9e4d622f782aeb7c70c0a786b8274be148f1e6c64a894e3f30f49e13"
+dependencies = [
+ "dioxus",
+ "dioxus-use-mounted",
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "dioxus-router"
 version = "0.6.0-alpha.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1416,6 +1429,15 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
+]
+
+[[package]]
+name = "dioxus-use-mounted"
+version = "0.3.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad6bcb4538e1ec16fbebc937e30a41a1fbcc882064a38040df31df29db2f9d4b"
+dependencies = [
+ "dioxus",
 ]
 
 [[package]]
@@ -1817,6 +1839,8 @@ dependencies = [
  "derive_more",
  "dioxus",
  "dioxus-logger",
+ "dioxus-resize-observer",
+ "dioxus-use-mounted",
  "dioxus-web",
  "forwarded-header-value",
  "futures",
