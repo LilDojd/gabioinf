@@ -27,7 +27,7 @@ COPY . .
 RUN cargo update -p wasm-bindgen --precise 0.2.92 && dx build --release --features web
 RUN cargo build --release --features server
 
-FROM debian:1.80-slim AS runtime
+FROM debian:1.80-slim-bookworm AS runtime
 WORKDIR /app
 COPY --from=builder /app/dist /usr/local/bin/dist
 COPY --from=builder /app/target/release/gabioinf /usr/local/bin
