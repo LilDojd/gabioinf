@@ -1,4 +1,8 @@
-FROM rust:1.80 AS chef
+ARG APPNAME=gabioinf
+
+ARG OUTDIR=dist
+
+FROM rust:bookworm AS chef
 
 # Install build tools
 RUN cargo install cargo-chef
@@ -14,25 +18,30 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM node:22-alpine as tailwind
 WORKDIR /app
 COPY . .
-RUN npm install && npx tailwindcss -i ./input.css -o ./assets/tailwind.css
+RUN npm install && npx tailwindcss -i ./input.css -o ./public/tailwind.css
 
 
 # Cook the dependencies using the recipe prepared earlier
 FROM chef AS builder 
 COPY --from=planner /app/recipe.json recipe.json
-COPY --from=tailwind /app/assets/tailwind.css assets/tailwind.css
+COPY --from=tailwind /app/public/tailwind.css public/tailwind.css
 RUN cargo chef cook --release --recipe-path recipe.json --features server
+RUN cargo chef cook --release --recipe-path recipe.json --features web --target wasm32-unknown-unknown
 # Copy over the source code and build the project
 COPY . .
-RUN cargo update -p wasm-bindgen --precise 0.2.92 && dx build --release --features web
-RUN cargo build --release --features server
+RUN cargo update -p wasm-bindgen --precise 0.2.92 && dx build --release --platform fullstack
+# RUN cargo build --release --features server
 
-FROM rust:1.80-slim-bookworm AS runtime
-WORKDIR /app
-COPY --from=builder /app/dist /usr/local/bin
-COPY --from=builder /app/target/release/gabioinf /usr/local/bin
-COPY --from=builder /app/config /app/config
+FROM debian:bookworm-slim AS runtime
+
+ARG OUTDIR
+ARG APPNAME
+
+WORKDIR /usr/local/bin
+RUN apt-get update && apt-get install -y openssl && apt-get clean
+COPY --from=builder /app/$OUTDIR /usr/local/bin/
+COPY --from=builder /app/config /usr/local/bin/config
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/gabioinf"] 
+ENTRYPOINT ["/usr/local/bin/server"] 

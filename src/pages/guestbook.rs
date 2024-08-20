@@ -4,8 +4,8 @@ use crate::{
     MessageValid,
 };
 use dioxus::prelude::*;
-const GITHUB_ICON: &str = asset!("assets/github-mark-white.svg");
-const LOGOUT: &str = asset!("assets/logout.svg");
+const GITHUB_ICON: &str = asset!("public/github-mark-white.svg");
+const LOGOUT: &str = asset!("public/logout.svg");
 #[component]
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
@@ -18,11 +18,7 @@ pub fn Guestbook() -> Element {
         if let Some(Ok(Some(guest))) = guest {
             spawn(async move {
                 dioxus_logger::tracing::debug!("Checking for user signature");
-                if let Ok(Some(signature)) = server_fns::load_user_signature(
-                        guest.clone(),
-                    )
-                    .await
-                {
+                if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
                     user_signature.set(Some(signature));
                 }
             });

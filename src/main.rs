@@ -11,10 +11,12 @@ mod pages;
 mod shared;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
-const TAILWIND: &str = asset!("assets/tailwind.css");
-const STYLE: &str = asset!("assets/main.css");
-const NAVBAR: &str = asset!("assets/navbar.css");
-const LINKS: &str = asset!("assets/alien_links.css");
+
+const TAILWIND: &str = asset!("public/tailwind.css");
+const STYLE: &str = asset!("public/main.css");
+const NAVBAR: &str = asset!("public/navbar.css");
+const LINKS: &str = asset!("public/alien_links.css");
+const FONT: &str = asset!("https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..800,0..1,0..1,0..1&display=swap");
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
 fn main() {
@@ -30,9 +32,9 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async move {
-                backend::server::serve(ServeConfig::builder().build(), App).await
-            });
+            .block_on(
+                async move { backend::server::serve(ServeConfig::builder().build(), App).await },
+            );
     }
 }
 #[derive(Routable, PartialEq, Clone)]
@@ -61,7 +63,7 @@ fn App() -> Element {
         head::Link { rel: "stylesheet", href: LINKS }
         head::Link {
             rel: "stylesheet",
-            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..800,0..1,0..1,0..1&display=swap",
+            href: FONT,
         }
         ErrorBoundary {
             handle_error: |errors: ErrorContext| {
