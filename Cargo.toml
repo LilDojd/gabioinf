@@ -12,7 +12,10 @@ chrono = { version = "0.4.38", features = ["clock", "serde"] }
 tracing = { version = "0.1.40" }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.122", optional = true }
-reqwest = { version = "0.12.5", features = ["json"], optional = true }
+reqwest = { version = "0.12.5", features = [
+  "json",
+  "rustls-tls",
+], optional = true }
 time = { version = "0.3.36", features = ["serde"] }
 config = { version = "0.14.0", features = ["convert-case"], optional = true }
 derive_more = { version = "0.99.18" }
