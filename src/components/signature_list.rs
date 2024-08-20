@@ -1,10 +1,8 @@
 use crate::components::{Card, CardType, CloseButton, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
-
 const SIGNATURES_PER_PAGE: usize = 8;
 const INTERSECTION_THRESHOLD: f64 = 0.5;
-
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
     #[default]
@@ -13,18 +11,14 @@ pub enum SignatureListState {
     Finished,
     MoreAvailable(u32),
 }
-
 #[component]
 pub fn SignatureList() -> Element {
     let load_state = use_signal(SignatureListState::default);
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
     let mut endless_signatures = use_signal(std::vec::Vec::new);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
-
     let mut is_intersecting = use_signal(|| false);
-
     use_effect(move || {
-        // Create and run the Intersection Observer
         let mut eval = eval(
             format!(
                 r#"
@@ -48,11 +42,10 @@ pub fn SignatureList() -> Element {
                     observer.unobserve(target);
                 }}
             }}
-            "#
+            "#,
             )
-            .as_ref(),
+                .as_ref(),
         );
-
         spawn(async move {
             while let Ok(is_intersecting_js) = eval.recv().await {
                 if let Some(value) = is_intersecting_js.as_bool() {
@@ -61,7 +54,6 @@ pub fn SignatureList() -> Element {
             }
         });
     });
-
     use_effect(move || {
         if *is_intersecting.read()
             && matches!(*load_state.read(), SignatureListState::MoreAvailable(_))
@@ -69,7 +61,6 @@ pub fn SignatureList() -> Element {
             load_next_batch.send(());
         }
     });
-
     rsx! {
         div {
             {
@@ -147,19 +138,21 @@ pub fn SignatureList() -> Element {
         }
     }
 }
-
 fn use_signature_list(
     mut state: Signal<SignatureListState>,
     mut batches: Signal<Vec<Vec<GuestbookEntry>>>,
 ) -> Coroutine<()> {
     use futures::StreamExt as _;
-
     let load_task = use_coroutine(|mut rx: UnboundedReceiver<Option<u32>>| async move {
         while let Some(next_cursor) = rx.next().await {
             let original_state = *state.read();
             state.set(SignatureListState::Loading);
-
-            match server_fns::load_signatures(next_cursor.unwrap_or(1), SIGNATURES_PER_PAGE).await {
+            match server_fns::load_signatures(
+                    next_cursor.unwrap_or(1),
+                    SIGNATURES_PER_PAGE,
+                )
+                .await
+            {
                 Ok(signatures) => {
                     if signatures.is_empty() {
                         state.set(SignatureListState::Finished);
@@ -170,13 +163,14 @@ fn use_signature_list(
                     }
                 }
                 Err(error) => {
-                    dioxus_logger::tracing::error!("Could not load signatures: {:?}", error);
+                    dioxus_logger::tracing::error!(
+                        "Could not load signatures: {:?}", error
+                    );
                     state.set(original_state);
                 }
             }
         }
     });
-
     use_coroutine(|mut rx: UnboundedReceiver<()>| async move {
         load_task.send(None);
         while rx.next().await.is_some() {

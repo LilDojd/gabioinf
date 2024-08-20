@@ -1,11 +1,9 @@
 use dioxus::prelude::*;
-
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CloseButtonProps {
     pub layout: String,
     pub onclick: EventHandler<MouseEvent>,
 }
-
 #[component]
 pub fn CloseButton(props: CloseButtonProps) -> Element {
     rsx! {

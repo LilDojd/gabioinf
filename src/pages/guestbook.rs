@@ -3,7 +3,6 @@ use crate::{
     shared::{models::GuestbookEntry, server_fns},
     MessageValid,
 };
-
 use dioxus::prelude::*;
 const GITHUB_ICON: &str = asset!("assets/github-mark-white.svg");
 const LOGOUT: &str = asset!("assets/logout.svg");
@@ -11,25 +10,24 @@ const LOGOUT: &str = asset!("assets/logout.svg");
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
-
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
-
     let mut user = use_resource(server_fns::get_user);
-
-    // Set user signature if present in DB
     use_effect(move || {
         let guest = user();
         if let Some(Ok(Some(guest))) = guest {
             spawn(async move {
                 dioxus_logger::tracing::debug!("Checking for user signature");
-                if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
+                if let Ok(Some(signature)) = server_fns::load_user_signature(
+                        guest.clone(),
+                    )
+                    .await
+                {
                     user_signature.set(Some(signature));
                 }
             });
         }
     });
-
     rsx! {
         div { class: "container mx-auto px-4 py-8",
             article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",

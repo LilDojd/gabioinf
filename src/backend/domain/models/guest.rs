@@ -1,5 +1,4 @@
 use axum_login::AuthUser;
-
 use crate::shared::models::{Guest, GuestId};
 impl AuthUser for Guest {
     type Id = GuestId;

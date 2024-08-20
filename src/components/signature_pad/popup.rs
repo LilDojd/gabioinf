@@ -15,7 +15,6 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     let mut char_count = use_signal(|| 0);
     let mut local_signature = use_signal(String::new);
     let mut message_valid = use_context::<Signal<MessageValid>>();
-
     let update_message = move |evt: Event<FormData>| {
         let new_message = evt.value();
         match new_message.chars().count() {
@@ -57,7 +56,6 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                                 class: if *char_count.read() == MAX_MESSAGE_LENGTH { "text-coral" } else { "text-stone-400" },
                                 "{char_count} / {MAX_MESSAGE_LENGTH}"
                             }
-                            // Just beneath
                             if !message_valid.read().0 {
                                 span { class: "absolute bottom-2 left-2 text-coral text-xs",
                                     "{message_valid.read().1}"

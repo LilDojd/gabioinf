@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-
 use dioxus::prelude::*;
 use shared::models::GuestbookEntry;
 use tracing::Level;
@@ -16,32 +15,26 @@ const TAILWIND: &str = asset!("assets/tailwind.css");
 const STYLE: &str = asset!("assets/main.css");
 const NAVBAR: &str = asset!("assets/navbar.css");
 const LINKS: &str = asset!("assets/alien_links.css");
-
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
-
 fn main() {
     dioxus_logger::init(Level::INFO).expect("failed to init logger");
-
     #[cfg(feature = "web")]
     dioxus_web::launch::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
-
     #[cfg(feature = "server")]
     {
         let _guard = sentry::init(sentry::ClientOptions {
             release: sentry::release_name!(),
             ..Default::default()
         });
-
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(
-                async move { backend::server::serve(ServeConfig::builder().build(), App).await },
-            );
+            .block_on(async move {
+                backend::server::serve(ServeConfig::builder().build(), App).await
+            });
     }
 }
-
 #[derive(Routable, PartialEq, Clone)]
 enum Route {
     #[layout(NavFooter)]
@@ -59,11 +52,8 @@ enum Route {
     NotFound { route: Vec<String> },
 }
 fn App() -> Element {
-    // Context providers
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
-    // Users own signature
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
-
     rsx! {
         head::Link { rel: "stylesheet", href: TAILWIND }
         head::Link { rel: "stylesheet", href: STYLE }
