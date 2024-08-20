@@ -65,9 +65,9 @@ jobs:
           cargo install sqlx-cli --no-default-features --features rustls,postgres
           sqlx migrate run
       - id: deploy
-        uses: superfly/fly-pr-review-apps@1.2.1
+        uses: LilDojd/fly-pr-review-apps@1.2.1
         with:
-          secrets: DATABASE_URL=$DATABASE_URL SENTRY_DSN=$SENTRY_DSN GABIOINF_SECRET=$GABIOINF_SECRET
+          secrets: DATABASE_URL=${{ steps.create_branch.outputs.db_url_with_pooler }} SENTRY_DSN=$SENTRY_DSN GABIOINF_SECRET=$GABIOINF_SECRET
           name: gabioinf-pr-${{ github.event.number }}
 
       - name: Comment on Pull Request
@@ -91,7 +91,7 @@ jobs:
           branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
       - name: Delete Fly preview
-        uses: superfly/fly-pr-review-apps@1.2.1
+        uses: LilDojd/fly-pr-review-apps@1.2.1
         with:
           name: gabioinf-pr-${{ github.event.number }}
       - name: Clean up GitHub environment
