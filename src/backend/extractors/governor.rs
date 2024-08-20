@@ -77,18 +77,21 @@ fn maybe_x_real_ip(headers: &HeaderMap) -> Option<IpAddr> {
 }
 /// Tries to parse `forwarded` headers
 fn maybe_forwarded(headers: &HeaderMap) -> Option<IpAddr> {
-    headers.get_all(FORWARDED).iter().find_map(|hv| {
-        hv.to_str()
-            .ok()
-            .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
-            .and_then(|f| {
-                f.iter()
-                    .filter_map(|fs| fs.forwarded_for.as_ref())
-                    .find_map(|ff| match ff {
-                        Identifier::SocketAddr(a) => Some(a.ip()),
-                        Identifier::IpAddr(ip) => Some(*ip),
-                        _ => None,
-                    })
-            })
-    })
+    headers
+        .get_all(FORWARDED)
+        .iter()
+        .find_map(|hv| {
+            hv.to_str()
+                .ok()
+                .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
+                .and_then(|f| {
+                    f.iter()
+                        .filter_map(|fs| fs.forwarded_for.as_ref())
+                        .find_map(|ff| match ff {
+                            Identifier::SocketAddr(a) => Some(a.ip()),
+                            Identifier::IpAddr(ip) => Some(*ip),
+                            _ => None,
+                        })
+                })
+        })
 }
