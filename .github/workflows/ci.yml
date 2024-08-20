@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 env:
   DATABASE_URL: "postgres://postgres:postgres@localhost:5432/postgres"
-  GABIOINF_SECRET: ${{ GABIOINF_SECRET }}
+  GABIOINF_SECRET: ${{ secrets.GABIOINF_SECRET }}
 
 jobs:
   build-and-test:
