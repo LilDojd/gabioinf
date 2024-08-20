@@ -35,6 +35,8 @@ jobs:
           project_id: ${{ env.NEON_PROJECT_ID }}
           username: "gabioinf_owner"
           branch_name: preview/${{ steps.branch-name.outputs.current_branch }}
+          parent: develop
+          database: gabioinf
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: |
           echo "DATABASE_URL=${{ steps.create-branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
