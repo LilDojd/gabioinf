@@ -1040,7 +1040,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "axum",
  "dioxus-config-macro",
@@ -1063,7 +1063,7 @@ dependencies = [
 [[package]]
 name = "dioxus-cli-config"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "built",
  "clap",
@@ -1076,7 +1076,7 @@ dependencies = [
 [[package]]
 name = "dioxus-config-macro"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1085,7 +1085,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "const_format",
  "futures-channel",
@@ -1105,7 +1105,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "convert_case 0.6.0",
  "dioxus-rsx",
@@ -1118,7 +1118,7 @@ dependencies = [
 [[package]]
 name = "dioxus-fullstack"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "async-trait",
  "axum",
@@ -1158,7 +1158,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-core",
  "dioxus-signals",
@@ -1174,7 +1174,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-cli-config",
  "dioxus-core",
@@ -1194,7 +1194,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "async-trait",
  "dioxus-core",
@@ -1221,7 +1221,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html-internal-macro"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -1232,7 +1232,7 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -1248,7 +1248,7 @@ dependencies = [
 [[package]]
 name = "dioxus-lib"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-config-macro",
  "dioxus-core",
@@ -1262,7 +1262,7 @@ dependencies = [
 [[package]]
 name = "dioxus-liveview"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "axum",
  "dioxus-cli-config",
@@ -1299,7 +1299,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-cli-config",
  "dioxus-fullstack",
@@ -1319,7 +1319,7 @@ dependencies = [
 [[package]]
 name = "dioxus-router-macro"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1330,7 +1330,7 @@ dependencies = [
 [[package]]
 name = "dioxus-rsx"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-core",
  "internment",
@@ -1345,7 +1345,7 @@ dependencies = [
 [[package]]
 name = "dioxus-signals"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "dioxus-core",
  "futures-channel",
@@ -1361,7 +1361,7 @@ dependencies = [
 [[package]]
 name = "dioxus-ssr"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "askama_escape",
  "async-trait",
@@ -1383,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "dioxus-static-site-generation"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "axum",
  "dioxus-cli-config",
@@ -1403,7 +1403,7 @@ dependencies = [
 [[package]]
 name = "dioxus-web"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "ciborium",
  "console_error_panic_hook",
@@ -1429,7 +1429,7 @@ dependencies = [
 [[package]]
 name = "dioxus_server_macro"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -1802,7 +1802,6 @@ dependencies = [
  "getrandom",
  "governor",
  "instant",
- "js-sys",
  "markdown",
  "oauth2",
  "rand",
@@ -1824,14 +1823,13 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "validator",
- "wasm-bindgen",
  "web-sys",
 ]
 
 [[package]]
 name = "generational-box"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 dependencies = [
  "parking_lot",
 ]
@@ -2651,7 +2649,7 @@ dependencies = [
 [[package]]
 name = "lazy-js-bundle"
 version = "0.6.0-alpha.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#8e613d3bccafef265a19ff5d00cefd712c6a3c8d"
+source = "git+https://github.com/DioxusLabs/dioxus.git#005d52468d00bdd2df3ab6ca6f1ae81b96e5c47d"
 
 [[package]]
 name = "lazy_static"

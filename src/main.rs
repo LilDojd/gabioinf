@@ -32,9 +32,9 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async move {
-                backend::server::serve(ServeConfig::builder().build(), App).await
-            });
+            .block_on(
+                async move { backend::server::serve(ServeConfig::new().unwrap(), App).await },
+            );
     }
 }
 #[derive(Routable, PartialEq, Clone)]

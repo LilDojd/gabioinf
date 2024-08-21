@@ -1,9 +1,9 @@
 use crate::use_mounted::UseMounted;
 use dioxus::prelude::*;
-use js_sys::Array;
 use std::rc::Rc;
-use wasm_bindgen::closure::Closure;
-use wasm_bindgen::JsCast;
+use web_sys::js_sys::Array;
+use web_sys::wasm_bindgen::closure::Closure;
+use web_sys::wasm_bindgen::JsCast;
 use web_sys::DomRectReadOnly;
 use web_sys::ResizeObserver;
 use web_sys::ResizeObserverEntry;
@@ -13,7 +13,9 @@ pub type Rect = DomRectReadOnly;
 pub fn use_size(mounted: UseMounted) -> Rect {
     let resize = use_resize(mounted);
     let resize_ref = resize.read();
-    resize_ref.clone().unwrap_or_else(|| DomRectReadOnly::new().unwrap())
+    resize_ref
+        .clone()
+        .unwrap_or_else(|| DomRectReadOnly::new().unwrap())
 }
 /// Hook to get an element's resize events as a signal.
 pub fn use_resize(mounted: UseMounted) -> Signal<Option<Rect>> {
@@ -22,25 +24,19 @@ pub fn use_resize(mounted: UseMounted) -> Signal<Option<Rect>> {
     use_effect(move || {
         if let Some(mounted) = mounted.signal.read().clone() {
             maybe_unobserve(state_ref);
-            let on_resize = Closure::<
-                dyn FnMut(Array),
-            >::new(move |entries: Array| {
+            let on_resize = Closure::<dyn FnMut(Array)>::new(move |entries: Array| {
                 let entry = entries.at(0);
                 let entry: ResizeObserverEntry = entry.dyn_into().unwrap();
                 size_ref.set(Some(entry.content_rect()));
             });
-            let resize_observer = ResizeObserver::new(on_resize.as_ref().unchecked_ref())
-                .unwrap();
+            let resize_observer = ResizeObserver::new(on_resize.as_ref().unchecked_ref()).unwrap();
             let raw_elem = get_raw_element(&mounted);
             resize_observer.observe(raw_elem);
-            state_ref
-                .set(
-                    Some(State {
-                        resize_observer,
-                        mounted,
-                        _on_resize: on_resize,
-                    }),
-                );
+            state_ref.set(Some(State {
+                resize_observer,
+                mounted,
+                _on_resize: on_resize,
+            }));
         } else {
             maybe_unobserve(state_ref);
         }
