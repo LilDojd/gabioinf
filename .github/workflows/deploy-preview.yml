@@ -68,10 +68,10 @@ jobs:
       - id: deploy
         uses: LilDojd/fly-pr-review-apps@1.2.1
         with:
-          secrets: |
-            DATABASE_URL=${{ steps.create_branch.outputs.db_url_with_pooler }} \
-            SENTRY_DSN=$SENTRY_DSN \
-            GABIOINF_SECRET=$GABIOINF_SECRET \
+          secrets: >
+            DATABASE_URL=${{ steps.create_branch.outputs.db_url_with_pooler }}
+            SENTRY_DSN=$SENTRY_DSN
+            GABIOINF_SECRET=$GABIOINF_SECRET
             DOMAIN_URL=$DOMAIN_URL
           name: gabioinf-pr-${{ github.event.number }}
 
