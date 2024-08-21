@@ -9,8 +9,7 @@ serve:
     dx serve
 
 build:
-    dx build --features web
-    cargo build --features server
+    dx build --platform fullstack
 
 # Format Rust code
 format:
