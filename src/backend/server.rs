@@ -30,7 +30,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         config.gabioinf.id.as_str(),
         config.gabioinf.secret.as_str(),
     );
-    let client = build_oauth_client(client_id, client_secret);
+    let client = build_oauth_client(client_id, client_secret, domain);
     let state = AppState::new(postgres.clone(), domain.to_string(), client.clone());
     let session_store = PostgresStore::new(postgres.clone());
     session_store.migrate().await.unwrap();

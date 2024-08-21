@@ -16,6 +16,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GABIOINF_SECRET: ${{ secrets.GABIOINF_SECRET }}
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  DOMAIN_URL: gabioinf-pr-${{ github.event.number }}.fly.dev
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
