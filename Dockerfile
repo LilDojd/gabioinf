@@ -24,12 +24,13 @@ RUN npm install && npx tailwindcss -i ./input.css -o ./public/tailwind.css
 # Cook the dependencies using the recipe prepared earlier
 FROM chef AS builder 
 COPY --from=planner /app/recipe.json recipe.json
-COPY --from=tailwind /app/public/tailwind.css public/tailwind.css
 RUN cargo chef cook --release --recipe-path recipe.json --features server
 RUN cargo chef cook --release --recipe-path recipe.json --features web --target wasm32-unknown-unknown
 # Copy over the source code and build the project
 # Note that we control profiles for server and client by ./cargo/cargo.toml
 COPY . .
+# Copy tailwind.css we generated earlier
+COPY --from=tailwind /app/public/tailwind.css ./public/tailwind.css
 RUN dx build --platform fullstack --release
 
 FROM debian:bookworm-slim AS runtime
