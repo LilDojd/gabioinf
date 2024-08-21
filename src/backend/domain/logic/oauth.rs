@@ -4,8 +4,7 @@ use crate::backend::domain::logic::AuthSession;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{
-    extract::Query,
-    response::{IntoResponse, Redirect},
+    extract::Query, response::{IntoResponse, Redirect},
     Router,
 };
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, TokenUrl};
@@ -32,36 +31,31 @@ pub fn router() -> Router<()> {
 ///
 /// A `BasicClient` object for the GitHub OAuth provider
 ///
-pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S, domain: S) -> BasicClient {
+pub fn build_oauth_client<S: AsRef<str>>(
+    client_id: S,
+    client_secret: S,
+    domain: S,
+) -> BasicClient {
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
+    let token_url = TokenUrl::new(
+            "https://github.com/login/oauth/access_token".to_string(),
+        )
         .expect("Invalid token endpoint URL");
     let oauth_redirect_uri = if domain.as_ref().contains("localhost:") {
-        // e.g http://localhost:8080/some/path
-        let port = domain
-            .as_ref()
-            .split(':')
-            .last()
-            .unwrap()
-            .split('/')
-            .next()
-            .unwrap();
-
+        let port = domain.as_ref().split(':').last().unwrap().split('/').next().unwrap();
         format!("http://localhost:{port}/v1/oauth/callback")
     } else {
         format!("https://{}/v1/oauth/callback", domain.as_ref())
     };
-
     dioxus_logger::tracing::debug!("OAuth redirect URI: {}", oauth_redirect_uri);
-
     BasicClient::new(
-        ClientId::new(client_id.as_ref().to_owned()),
-        Some(ClientSecret::new(client_secret.as_ref().to_owned())),
-        auth_url,
-        Some(token_url),
-    )
-    .set_redirect_uri(RedirectUrl::new(oauth_redirect_uri).unwrap())
+            ClientId::new(client_id.as_ref().to_owned()),
+            Some(ClientSecret::new(client_secret.as_ref().to_owned())),
+            auth_url,
+            Some(token_url),
+        )
+        .set_redirect_uri(RedirectUrl::new(oauth_redirect_uri).unwrap())
 }
 mod get {
     use super::*;
@@ -69,10 +63,7 @@ mod get {
     pub async fn callback(
         mut auth_session: AuthSession,
         session: Session,
-        Query(AuthzResp {
-            code,
-            state: new_state,
-        }): Query<AuthzResp>,
+        Query(AuthzResp { code, state: new_state }): Query<AuthzResp>,
     ) -> impl IntoResponse {
         let Ok(Some(old_state)) = session.get(CSRF_STATE_KEY).await else {
             return StatusCode::BAD_REQUEST.into_response();

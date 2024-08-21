@@ -1,5 +1,5 @@
 use crate::{
-    components::{ButtonVariant, SignaturePad, StyledButton},
+    components::{signature_pad::Canvas, ButtonVariant, SignaturePad, StyledButton},
     MessageValid,
 };
 use dioxus::prelude::*;
@@ -14,6 +14,13 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     let mut message = use_signal(String::new);
     let mut char_count = use_signal(|| 0);
     let mut local_signature = use_signal(String::new);
+    let mut canvas_ref = use_signal(|| None::<Canvas>);
+    let trim_on_submit = use_callback(move |_| {
+        if let Some(canvas) = canvas_ref.read().as_ref() {
+            let trimmed_signature = canvas.trim_to_image();
+            props.on_submit.call((message.read().clone(), trimmed_signature));
+        }
+    });
     let mut message_valid = use_context::<Signal<MessageValid>>();
     let update_message = move |evt: Event<FormData>| {
         let new_message = evt.value();
@@ -74,6 +81,9 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                             on_change: move |value: Option<String>| {
                                 local_signature.set(value.unwrap_or_default());
                             },
+                            on_canvas_ready: move |canvas: Canvas| {
+                                canvas_ref.set(Some(canvas));
+                            },
                         }
                     }
                     div { class: "flex justify-end space-x-4",
@@ -85,9 +95,7 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                         StyledButton {
                             text: "Sign",
                             variant: ButtonVariant::Primary,
-                            onclick: move |_| {
-                                props.on_submit.call((message.read().clone(), local_signature.read().clone()));
-                            },
+                            onclick: trim_on_submit,
                         }
                     }
                 }

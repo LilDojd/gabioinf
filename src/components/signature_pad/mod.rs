@@ -1,10 +1,10 @@
-use crate::use_mounted::use_mounted;
-use crate::use_resize_observer::use_resize;
 use canvas::Canvas;
 use dioxus::prelude::*;
 use dioxus::web::WebEventExt;
+use wasm_bindgen::closure::Closure;
+use web_sys::js_sys::Array;
 use web_sys::wasm_bindgen::JsCast;
-use web_sys::HtmlCanvasElement;
+use web_sys::{HtmlCanvasElement, ResizeObserver};
 mod canvas;
 mod point;
 mod popup;
@@ -21,22 +21,35 @@ pub struct SignaturePadProps {
     disabled: bool,
     #[props(default)]
     on_change: Option<EventHandler<Option<String>>>,
+    #[props(default)]
+    on_canvas_ready: Option<EventHandler<Canvas>>,
 }
 #[component]
 pub fn SignaturePad(props: SignaturePadProps) -> Element {
     let mut canvas = use_signal(|| None::<Canvas>);
-    let mounted = use_mounted();
-    let canvas_resize = use_resize(mounted);
+    let mut observer = use_signal(|| None::<ResizeObserver>);
     let set_canvas = use_callback(move |event: MountedEvent| {
         let html_canvas = event
             .as_web_event()
             .clone()
             .dyn_into::<HtmlCanvasElement>()
             .unwrap();
-        let canvas_ref = Canvas::new(html_canvas);
+        let mut canvas_ref = Canvas::new(html_canvas);
         canvas_ref.beautify();
-        canvas.set(Some(canvas_ref));
-        mounted.onmounted(event);
+        canvas.set(Some(canvas_ref.clone()));
+        if let Some(on_canvas_ready) = &props.on_canvas_ready {
+            on_canvas_ready.call(canvas_ref.clone());
+        }
+        let on_resize = Closure::<
+            dyn FnMut(Array),
+        >::new(move |_entries: Array| {
+                canvas_ref.on_resize();
+            })
+            .into_js_value();
+        let resize_observer = ResizeObserver::new(on_resize.as_ref().unchecked_ref())
+            .unwrap();
+        resize_observer.observe(event.downcast::<web_sys::Element>().unwrap());
+        observer.set(Some(resize_observer));
     });
     let on_signature_change = move || {
         if let Some(c) = canvas.read().as_ref() {
@@ -62,16 +75,6 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
             on_signature_change();
         }
     };
-    use_effect(move || {
-        let size = canvas_resize();
-        match size {
-            Some(_) => {}
-            None => {
-                return;
-            }
-        }
-        canvas.write().as_mut().unwrap().on_resize();
-    });
     rsx! {
         div {
             class: format!(
