@@ -95,7 +95,7 @@ jobs:
         with:
           name: gabioinf-pr-${{ github.event.number }}
       - name: Clean up GitHub environment
-        uses: strumwolf/delete-deployment-environment@v2
+        uses: strumwolf/delete-deployment-environment@v3
         if: ${{ github.event.action == 'closed' }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
