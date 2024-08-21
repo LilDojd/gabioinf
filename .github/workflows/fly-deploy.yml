@@ -7,7 +7,7 @@ jobs:
     name: Deploy app
     environment:
       name: production
-      url: gabioinf.dev
+      url: https://gabioinf.dev
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-to-fly
