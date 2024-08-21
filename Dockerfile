@@ -24,6 +24,7 @@ RUN npm install && npx tailwindcss -i ./input.css -o ./public/tailwind.css
 # Cook the dependencies using the recipe prepared earlier
 FROM chef AS builder 
 COPY --from=planner /app/recipe.json recipe.json
+RUN apt-get update && apt-get install -y libssl-dev pkg-config && apt-get clean
 RUN cargo chef cook --release --recipe-path recipe.json --features server
 RUN cargo chef cook --release --recipe-path recipe.json --features web --target wasm32-unknown-unknown
 # Copy over the source code and build the project
@@ -39,7 +40,9 @@ ARG OUTDIR
 ARG APPNAME
 
 WORKDIR /usr/local/bin
-RUN apt-get update && apt-get install -y openssl && apt-get clean
+RUN apt-get update \
+  && apt-get install -y libssl-dev pkg-config ca-certificates \
+  && apt-get clean && update-ca-certificates
 COPY --from=builder /app/$OUTDIR /usr/local/bin
 COPY --from=builder /app/config /usr/local/bin/config
 
