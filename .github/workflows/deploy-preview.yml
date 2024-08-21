@@ -54,7 +54,7 @@ jobs:
           project_id: ${{ env.NEON_PROJECT_ID }}
           username: "gabioinf_owner"
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
-          parent: develop
+          parent: main
           database: gabioinf
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: |
