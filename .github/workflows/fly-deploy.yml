@@ -1,0 +1,23 @@
+name: Fly Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy app
+    environment:
+      name: production
+      url: gabioinf.dev
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-to-fly
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

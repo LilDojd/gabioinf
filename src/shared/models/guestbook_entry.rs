@@ -1,15 +1,15 @@
 use super::GuestId;
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use sqlx::{FromRow, Type};
+use time::OffsetDateTime;
 extern crate derive_more;
 use derive_more::{From, Into};
 /// Represents an ID of a guestbook entry
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with guestbook IDs.
-#[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, From, Into, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, From, Into, PartialEq)]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestbookId(pub(crate) i64);
 impl GuestbookId {
@@ -18,7 +18,7 @@ impl GuestbookId {
     }
 }
 /// Represents an entry in the guestbook.
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct GuestbookEntry {
     /// The unique identifier for the guestbook entry.
@@ -29,13 +29,26 @@ pub struct GuestbookEntry {
     /// This is typically stored as Base64 encoded image data.
     pub signature: Option<String>,
     /// The timestamp when the guestbook entry was created.
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
     /// The timestamp when the guestbook entry was last updated.
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: OffsetDateTime,
     /// The ID of the guest who authored this entry.
     pub author_id: GuestId,
     /// The username of the guest who authored this entry.
     pub author_username: String,
+}
+impl Default for GuestbookEntry {
+    fn default() -> Self {
+        Self {
+            id: GuestbookId(0),
+            message: "".to_string(),
+            signature: None,
+            created_at: OffsetDateTime::now_utc(),
+            updated_at: OffsetDateTime::now_utc(),
+            author_id: GuestId(0),
+            author_username: "".to_string(),
+        }
+    }
 }
 /// Represents the data required to create a new guestbook entry.
 #[derive(Debug)]

@@ -16,7 +16,7 @@
       {
         "ordinal": 2,
         "name": "signature",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -32,6 +32,11 @@
         "ordinal": 5,
         "name": "author_id",
         "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "author_username",
+        "type_info": "Varchar"
       }
     ],
     "parameters": {
@@ -43,6 +48,7 @@
       false,
       false,
       true,
+      false,
       false,
       false,
       false

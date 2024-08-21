@@ -10,13 +10,12 @@ default_platform = "fullstack"
 # `build` & `serve` dist path
 out_dir = "dist"
 
-# resource (assets) file folder
-asset_dir = "assets"
+asset_dir = "public"
 
 [web.app]
 
 # HTML title tag content
-title = "gabioinf_test"
+title = "gabioinf"
 
 [web.watcher]
 
@@ -24,4 +23,17 @@ title = "gabioinf_test"
 reload_html = true
 
 # which files or dirs will be watcher monitoring
-watch_path = ["src", "assets"]
+watch_path = ["src", "public"]
+
+# include `assets` in web platform
+[web.resource]
+
+# CSS style file
+style = []
+
+# Javascript code file
+script = []
+
+[web.resource.dev]
+
+script = []

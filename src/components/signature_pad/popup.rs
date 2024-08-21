@@ -15,28 +15,33 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     let mut char_count = use_signal(|| 0);
     let mut local_signature = use_signal(String::new);
     let mut message_valid = use_context::<Signal<MessageValid>>();
-
     let update_message = move |evt: Event<FormData>| {
         let new_message = evt.value();
-        if new_message.chars().count() < MAX_MESSAGE_LENGTH {
-            message.set(new_message.clone());
-            char_count.set(new_message.chars().count());
-            message_valid.write().0 = true;
-        } else if new_message.chars().count() == MAX_MESSAGE_LENGTH {
-            message.set(new_message.clone());
-            char_count.set(new_message.chars().count());
-            message_valid.write().0 = false;
-            message_valid.write().1 = "Too long".to_string();
-        } else {
-            message_valid.write().0 = false;
-            message_valid.write().1 = "Too long".to_string();
+        match new_message.chars().count() {
+            n if n < MAX_MESSAGE_LENGTH => {
+                message.set(new_message.clone());
+                char_count.set(n);
+                message_valid.write().0 = true;
+            }
+            MAX_MESSAGE_LENGTH => {
+                message.set(new_message.clone());
+                char_count.set(MAX_MESSAGE_LENGTH);
+                message_valid.write().0 = false;
+                message_valid.write().1 = "Too long".to_string();
+            }
+            _ => {
+                message_valid.write().0 = false;
+                message_valid.write().1 = "Too long".to_string();
+            }
         }
     };
     rsx! {
         div { class: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50",
             div { class: "bg-nasty-black rounded-lg p-6 sm:max-w-lg w-full min-w-0 border border-onyx shadow-lg",
                 h2 { class: "text-xl font-bold mb-4 text-stone-100", "Sign guestbook" }
-                form { class: "space-y-4", prevent_default: "onsubmit",
+                form {
+                    class: "space-y-4",
+                    onsubmit: move |evt| evt.prevent_default(),
                     div {
                         label { class: "block text-stone-400 mb-2", "leave a message" }
                         div { class: "relative",
@@ -53,7 +58,6 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                                 class: if *char_count.read() == MAX_MESSAGE_LENGTH { "text-coral" } else { "text-stone-400" },
                                 "{char_count} / {MAX_MESSAGE_LENGTH}"
                             }
-                            // Just beneath
                             if !message_valid.read().0 {
                                 span { class: "absolute bottom-2 left-2 text-coral text-xs",
                                     "{message_valid.read().1}"

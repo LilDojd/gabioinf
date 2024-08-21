@@ -1,3 +1,4 @@
+#![allow(unused)]
 use serde::{de::DeserializeOwned, Serialize};
 /// A trait defining the common operations for a repository.
 ///
