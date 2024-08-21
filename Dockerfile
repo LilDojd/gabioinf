@@ -30,7 +30,8 @@ RUN cargo chef cook --release --recipe-path recipe.json --features web --target 
 # Copy over the source code and build the project
 # Note that we control profiles for server and client by ./cargo/cargo.toml
 COPY . .
-RUN dx build --platform fullstack
+RUN dx build --platform web
+RUN cargo build --features server --release
 
 FROM debian:bookworm-slim AS runtime
 
@@ -39,7 +40,8 @@ ARG APPNAME
 
 WORKDIR /usr/local/bin
 RUN apt-get update && apt-get install -y openssl && apt-get clean
-COPY --from=builder /app/$OUTDIR /usr/local/bin/
+COPY --from=builder /app/$OUTDIR /usr/local/bin/public
+COPY --from=builder /app/target/release/$APPNAME /usr/local/bin/server
 COPY --from=builder /app/config /usr/local/bin/config
 
 EXPOSE 8080
