@@ -1791,7 +1791,6 @@ dependencies = [
  "axum-extra",
  "axum-helmet",
  "axum-login",
- "axum-macros",
  "axum-server",
  "config",
  "derive_more",
@@ -1822,8 +1821,9 @@ dependencies = [
  "tower-sessions-sqlx-store",
  "tower_governor",
  "tracing",
- "tracing-subscriber",
  "validator",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
 ]
 

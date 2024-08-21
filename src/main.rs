@@ -1,8 +1,7 @@
 #![allow(non_snake_case)]
-use std::str::FromStr;
-
 use dioxus::prelude::*;
 use shared::models::GuestbookEntry;
+use std::str::FromStr;
 use tracing::Level;
 #[cfg(feature = "server")]
 mod backend;
@@ -11,8 +10,6 @@ mod hide;
 mod markdown;
 mod pages;
 mod shared;
-mod use_mounted;
-mod use_resize_observer;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
 const TAILWIND: &str = asset!("public/tailwind.css");
@@ -23,10 +20,8 @@ const LINKS: &str = asset!("public/alien_links.css");
 pub struct MessageValid(bool, String);
 fn main() {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
-
     #[cfg(feature = "web")]
     dioxus_web::launch::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
     #[cfg(feature = "server")]
@@ -38,9 +33,9 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(
-                async move { backend::server::serve(ServeConfig::new().unwrap(), App).await },
-            );
+            .block_on(async move {
+                backend::server::serve(ServeConfig::new().unwrap(), App).await
+            });
     }
 }
 #[derive(Routable, PartialEq, Clone)]
