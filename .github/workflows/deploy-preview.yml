@@ -70,9 +70,9 @@ jobs:
         with:
           secrets: >
             DATABASE_URL=${{ steps.create_branch.outputs.db_url_with_pooler }}
-            SENTRY_DSN=$SENTRY_DSN
-            GABIOINF_SECRET=$GABIOINF_SECRET
-            DOMAIN_URL=$DOMAIN_URL
+            SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            GABIOINF_SECRET=${{ secrets.GABIOINF_SECRET }}
+            DOMAIN_URL=gabioinf-pr-${{ github.event.number }}.fly.dev
           name: gabioinf-pr-${{ github.event.number }}
 
       - name: Comment on Pull Request
