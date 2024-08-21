@@ -1,12 +1,10 @@
 use dioxus::prelude::*;
-
 #[component]
 pub fn Loading() -> Element {
     rsx! {
         Spinner {}
     }
 }
-
 fn Spinner() -> Element {
     rsx! {
         div { class: "relative rounded-xl overflow-auto p-2",

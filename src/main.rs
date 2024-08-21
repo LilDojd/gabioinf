@@ -1,42 +1,42 @@
 #![allow(non_snake_case)]
-
 use dioxus::prelude::*;
-use dioxus_logger::tracing::info;
 use shared::models::GuestbookEntry;
 use tracing::Level;
 #[cfg(feature = "server")]
 mod backend;
 mod components;
+mod hide;
 mod markdown;
 mod pages;
 mod shared;
+mod use_mounted;
+mod use_resize_observer;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
-const TAILWIND: &str = asset!("assets/tailwind.css");
-const STYLE: &str = asset!("assets/main.css");
-const NAVBAR: &str = asset!("assets/navbar.css");
-const LINKS: &str = asset!("assets/alien_links.css");
-
+const TAILWIND: &str = asset!("public/tailwind.css");
+const STYLE: &str = asset!("public/main.css");
+const NAVBAR: &str = asset!("public/navbar.css");
+const LINKS: &str = asset!("public/alien_links.css");
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
-
 fn main() {
     dioxus_logger::init(Level::INFO).expect("failed to init logger");
-
     #[cfg(feature = "web")]
     dioxus_web::launch::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
-
     #[cfg(feature = "server")]
     {
-        info!("Starting server");
+        let _guard = sentry::init(sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        });
+        dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
             .block_on(
-                async move { backend::server::serve(ServeConfig::builder().build(), App).await },
+                async move { backend::server::serve(ServeConfig::new().unwrap(), App).await },
             );
     }
 }
-
 #[derive(Routable, PartialEq, Clone)]
 enum Route {
     #[layout(NavFooter)]
@@ -54,11 +54,8 @@ enum Route {
     NotFound { route: Vec<String> },
 }
 fn App() -> Element {
-    // Context providers
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
-    // Users own signature
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
-
     rsx! {
         head::Link { rel: "stylesheet", href: TAILWIND }
         head::Link { rel: "stylesheet", href: STYLE }
@@ -66,7 +63,7 @@ fn App() -> Element {
         head::Link { rel: "stylesheet", href: LINKS }
         head::Link {
             rel: "stylesheet",
-            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..800,0..1,0..1,0..1&display=swap",
+            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap",
         }
         ErrorBoundary {
             handle_error: |errors: ErrorContext| {

@@ -1,9 +1,7 @@
 use crate::backend::domain::logic::{oauth::CSRF_STATE_KEY, AuthSession};
 use axum::{
-    http::StatusCode,
     response::{IntoResponse, Redirect},
-    routing::get,
-    Form, Router,
+    routing::get, Form, Router,
 };
 use axum_login::tower_sessions::Session;
 use serde::Deserialize;
@@ -15,10 +13,8 @@ pub struct NextUrl {
 pub fn router() -> Router<()> {
     Router::new().route("/login", get(self::get::login))
 }
-
 mod get {
     use super::*;
-
     pub async fn login(
         auth_session: AuthSession,
         session: Session,

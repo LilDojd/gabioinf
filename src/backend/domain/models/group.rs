@@ -19,6 +19,7 @@ pub enum Group {
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroupEntry {
     /// The unique identifier for the group.
+    #[allow(dead_code)]
     pub id: i16,
     /// The type of the group.
     pub name: Group,

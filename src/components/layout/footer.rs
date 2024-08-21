@@ -1,5 +1,4 @@
 use crate::Route;
-use chrono::Datelike;
 use dioxus::prelude::*;
 #[derive(Props, Clone, Debug, PartialEq, Eq)]
 struct AreciboDateProps {
@@ -222,7 +221,7 @@ fn AreciboIcons() -> Element {
             {Grid(grid)}
             img {
                 class: "w-4 h-4",
-                src: asset!("assets/heart.svg"),
+                src: asset!("public/heart.svg"),
                 alt: "Pluto",
                 title: "With love, Pluto",
             }
@@ -231,7 +230,7 @@ fn AreciboIcons() -> Element {
 }
 #[component]
 pub fn Footer() -> Element {
-    let year = chrono::Utc::now().year();
+    let year = time::OffsetDateTime::now_utc().year();
     rsx! {
         footer { class: "bg-nasty-black text-stone-100 fixed bottom-0 left-0 right-0 z-10 border-t border-jet py-2",
             div { class: "max-w-screen-xl mx-auto flex justify-between items-center px-4",

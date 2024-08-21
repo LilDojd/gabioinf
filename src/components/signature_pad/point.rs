@@ -1,7 +1,7 @@
-use std::ops::{Add, Mul, Sub};
-use dioxus::prelude::*;
-use web_sys::HtmlCanvasElement;
 use super::utils::PointExt;
+use dioxus::prelude::*;
+use std::ops::{Add, Mul, Sub};
+use web_sys::HtmlCanvasElement;
 #[derive(Clone, Debug, Copy)]
 pub struct Point {
     pub x: f64,

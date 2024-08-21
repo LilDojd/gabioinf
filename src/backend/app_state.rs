@@ -4,10 +4,7 @@
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
 use crate::{
-    backend::{
-        db::DbConnPool,
-        repos::{GroupsAndPermissionsRepo, PgRepository},
-    },
+    backend::{db::DbConnPool, repos::{GroupsAndPermissionsRepo, PgRepository}},
     shared::models::{Guest, GuestbookEntry},
 };
 use axum::extract::FromRef;
@@ -43,7 +40,6 @@ impl FromRef<AppState> for Key {
         state.key.clone()
     }
 }
-
 impl AppState {
     /// Creates a new instance of `AppState`.
     ///
