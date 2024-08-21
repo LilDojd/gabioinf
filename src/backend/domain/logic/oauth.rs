@@ -38,10 +38,22 @@ pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S, domain:
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
         .expect("Invalid token endpoint URL");
     let oauth_redirect_uri = if domain.as_ref().contains("localhost:") {
-        format!("http://{}/v1/oauth/callback", domain.as_ref())
+        // e.g http://localhost:8080/some/path
+        let port = domain
+            .as_ref()
+            .split(':')
+            .last()
+            .unwrap()
+            .split('/')
+            .next()
+            .unwrap();
+
+        format!("http://localhost:{port}/v1/oauth/callback")
     } else {
         format!("https://{}/v1/oauth/callback", domain.as_ref())
     };
+
+    dioxus_logger::tracing::debug!("OAuth redirect URI: {}", oauth_redirect_uri);
 
     BasicClient::new(
         ClientId::new(client_id.as_ref().to_owned()),

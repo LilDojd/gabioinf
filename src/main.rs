@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+use std::str::FromStr;
+
 use dioxus::prelude::*;
 use shared::models::GuestbookEntry;
 use tracing::Level;
@@ -20,7 +22,11 @@ const LINKS: &str = asset!("public/alien_links.css");
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
 fn main() {
-    dioxus_logger::init(Level::INFO).expect("failed to init logger");
+    let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+
+    dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
+        .expect("failed to init logger");
+
     #[cfg(feature = "web")]
     dioxus_web::launch::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
     #[cfg(feature = "server")]

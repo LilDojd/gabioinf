@@ -39,7 +39,6 @@ ARG OUTDIR
 ARG APPNAME
 
 WORKDIR /usr/local/bin
-RUN apt-get update && apt-get install -y openssl && apt-get clean
 COPY --from=builder /app/$OUTDIR /usr/local/bin
 COPY --from=builder /app/config /usr/local/bin/config
 
