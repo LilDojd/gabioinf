@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO guestbook (message, signature, author_id)\n            VALUES ($1, $2, $3)\n            RETURNING *\n            ",
+  "query": "SELECT * FROM guestbook ORDER BY created_at DESC LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -16,7 +16,7 @@
       {
         "ordinal": 2,
         "name": "signature",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -32,12 +32,16 @@
         "ordinal": 5,
         "name": "author_id",
         "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "author_username",
+        "type_info": "Varchar"
       }
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Varchar",
+        "Int8",
         "Int8"
       ]
     },
@@ -47,8 +51,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "4fac131c4287b4f6339544787c9baa25ec63ade646ee098f23074b5b355d2b54"
+  "hash": "d212d949a8e3ececa0b4e851ddf133ff29c5c9bf24ef9c2c078c63332857611c"
 }

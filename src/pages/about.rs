@@ -26,7 +26,7 @@ pub fn AboutMe() -> Element {
                 figure { class: "max-w-prose ml-auto mr-auto block",
                     img {
                         class: "w-full",
-                        src: asset!("assets/sesh.JPG"),
+                        src: asset!("public/sesh.JPG"),
                         alt: "Sesh the cat",
                     }
                     figcaption { "yes, he is a pirate" }
@@ -112,7 +112,7 @@ pub fn AboutMe() -> Element {
                 ul {
                     li {
                         Link {
-                            to: asset!("assets/CV_Georgy_Andreev_barebones.pdf"),
+                            to: asset!("public/CV_Georgy_Andreev_barebones.pdf"),
                             class: "alien-link",
                             new_tab: true,
                             r#""Professional" CV"#

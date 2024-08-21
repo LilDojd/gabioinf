@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE guestbook\n            SET message = $2, signature = $3, updated_at = NOW()\n            WHERE id = $1\n            RETURNING *\n            ",
+  "query": "\n            INSERT INTO guestbook (message, signature, author_id, author_username)\n            VALUES ($1, $2, $3, $4)\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -41,9 +41,10 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
         "Varchar",
-        "Text"
+        "Text",
+        "Int8",
+        "Varchar"
       ]
     },
     "nullable": [
@@ -56,5 +57,5 @@
       false
     ]
   },
-  "hash": "ac852ff5e06ea59bec06ede93994b8e17182f300081f7795f008eeccc3d30742"
+  "hash": "947af03d2a945011d0a070de1c52858b55c4ab3a86dc1a08c8311f0df1b12175"
 }

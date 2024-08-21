@@ -8,13 +8,16 @@ default:
 serve:
     dx serve
 
+build:
+    dx build --platform fullstack
+
 # Format Rust code
 format:
     dx fmt --all-code
     cargo clippy --fix
 
 # Format Dioxus code
-dioxusf-format:
+dioxus-format:
     dx fmt
 
 # Install required crates

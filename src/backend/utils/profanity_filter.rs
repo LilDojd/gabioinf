@@ -5,6 +5,7 @@ pub fn is_severely_unappropriate(text: &str) -> bool {
     text.is(Type::SEVERE)
 }
 /// Censors any profanity in the given text.
+#[allow(dead_code)]
 pub fn censor_profanity(text: &str) -> String {
     text.censor()
 }
