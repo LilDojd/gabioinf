@@ -10,7 +10,7 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 pub const DPI: f64 = 4.0;
 #[derive(Debug, Clone)]
 pub struct Canvas {
-    canvas: HtmlCanvasElement,
+    pub canvas: HtmlCanvasElement,
     current_canvas_width: RefCell<u32>,
     current_canvas_height: RefCell<u32>,
     is_pressed: RefCell<bool>,
@@ -151,6 +151,66 @@ impl Canvas {
     pub fn get_signature_data(&self) -> String {
         let data_url = self.canvas.to_data_url().unwrap();
         data_url.split(',').nth(1).unwrap_or("").to_string()
+    }
+    pub fn trim_to_image(&self) -> String {
+        let ctx = self.get_context();
+        let image_data = ctx
+            .get_image_data(
+                0.0,
+                0.0,
+                self.canvas.width() as f64,
+                self.canvas.height() as f64,
+            )
+            .unwrap();
+        let data = image_data.data();
+        let mut pix_x = Vec::new();
+        let mut pix_y = Vec::new();
+        for y in 0..self.canvas.height() {
+            for x in 0..self.canvas.width() {
+                let index = ((y * self.canvas.width() + x) * 4) as usize;
+                if data[index + 3] > 0 {
+                    pix_x.push(x);
+                    pix_y.push(y);
+                }
+            }
+        }
+        if pix_x.is_empty() || pix_y.is_empty() {
+            return self.get_signature_data();
+        }
+        pix_x.sort_unstable();
+        pix_y.sort_unstable();
+        let x_min = *pix_x.first().unwrap();
+        let y_min = *pix_y.first().unwrap();
+        let x_max = *pix_x.last().unwrap();
+        let y_max = *pix_y.last().unwrap();
+        let new_w = 1 + x_max - x_min;
+        let new_h = 1 + y_max - y_min;
+        if (self.canvas.width() * self.canvas.height()) as f32 * 0.5
+            > (new_w * new_h) as f32
+        {
+            return self.get_signature_data();
+        }
+        let cut = ctx
+            .get_image_data(x_min as f64, y_min as f64, new_w as f64, new_h as f64)
+            .unwrap();
+        let tmp_canvas = web_sys::window()
+            .unwrap()
+            .document()
+            .unwrap()
+            .create_element("canvas")
+            .unwrap()
+            .dyn_into::<HtmlCanvasElement>()
+            .unwrap();
+        tmp_canvas.set_width(new_w);
+        tmp_canvas.set_height(new_h);
+        let tmp_ctx = tmp_canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<CanvasRenderingContext2d>()
+            .unwrap();
+        tmp_ctx.put_image_data(&cut, 0.0, 0.0).unwrap();
+        tmp_canvas.to_data_url().unwrap().split(',').nth(1).unwrap_or("").to_string()
     }
     fn draw_lines(&self) {
         let ctx = self.get_context();
