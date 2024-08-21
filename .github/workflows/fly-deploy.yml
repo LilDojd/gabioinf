@@ -1,8 +1,7 @@
 name: Fly Deploy
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+
 env:
   DOMAIN_URL: gabioinf.dev
 
@@ -11,7 +10,7 @@ jobs:
     name: Deploy app
     environment:
       name: production
-      url: gabioinf.dev
+      url: https://gabioinf.dev
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-to-fly

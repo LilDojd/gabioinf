@@ -55,7 +55,7 @@ jobs:
           project_id: ${{ env.NEON_PROJECT_ID }}
           username: "gabioinf_owner"
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
-          parent: develop
+          parent: main
           database: gabioinf
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: |
@@ -96,7 +96,7 @@ jobs:
         with:
           name: gabioinf-pr-${{ github.event.number }}
       - name: Clean up GitHub environment
-        uses: strumwolf/delete-deployment-environment@v2
+        uses: strumwolf/delete-deployment-environment@v3
         if: ${{ github.event.action == 'closed' }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
