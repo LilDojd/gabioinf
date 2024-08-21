@@ -66,10 +66,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     let ssr_state = SSRState::new(&cfg);
     let app = Router::new()
         .nest("/v1/", api_router(state.clone(), governor_conf))
-        .serve_static_assets();
-
-    dioxus_logger::tracing::info!("Discovered routes: {:#?}", app);
-    let app = app
+        .serve_static_assets()
         .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
             Box::new(state.clone())
         })]))

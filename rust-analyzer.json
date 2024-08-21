@@ -1,12 +1,7 @@
 {
   "rust-analyzer": {
     "cargo": {
-      "features": [
-        "server",
-        "web",
-        "all",
-        "rust-analyzer"
-      ]
+      "features": "all"
     }
   }
 }
