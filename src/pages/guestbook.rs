@@ -18,11 +18,7 @@ pub fn Guestbook() -> Element {
         if let Some(Ok(Some(guest))) = guest {
             spawn(async move {
                 dioxus_logger::tracing::debug!("Checking for user signature");
-                if let Ok(Some(signature)) = server_fns::load_user_signature(
-                        guest.clone(),
-                    )
-                    .await
-                {
+                if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
                     user_signature.set(Some(signature));
                 }
             });
@@ -35,8 +31,8 @@ pub fn Guestbook() -> Element {
             }
             div { class: "mb-6 flex w-full justify-between items-center",
                 {
-                    match &*user.read() {
-                        Some(Ok(Some(_user))) => rsx! {
+                    match (&*user.read(), &*user_signature.read()) {
+                        (Some(Ok(Some(_user))), None) => rsx! {
                             StyledButton {
                                 text: "Sign Guestbook",
                                 variant: ButtonVariant::Primary,
@@ -55,6 +51,9 @@ pub fn Guestbook() -> Element {
                                 icon: Some(LOGOUT.to_string()),
                             }
                         },
+                        (Some(Ok(Some(_user))), Some(_signature)) => {
+                            rsx! {  }
+                        }
                         _ => rsx! {
                             a { href: "/v1/login?next=/guestbook",
                                 StyledButton {
