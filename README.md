@@ -35,7 +35,7 @@ This project is [MIT](https://opensource.org/licenses/MIT) licensed.
 
 **Georgiy Andreev**
 
-- Website (this one): [gabioinf.com](https://gabioinf.com)
+- Website (this one): [gabioinf.dev](https://gabioinf.dev)
 - GitHub: [@LilDojd](https://github.com/LilDojd)
 - LinkedIn: [@georgiy-andreev](https://linkedin.com/in/georgiy-andreev)
 
