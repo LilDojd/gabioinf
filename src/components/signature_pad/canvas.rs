@@ -8,7 +8,7 @@ use dioxus::prelude::*;
 use std::cell::RefCell;
 use web_sys::wasm_bindgen::{JsCast, JsValue};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
-pub const DPI: f64 = 4.0;
+pub const DPI: f64 = 2.0;
 #[derive(Debug, Clone)]
 pub struct Canvas {
     pub canvas: HtmlCanvasElement,
@@ -24,7 +24,7 @@ impl Canvas {
         let rect = canvas.get_bounding_client_rect();
         let current_canvas_width = RefCell::new((rect.width() * DPI) as u32);
         let current_canvas_height = RefCell::new((rect.height() * DPI) as u32);
-        let size = (rect.width() * DPI).min(rect.height() * DPI) * 0.03;
+        let size = (rect.width() * DPI).min(rect.height() * DPI) * 0.025;
         let stroke_options = StrokeOptions {
             size,
             start: CapOptions {
