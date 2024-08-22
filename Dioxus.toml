@@ -32,7 +32,7 @@ watch_path = ["src", "public"]
 style = ["/tailwind.css", "/main.css", "/navbar.css", "/alien_links.css"]
 
 # Javascript code file
-script = []
+script = ["https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js"]
 
 [web.resource.dev]
 

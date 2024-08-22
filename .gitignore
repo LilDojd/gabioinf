@@ -16,3 +16,5 @@ Secrets*.toml
 dist/
 .dioxus/
 node_modules/
+# Mac
+.DS_store
