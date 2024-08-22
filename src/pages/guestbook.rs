@@ -4,8 +4,7 @@ use crate::{
     MessageValid,
 };
 use dioxus::prelude::*;
-const GITHUB_ICON: &str = asset!("public/github-mark-white.svg");
-const LOGOUT: &str = asset!("public/logout.svg");
+
 #[component]
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
@@ -48,7 +47,7 @@ pub fn Guestbook() -> Element {
                                         user_signature.set(None);
                                     });
                                 },
-                                icon: Some(LOGOUT.to_string()),
+                                icon: Some(asset!("public/logout.svg").to_string()),
                             }
                         },
                         (Some(Ok(Some(_user))), Some(_signature)) => {
@@ -60,7 +59,7 @@ pub fn Guestbook() -> Element {
                                     text: "Sign in with GitHub",
                                     variant: ButtonVariant::Primary,
                                     onclick: |_| (),
-                                    icon: Some(GITHUB_ICON.to_string()),
+                                    icon: Some(asset!("public/github-mark-white.svg").to_string()),
                                 }
                             }
                         },
