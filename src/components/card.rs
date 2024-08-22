@@ -91,7 +91,7 @@ pub fn Card(props: CardProps) -> Element {
                             p { "{date}" }
                         }
                         img {
-                            class: "w-[200px] max-h-[175px] -mb-8 -mr-4",
+                            class: "w-[200px] max-h-[175px] -mb-4 -mr-4",
                             src: "data:image/png;base64,{sigb64}",
                             alt: "Signature",
                         }
