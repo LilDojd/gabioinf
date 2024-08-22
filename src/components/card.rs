@@ -33,9 +33,10 @@ pub fn Card(props: CardProps) -> Element {
                             {
                                 if let Some(url) = &project.url {
                                     rsx! {
-                                        Link {
-                                            to: "{url}",
-                                            new_tab: true,
+                                        a {
+                                            href: "{url}",
+                                            rel: "noopener noreferrer",
+                                            target: "_blank",
                                             class: "flex items-center hover:text-alien-green",
                                             "{project.name}"
                                         }
@@ -103,9 +104,10 @@ pub fn Card(props: CardProps) -> Element {
 #[component]
 pub fn ProjectLink(url: String) -> Element {
     rsx! {
-        Link {
-            to: "{url}",
-            new_tab: true,
+        a {
+            href: "{url}",
+            rel: "noopener noreferrer",
+            target: "_blank",
             class: "inline-flex items-center text-stone-300 hover:text-alien-green transition-colors duration-200",
             "View Project"
             svg {
