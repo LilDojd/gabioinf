@@ -8,17 +8,19 @@ pub fn AboutMe() -> Element {
                 h1 { "about me" }
                 p {
                     "Hey, I'm George. I've been studying Bioengineering and Bioinformatics at "
-                    Link {
-                        to: "https://fbb.msu.ru/",
+                    a {
+                        href: "https://fbb.msu.ru/",
                         class: "alien-link",
-                        new_tab: true,
+                        rel: "noopener noreferrer",
+                        target: "_blank",
                         "FBB MSU"
                     }
                     ". Now, I live in UAE with my wonderful wife (she drew the alien, btw.) and a cat named "
-                    Link {
-                        to: "https://teamsesh.bigcartel.com/",
+                    a {
+                        href: "https://teamsesh.bigcartel.com/",
                         class: "alien-link",
-                        new_tab: true,
+                        rel: "noopener noreferrer",
+                        target: "_blank",
                         "Sesh"
                     }
                     " ↓"
@@ -44,18 +46,20 @@ pub fn AboutMe() -> Element {
                 ul {
                     li { "Email: yawner@pm.me" }
                     li {
-                        Link {
-                            to: "https://www.linkedin.com/in/georgiy-andreev/",
+                        a {
+                            href: "https://www.linkedin.com/in/georgiy-andreev/",
                             class: "alien-link",
-                            new_tab: true,
+                            rel: "noopener noreferrer",
+                            target: "_blank",
                             "LinkedIn"
                         }
                     }
                     li {
-                        Link {
-                            to: "https://github.com/LilDojd",
+                        a {
+                            href: "https://github.com/LilDojd",
                             class: "alien-link",
-                            new_tab: true,
+                            rel: "noopener noreferrer",
+                            target: "_blank",
                             "GitHub"
                         }
                     }
@@ -111,18 +115,18 @@ pub fn AboutMe() -> Element {
                 Hr {}
                 ul {
                     li {
-                        Link {
-                            to: "/CV_Georgy_Andreev_barebones.pdf",
+                        a {
+                            href: "/CV_Georgy_Andreev_barebones.pdf",
                             class: "alien-link",
-                            new_tab: true,
+                            target: "_blank",
                             r#""Professional" CV"#
                         }
                     }
                     li {
-                        Link {
-                            to: "https://lildojd.github.io/cv-pretty/en",
+                        a {
+                            href: "https://lildojd.github.io/cv-pretty/en",
                             class: "alien-link",
-                            new_tab: true,
+                            target: "_blank",
                             "CV"
                         }
                     }

@@ -149,7 +149,7 @@ fn IntroText() -> Element {
             p { class: "mb-4", "I'm a bioinformatician and a developer." }
             p { class: "mb-6",
                 "You can use this website to read my "
-                Link { to: Route::Home {}, class: "alien-link", "random rambles" }
+                Link { to: Route::Blog {}, class: "alien-link", "random rambles" }
                 ", learn more "
                 Link { to: Route::AboutMe {}, class: "alien-link", "about me" }
                 " and "
@@ -205,14 +205,21 @@ fn LinkButtons(props: LinkButtonsProps) -> Element {
 fn SaucerDivier(animate: Signal<bool>) -> Element {
     let random_id = rand::random::<u32>();
     rsx! {
-        object { data : format!("{}?r={}", "/saucer_divider.svg",
-        random_id), id : "divider-svg", alt : "Flying saucer divider", r#type :
-        "image/svg+xml", class : "h-4", onload : | _ | { _ =
-        eval(r#"var el = document.getElementById("divider-svg");
-                               if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                                   var ks = el.contentDocument.defaultView.KeyshapeJS;
-                                   ks.globalPause();
-                            }"#,)
-        }, }
+        object {
+            data: format!("{}?r={}", "/saucer_divider.svg", random_id),
+            id: "divider-svg",
+            alt: "Flying saucer divider",
+            r#type: "image/svg+xml",
+            class: "h-4",
+            onload: |_| {
+                _ = eval(
+                    r#"var el = document.getElementById("divider-svg");
+                                       if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                           var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                           ks.globalPause();
+                                    }"#,
+                )
+            },
+        }
     }
 }
