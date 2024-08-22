@@ -12,10 +12,6 @@ mod pages;
 mod shared;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
-const TAILWIND: &str = asset!("public/tailwind.css");
-const STYLE: &str = asset!("public/main.css");
-const NAVBAR: &str = asset!("public/navbar.css");
-const LINKS: &str = asset!("public/alien_links.css");
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
 fn main() {
@@ -33,9 +29,9 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async move {
-                backend::server::serve(ServeConfig::new().unwrap(), App).await
-            });
+            .block_on(
+                async move { backend::server::serve(ServeConfig::new().unwrap(), App).await },
+            );
     }
 }
 #[derive(Routable, PartialEq, Clone)]
@@ -58,10 +54,6 @@ fn App() -> Element {
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
     rsx! {
-        head::Link { rel: "stylesheet", href: TAILWIND }
-        head::Link { rel: "stylesheet", href: STYLE }
-        head::Link { rel: "stylesheet", href: NAVBAR }
-        head::Link { rel: "stylesheet", href: LINKS }
         head::Link {
             rel: "stylesheet",
             href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap",
