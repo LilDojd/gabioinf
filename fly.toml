@@ -16,7 +16,20 @@ auto_start_machines = true
 min_machines_running = 1
 processes = ['app']
 
+[deploy]
+strategy = "canary"
+
 [[vm]]
+size = "shared-cpu-2x"
 memory = '1gb'
 cpu_kind = 'shared'
-cpus = 1
+cpus = 2
+
+[check]
+[checks.database_and_server]
+grace_period = "30s"
+interval = "1m0s"
+method = "get"
+path = "/v1/ping"
+timeout = "10s"
+type = "http"
