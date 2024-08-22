@@ -18,7 +18,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM node:22-alpine as tailwind
 WORKDIR /app
 COPY . .
-RUN npm install && npx tailwindcss -i ./input.css -o ./public/tailwind.css
+RUN npm install && npx tailwindcss -i ./input.css -o ./public/tailwind.css --minify
 
 
 # Cook the dependencies using the recipe prepared earlier
