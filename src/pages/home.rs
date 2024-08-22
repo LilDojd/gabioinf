@@ -112,8 +112,8 @@ fn RightColumn() -> Element {
                 autoplay: true,
                 muted: true,
                 r#loop: "false",
-                source { src: asset!("public/alien_white.mp4"), r#type: "video/mp4;codecs=hvc1" }
-                source { src: asset!("public/alien_white.webm"), r#type: "video/webm" }
+                source { src: "/alien_white.mp4", r#type: "video/mp4;codecs=hvc1" }
+                source { src: "/alien_white.webm", r#type: "video/webm" }
             }
         }
     }
