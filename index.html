@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{app_title}</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="George Andreev personal website" />
+    <meta
+      property="og:description"
+      content="Personal website of George Andreev, bioinformatician and developer. Explore projects, blog posts, and sign the guestbook."
+    />
+    <meta property="og:url" content="https://gabioinf.dev" />
+
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/LilDojd/gabioinf/feat/og/public/og-img.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter/X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="George Andreev personal website" />
+    <meta
+      name="twitter:description"
+      content="Personal website of George Andreev, bioinformatician and developer. Explore projects, blog posts, and sign the guestbook."
+    />
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/LilDojd/gabioinf/feat/og/public/og-img.png"
+    />
+    <meta name="twitter:image:width" content="1200" />
+    <meta name="twitter:image:height" content="630" />
+    {style_include}
+  </head>
+  <body>
+    <div id="main"></div>
+    <script>
+      // We can't use a module script here because we need to start the script immediately when streaming
+      import("/{base_path}/assets/dioxus/{app_name}.js").then(
+        ({ default: init }) => {
+          init("/{base_path}/assets/dioxus/{app_name}_bg.wasm").then((wasm) => {
+            if (wasm.__wbindgen_start == undefined) {
+              wasm.main();
+            }
+          });
+        },
+      );
+    </script>
+    {script_include}
+  </body>
+</html>
