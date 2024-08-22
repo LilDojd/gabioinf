@@ -1,5 +1,6 @@
 use super::{
-    point::Point, stroke::{get_stroke, CapOptions, StrokeOptions},
+    point::Point,
+    stroke::{get_stroke, CapOptions, StrokeOptions},
     utils::get_svg_path_from_stroke,
 };
 use crate::components::signature_pad::utils::PointExt;
@@ -27,7 +28,7 @@ impl Canvas {
         let stroke_options = StrokeOptions {
             size,
             start: CapOptions {
-                easing: |t| t * (2.0 - t),
+                easing: |t| t,
                 ..Default::default()
             },
             end: CapOptions {
@@ -65,8 +66,10 @@ impl Canvas {
         let image_data = ctx
             .get_image_data(0.0, 0.0, old_width as f64, old_height as f64)
             .unwrap();
-        self.current_canvas_width.swap(&RefCell::new((rect.width() * DPI) as u32));
-        self.current_canvas_height.swap(&RefCell::new((rect.height() * DPI) as u32));
+        self.current_canvas_width
+            .swap(&RefCell::new((rect.width() * DPI) as u32));
+        self.current_canvas_height
+            .swap(&RefCell::new((rect.height() * DPI) as u32));
         self.canvas.set_width(*self.current_canvas_width.borrow());
         self.canvas.set_height(*self.current_canvas_height.borrow());
         self.beautify();
@@ -97,7 +100,9 @@ impl Canvas {
         *self.is_pressed.borrow_mut() = false;
         let point = Point::from_event(event, &self.canvas);
         self.current_line.borrow_mut().push(point);
-        self.lines.borrow_mut().push(self.current_line.borrow().clone());
+        self.lines
+            .borrow_mut()
+            .push(self.current_line.borrow().clone());
         self.current_line.borrow_mut().clear();
         self.draw_lines()
     }
@@ -185,9 +190,7 @@ impl Canvas {
         let y_max = *pix_y.last().unwrap();
         let new_w = 1 + x_max - x_min;
         let new_h = 1 + y_max - y_min;
-        if (self.canvas.width() * self.canvas.height()) as f32 * 0.5
-            > (new_w * new_h) as f32
-        {
+        if (self.canvas.width() * self.canvas.height()) as f32 * 0.5 > (new_w * new_h) as f32 {
             return self.get_signature_data();
         }
         let cut = ctx
@@ -210,7 +213,13 @@ impl Canvas {
             .dyn_into::<CanvasRenderingContext2d>()
             .unwrap();
         tmp_ctx.put_image_data(&cut, 0.0, 0.0).unwrap();
-        tmp_canvas.to_data_url().unwrap().split(',').nth(1).unwrap_or("").to_string()
+        tmp_canvas
+            .to_data_url()
+            .unwrap()
+            .split(',')
+            .nth(1)
+            .unwrap_or("")
+            .to_string()
     }
     fn draw_lines(&self) {
         let ctx = self.get_context();
@@ -232,9 +241,7 @@ impl Canvas {
                     .map(|p| p.as_vector())
                     .collect::<Vec<_>>();
                 let path = get_svg_path_from_stroke(stroke, false);
-                ctx.fill_with_path_2d(
-                    &web_sys::Path2d::new_with_path_string(&path).unwrap(),
-                );
+                ctx.fill_with_path_2d(&web_sys::Path2d::new_with_path_string(&path).unwrap());
             }
         }
     }

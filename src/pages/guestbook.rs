@@ -51,7 +51,20 @@ pub fn Guestbook() -> Element {
                             }
                         },
                         (Some(Ok(Some(_user))), Some(_signature)) => {
-                            rsx! {  }
+                            rsx! {
+                                StyledButton {
+                                    text: "Sign out",
+                                    variant: ButtonVariant::Secondary,
+                                    onclick: move |_| {
+                                        spawn(async move {
+                                            server_fns::logout().await.unwrap();
+                                            user.restart();
+                                            user_signature.set(None);
+                                        });
+                                    },
+                                    icon: Some("/logout.svg".to_string()),
+                                }
+                            }
                         }
                         _ => rsx! {
                             a { href: "/v1/login?next=/guestbook",
