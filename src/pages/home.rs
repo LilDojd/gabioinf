@@ -103,17 +103,42 @@ fn LeftColumn() -> Element {
 }
 #[component]
 fn RightColumn() -> Element {
+    let uaparser = r#"
+                    function checkEdgeBrowser() {
+                        var parser = new UAParser();
+                        var result = parser.getResult();
+                        if (result.browser.name === 'Edge') {
+                            document.getElementById('alien-video').style.display = 'none';
+                            document.getElementById('alien-image').style.display = 'block';
+                        }
+                    }
+                    // Wait for UA Parser to load
+                    if (typeof UAParser !== 'undefined') {
+                        checkEdgeBrowser();
+                    } else {
+                        window.addEventListener('load', checkEdgeBrowser);
+                    }
+                "#;
+
     rsx! {
         div { class: "w-full md:w-1/2 text-left",
             video {
+                id: "alien-video",
                 class: "w-full h-auto object-cover",
                 playsinline: true,
                 autoplay: true,
                 muted: true,
                 r#loop: "false",
-                source { src: "/alien_white.mp4", r#type: "video/mp4;codecs=hvc1" }
+                source { src: "/alien_white.mov", r#type: "video/mp4;codecs=hvc1" }
                 source { src: "/alien_white.webm", r#type: "video/webm" }
             }
+            img {
+                id: "alien-image",
+                class: "w-full h-auto object-cover hidden",
+                src: "/alien_white.png",
+                alt: "Alien",
+            }
+            script { dangerous_inner_html: "{uaparser}" }
         }
     }
 }
