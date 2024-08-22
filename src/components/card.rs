@@ -81,7 +81,7 @@ pub fn Card(props: CardProps) -> Element {
                     div { class: "flex=grow",
                         p { class: "text-stone-100 leading-6 mt-0", "{entry.message}" }
                     }
-                    div { class: "mt-4 flex items-center justify-between",
+                    div { class: "mt-3 flex items-center justify-between",
                         div { class: "flex flex-col justify-end h-full text-sm text-stone-400",
                             p {
                                 "by "
@@ -90,7 +90,7 @@ pub fn Card(props: CardProps) -> Element {
                             p { "{date}" }
                         }
                         img {
-                            class: "w-[150px] max-h-[150px] -mb-4 -mr-4",
+                            class: "w-[200px] max-h-[175px] -mb-8 -mr-4",
                             src: "data:image/png;base64,{sigb64}",
                             alt: "Signature",
                         }
