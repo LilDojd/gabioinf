@@ -31,7 +31,7 @@ RUN cargo chef cook --release --recipe-path recipe.json --features web --target 
 COPY . .
 # Copy tailwind.css we generated earlier
 COPY --from=tailwind /app/public/tailwind.css ./public/tailwind.css
-RUN dx build --platform fullstack
+RUN dx build --platform fullstack --release
 
 FROM debian:bookworm-slim AS runtime
 
