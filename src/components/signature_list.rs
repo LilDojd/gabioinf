@@ -150,8 +150,8 @@ pub fn SignatureList() -> Element {
                     _ => rsx! {  },
                 }
             }
-                div { id: "signature-loader", class: "h-5" }
-
+            div { id: "signature-loader", class: "h-5" }
+        
         }
     }
 }

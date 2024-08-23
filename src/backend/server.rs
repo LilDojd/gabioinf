@@ -2,16 +2,16 @@ use crate::backend::config::AppConfig;
 use crate::backend::domain::logic::oauth::build_oauth_client;
 use crate::backend::domain::logic::AuthBackend;
 use crate::backend::extractors::CookieExtractor;
+use crate::backend::utils::LocalRouterExt;
 use crate::backend::wapi::api_router;
 use crate::backend::AppState;
-use axum::{BoxError, Router};
+use axum::Router;
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
 use dioxus::dioxus_core::Element;
 use dioxus::fullstack::prelude::*;
 use std::sync::Arc;
 use std::time::Duration;
-use tower::ServiceBuilder;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
@@ -69,7 +69,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
 
     let app = Router::new()
         .nest("/v1/", api_router(state.clone(), governor_conf))
-        .serve_static_assets()
+        .serve_static_assets_etagged()
         .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
             Box::new(state.clone())
         })]))
@@ -85,14 +85,4 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
-}
-
-/// Get the path to the public assets directory to serve static files from
-pub(crate) fn public_path() -> std::path::PathBuf {
-    // The CLI always bundles static assets into the exe/public directory
-    std::env::current_exe()
-        .expect("Failed to get current executable path")
-        .parent()
-        .unwrap()
-        .join("public")
 }
