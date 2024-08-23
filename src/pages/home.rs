@@ -104,24 +104,32 @@ fn LeftColumn() -> Element {
 #[component]
 fn RightColumn() -> Element {
     let uaparser = r#"
-                    function checkEdgeBrowser() {
-                        var parser = new UAParser();
-                        var result = parser.getResult();
-                        if (result.browser.name === 'Edge') {
-                            document.getElementById('alien-video').style.display = 'none';
-                            document.getElementById('alien-image').style.display = 'block';
-                        }
-                    }
-                    // Wait for UA Parser to load
-                    if (typeof UAParser !== 'undefined') {
-                        checkEdgeBrowser();
-                    } else {
-                        window.addEventListener('load', checkEdgeBrowser);
-                    }
-                "#;
+        function checkBrowser() {
+            var parser = new UAParser();
+            var result = parser.getResult();
+            var browserName = result.browser.name.toLowerCase();
+            var supportedBrowsers = ['chrome', 'safari', 'opera', 'firefox'];
+            
+            if (!supportedBrowsers.some(browser => browserName.startsWith(browser))) {
+                document.getElementById('alien-video').style.display = 'none';
+                var img = document.createElement('img');
+                img.id = 'alien-image';
+                img.className = 'w-full h-auto object-cover';
+                img.src = '/alien_white.png';
+                img.alt = 'Alien';
+                document.getElementById('alien-container').appendChild(img);
+            }
+        }
+        // Wait for UA Parser to load
+        if (typeof UAParser !== 'undefined') {
+            checkBrowser();
+        } else {
+            window.addEventListener('load', checkBrowser);
+        }
+    "#;
 
     rsx! {
-        div { class: "w-full md:w-1/2 text-left",
+        div { class: "w-full md:w-1/2 text-left", id: "alien-container",
             video {
                 id: "alien-video",
                 class: "w-full h-auto object-cover",
@@ -131,12 +139,6 @@ fn RightColumn() -> Element {
                 r#loop: "false",
                 source { src: "/alien_white.mov", r#type: "video/mp4;codecs=hvc1" }
                 source { src: "/alien_white.webm", r#type: "video/webm" }
-            }
-            img {
-                id: "alien-image",
-                class: "w-full h-auto object-cover hidden",
-                src: "/alien_white.png",
-                alt: "Alien",
             }
             script { dangerous_inner_html: "{uaparser}" }
         }
@@ -203,23 +205,25 @@ fn LinkButtons(props: LinkButtonsProps) -> Element {
 }
 #[component]
 fn SaucerDivier(animate: Signal<bool>) -> Element {
-    let random_id = rand::random::<u32>();
     rsx! {
-        object {
-            data: format!("{}?r={}", "/saucer_divider.svg", random_id),
-            id: "divider-svg",
-            alt: "Flying saucer divider",
-            r#type: "image/svg+xml",
-            class: "h-4",
-            onload: |_| {
-                _ = eval(
-                    r#"var el = document.getElementById("divider-svg");
-                                       if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                                           var ks = el.contentDocument.defaultView.KeyshapeJS;
-                                           ks.globalPause();
-                                    }"#,
-                )
-            },
+        div { class: "h-4",
+
+            object {
+                class: "h-full",
+                data: "/saucer_divider.svg",
+                id: "divider-svg",
+                alt: "Flying saucer divider",
+                r#type: "image/svg+xml",
+                onload: |_| {
+                    _ = eval(
+                        r#"var el = document.getElementById("divider-svg");
+                                                   if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                                       var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                                       ks.globalPause();
+                                                }"#,
+                    )
+                },
+            }
         }
     }
 }
