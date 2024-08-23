@@ -12,6 +12,10 @@ out_dir = "dist"
 
 asset_dir = "public"
 
+[web.wasm_opt]
+# The level wasm-opt should target. z is the smallest. 4 is the fastest.
+level = "z"
+
 [web.app]
 
 # HTML title tag content
