@@ -104,10 +104,13 @@ fn LeftColumn() -> Element {
 #[component]
 fn RightColumn() -> Element {
     let uaparser = r#"
-        function checkEdgeBrowser() {
+        function checkBrowser() {
             var parser = new UAParser();
             var result = parser.getResult();
-            if (result.browser.name === 'Edge') {
+            var browserName = result.browser.name.toLowerCase();
+            var supportedBrowsers = ['chrome', 'safari', 'opera', 'firefox'];
+            
+            if (!supportedBrowsers.some(browser => browserName.startsWith(browser))) {
                 document.getElementById('alien-video').style.display = 'none';
                 var img = document.createElement('img');
                 img.id = 'alien-image';
@@ -119,9 +122,9 @@ fn RightColumn() -> Element {
         }
         // Wait for UA Parser to load
         if (typeof UAParser !== 'undefined') {
-            checkEdgeBrowser();
+            checkBrowser();
         } else {
-            window.addEventListener('load', checkEdgeBrowser);
+            window.addEventListener('load', checkBrowser);
         }
     "#;
 
