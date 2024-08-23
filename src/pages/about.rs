@@ -27,8 +27,8 @@ pub fn AboutMe() -> Element {
                 }
                 figure { class: "max-w-prose ml-auto mr-auto block",
                     img {
-                        class: "w-full",
-                        src: "/sesh.JPG",
+                        class: "w-full h-auto",
+                        src: "/sesh.avif",
                         alt: "Sesh the cat",
                     }
                     figcaption { "yes, he is a pirate" }

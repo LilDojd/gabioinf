@@ -54,10 +54,6 @@ fn App() -> Element {
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
     rsx! {
-        head::Link {
-            rel: "stylesheet",
-            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap",
-        }
         ErrorBoundary {
             handle_error: |errors: ErrorContext| {
                 match errors.show() {

@@ -1,0 +1,25 @@
+#        _
+#       [ ]
+#      (   )
+#       |>|
+#    __/===\__
+#   //| o=o |\\
+# <]  | o=o |  [>
+#     \=====/
+#    / / | \ \
+#   <_________>
+
+User-agent: Googlebot
+Disallow: /v1/
+
+User-agent: Bingbot
+Disallow: /v1/
+
+User-agent: YandexBot
+Disallow: /v1/
+
+User-agent: Baiduspider
+Disallow: /v1/
+
+User-agent: *
+Disallow: /

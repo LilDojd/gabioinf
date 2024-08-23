@@ -99,6 +99,9 @@ sentry = { version = "0.34.0", default-features = false, features = [
 ], optional = true }
 wasm-bindgen-futures = "0.4.43"
 wasm-bindgen = "0.2.93"
+tower-etag-cache = { git = "https://github.com/LilDojd/tower-etag-cache.git", features = [
+  "const-lru-provider",
+], optional = true }
 
 [features]
 default = []
@@ -120,6 +123,7 @@ server = [
   "dep:forwarded-header-value",
   "dep:tower-sessions",
   "dep:tower-sessions-sqlx-store",
+  "dep:tower-etag-cache",
   "dep:axum-login",
   "dep:axum-helmet",
   "dep:serde_json",
