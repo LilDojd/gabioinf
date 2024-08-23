@@ -107,7 +107,6 @@ fn RightColumn() -> Element {
         function checkEdgeBrowser() {
             var parser = new UAParser();
             var result = parser.getResult();
-            console.log(resukt);
             if (result.browser.name === 'Edge') {
                 document.getElementById('alien-video').style.display = 'none';
                 var img = document.createElement('img');
