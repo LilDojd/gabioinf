@@ -217,10 +217,10 @@ fn SaucerDivier(animate: Signal<bool>) -> Element {
                 onload: |_| {
                     _ = eval(
                         r#"var el = document.getElementById("divider-svg");
-                                                                                       if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                                                                                           var ks = el.contentDocument.defaultView.KeyshapeJS;
-                                                                                           ks.globalPause();
-                                                                                    }"#,
+                                                                                                                                                               if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                                                                                                                                                   var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                                                                                                                                                   ks.globalPause();
+                                                                                                                                                            }"#,
                     )
                 },
             }
