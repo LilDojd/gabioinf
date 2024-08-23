@@ -4146,9 +4146,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.126"
+version = "1.0.127"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3b863381a05ffefbc82571a2d893edf47b27fb0ebedbf582c39640e51abebef"
+checksum = "8043c06d9f82bd7271361ed64f415fe5e12a77fdb52e573e7f06a516dea329ad"
 dependencies = [
  "itoa",
  "memchr",
@@ -5083,7 +5083,7 @@ dependencies = [
 [[package]]
 name = "tower-etag-cache"
 version = "0.1.0"
-source = "git+https://github.com/LilDojd/tower-etag-cache.git#1258b5e192b54f72fd13a375799ed3e6ed9be131"
+source = "git+https://github.com/LilDojd/tower-etag-cache.git#91737aea701ac70dcb409d71e3582bd6cc39ef8f"
 dependencies = [
  "blake3",
  "bytes",
