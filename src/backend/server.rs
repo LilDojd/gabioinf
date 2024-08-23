@@ -4,11 +4,7 @@ use crate::backend::domain::logic::AuthBackend;
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::wapi::api_router;
 use crate::backend::AppState;
-use axum::extract::Request;
-use axum::http::header;
-use axum::middleware::{self, Next};
-use axum::response::Response;
-use axum::Router;
+use axum::{BoxError, Router};
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
 use dioxus::dioxus_core::Element;
@@ -20,7 +16,6 @@ use tower_governor::governor::GovernorConfigBuilder;
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
 
-use super::utils::{generate_etag, CachePolicy, CacheableResponse};
 pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     let config = AppConfig::new_local().expect("Failed to load local configuration");
     dioxus_logger::tracing::info!("Loaded config: {:?}", config);
@@ -74,7 +69,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
 
     let app = Router::new()
         .nest("/v1/", api_router(state.clone(), governor_conf))
-        .serve_static_assets_cache()
+        .serve_static_assets()
         .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
             Box::new(state.clone())
         })]))
@@ -100,82 +95,4 @@ pub(crate) fn public_path() -> std::path::PathBuf {
         .parent()
         .unwrap()
         .join("public")
-}
-
-trait AxumAdapterExt<S> {
-    fn serve_static_assets_cache(self) -> Self
-    where
-        Self: Sized;
-}
-
-impl<S> AxumAdapterExt<S> for Router<S>
-where
-    S: Send + Sync + Clone + 'static,
-    Router<S>: DioxusRouterExt<S>,
-{
-    fn serve_static_assets_cache(mut self) -> Self {
-        use tower_http::services::{ServeDir, ServeFile};
-
-        let public_path = public_path();
-
-        // Serve all files in public folder except index.html
-        let dir = std::fs::read_dir(&public_path).unwrap_or_else(|e| {
-            panic!(
-                "Couldn't read public directory at {:?}: {}",
-                &public_path, e
-            )
-        });
-
-        for entry in dir.flatten() {
-            let path = entry.path();
-            if path.ends_with("index.html") {
-                continue;
-            }
-            let route = path
-                .strip_prefix(&public_path)
-                .unwrap()
-                .iter()
-                .map(|segment| {
-                    segment.to_str().unwrap_or_else(|| {
-                        panic!("Failed to convert path segment {:?} to string", segment)
-                    })
-                })
-                .collect::<Vec<_>>()
-                .join("/");
-            let route = format!("/{}", route);
-            if path.is_dir() {
-                self = self.nest_service(&route, ServeDir::new(path).precompressed_br());
-            } else {
-                self = self.nest_service(
-                    &route,
-                    ServiceBuilder::new()
-                        .layer(middleware::from_fn(set_static_cache_control))
-                        .service(ServeFile::new(path).precompressed_br()),
-                );
-            }
-        }
-
-        self
-    }
-}
-
-async fn set_static_cache_control(request: Request, next: Next) -> Response {
-    // Grab all we need from request before it is consumed
-    let etag = generate_etag(request.uri().path());
-
-    let mut response = next.run(request).await;
-
-    // Set Cache-Control header
-    response.set_cache_policy(CachePolicy::Revalidate {
-        ttl: std::time::Duration::from_secs(604800),
-        stale_ttl: Some(std::time::Duration::from_secs(86400)),
-    });
-    response.set_etag(etag);
-
-    // Remove unnecessary headers
-    response.headers_mut().remove(header::LAST_MODIFIED);
-    response.headers_mut().remove(header::EXPIRES);
-    response.headers_mut().remove(header::PRAGMA);
-
-    response
 }
