@@ -211,16 +211,16 @@ fn SaucerDivier(animate: Signal<bool>) -> Element {
             object {
                 class: "h-full",
                 data: "/saucer_divider.svg",
+                aria_label: "Flying saucer divider",
                 id: "divider-svg",
-                alt: "Flying saucer divider",
                 r#type: "image/svg+xml",
                 onload: |_| {
                     _ = eval(
                         r#"var el = document.getElementById("divider-svg");
-                                                   if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                                                       var ks = el.contentDocument.defaultView.KeyshapeJS;
-                                                       ks.globalPause();
-                                                }"#,
+                                                                                                                                                                           if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                                                                                                                                                               var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                                                                                                                                                               ks.globalPause();
+                                                                                                                                                                        }"#,
                     )
                 },
             }

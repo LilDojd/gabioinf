@@ -1,8 +1,12 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <title>{app_title}</title>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="description"
+      content="Personal website of George Andreev, bioinformatician and developer. Explore projects, blog posts, and sign the guestbook."
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="UTF-8" />
     <!-- Open Graph -->
@@ -34,6 +38,25 @@
     />
     <meta name="twitter:image:width" content="1200" />
     <meta name="twitter:image:height" content="630" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap"
+      as="style"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap"
+      />
+    </noscript>
+    <!-- We set the font here for now -->
     {style_include}
   </head>
   <body>

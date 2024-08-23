@@ -5,3 +5,12 @@ inherits = "release"
 
 [profile.dioxus-server]
 inherits = "release"
+
+[profile.release]
+opt-level = "z"
+debug = false
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+incremental = false

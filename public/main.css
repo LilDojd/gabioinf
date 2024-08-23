@@ -11,7 +11,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-family: "Recursive", monospace;
+  font-family: "Recursive", "Verdana", monospace, system-ui;
   flex-grow: 1;
 }
 

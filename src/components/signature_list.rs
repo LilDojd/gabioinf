@@ -7,10 +7,17 @@ const INTERSECTION_THRESHOLD: f64 = 0.5;
 pub enum SignatureListState {
     #[default]
     Initial,
-    Loading,
+    Loading(MaybeFirst),
     Finished,
     MoreAvailable(u32),
 }
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum MaybeFirst {
+    #[default]
+    First,
+    NotFirst,
+}
+
 #[component]
 pub fn SignatureList() -> Element {
     let load_state = use_signal(SignatureListState::default);
@@ -44,7 +51,7 @@ pub fn SignatureList() -> Element {
             }}
             "#,
             )
-                .as_ref(),
+            .as_ref(),
         );
         spawn(async move {
             while let Ok(is_intersecting_js) = eval.recv().await {
@@ -124,10 +131,18 @@ pub fn SignatureList() -> Element {
                     }
                 }
             }
-            div { id: "signature-loader", class: "h-5" }
             div {
                 match *load_state.read() {
-                    SignatureListState::Initial | SignatureListState::Loading => {
+                    SignatureListState::Initial | SignatureListState::Loading(MaybeFirst::First) => {
+                        rsx! {
+                            div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+                                {(0..SIGNATURES_PER_PAGE).map(|_| rsx! {
+                                    Card { card_type: CardType::Skeleton }
+                                })}
+                            }
+                        }
+                    }
+                    SignatureListState::Loading(MaybeFirst::NotFirst) => {
                         rsx! {
                             Loading {}
                         }
@@ -135,6 +150,8 @@ pub fn SignatureList() -> Element {
                     _ => rsx! {  },
                 }
             }
+            div { id: "signature-loader", class: "h-5" }
+        
         }
     }
 }
@@ -146,13 +163,12 @@ fn use_signature_list(
     let load_task = use_coroutine(|mut rx: UnboundedReceiver<Option<u32>>| async move {
         while let Some(next_cursor) = rx.next().await {
             let original_state = *state.read();
-            state.set(SignatureListState::Loading);
-            match server_fns::load_signatures(
-                    next_cursor.unwrap_or(1),
-                    SIGNATURES_PER_PAGE,
-                )
-                .await
-            {
+            state.set(SignatureListState::Loading(if next_cursor.is_some() {
+                MaybeFirst::NotFirst
+            } else {
+                MaybeFirst::First
+            }));
+            match server_fns::load_signatures(next_cursor.unwrap_or(1), SIGNATURES_PER_PAGE).await {
                 Ok(signatures) => {
                     if signatures.is_empty() {
                         state.set(SignatureListState::Finished);
@@ -163,9 +179,7 @@ fn use_signature_list(
                     }
                 }
                 Err(error) => {
-                    dioxus_logger::tracing::error!(
-                        "Could not load signatures: {:?}", error
-                    );
+                    dioxus_logger::tracing::error!("Could not load signatures: {:?}", error);
                     state.set(original_state);
                 }
             }
