@@ -107,6 +107,7 @@ fn RightColumn() -> Element {
         function checkEdgeBrowser() {
             var parser = new UAParser();
             var result = parser.getResult();
+            console.log(resukt);
             if (result.browser.name === 'Edge') {
                 document.getElementById('alien-video').style.display = 'none';
                 var img = document.createElement('img');
@@ -203,21 +204,23 @@ fn LinkButtons(props: LinkButtonsProps) -> Element {
 #[component]
 fn SaucerDivier(animate: Signal<bool>) -> Element {
     rsx! {
-        object {
-            data: "/saucer_divider.svg",
-            id: "divider-svg",
-            alt: "Flying saucer divider",
-            r#type: "image/svg+xml",
-            class: "h-4",
-            onload: |_| {
-                _ = eval(
-                    r#"var el = document.getElementById("divider-svg");
-                                       if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                                           var ks = el.contentDocument.defaultView.KeyshapeJS;
-                                           ks.globalPause();
-                                    }"#,
-                )
-            },
+        div { class: "h-4",
+
+            object {
+                data: "/saucer_divider.svg",
+                id: "divider-svg",
+                alt: "Flying saucer divider",
+                r#type: "image/svg+xml",
+                onload: |_| {
+                    _ = eval(
+                        r#"var el = document.getElementById("divider-svg");
+                                                   if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                                       var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                                       ks.globalPause();
+                                                }"#,
+                    )
+                },
+            }
         }
     }
 }
