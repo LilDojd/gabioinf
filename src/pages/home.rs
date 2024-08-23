@@ -127,7 +127,7 @@ fn RightColumn() -> Element {
     "#;
 
     rsx! {
-        div { class: "w-full md:w-1/2 text-left",
+        div { class: "w-full md:w-1/2 text-left", id: "alien-container",
             video {
                 id: "alien-video",
                 class: "w-full h-auto object-cover",
