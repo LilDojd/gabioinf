@@ -202,10 +202,9 @@ fn LinkButtons(props: LinkButtonsProps) -> Element {
 }
 #[component]
 fn SaucerDivier(animate: Signal<bool>) -> Element {
-    let random_id = rand::random::<u32>();
     rsx! {
         object {
-            data: format!("{}", "/saucer_divider.svg", random_id),
+            data: "/saucer_divider.svg",
             id: "divider-svg",
             alt: "Flying saucer divider",
             r#type: "image/svg+xml",
