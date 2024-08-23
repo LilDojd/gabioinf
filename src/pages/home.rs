@@ -206,7 +206,7 @@ fn SaucerDivier(animate: Signal<bool>) -> Element {
         div { class: "h-4",
 
             object {
-                class: "h-full"
+                class: "h-full",
                 data: "/saucer_divider.svg",
                 id: "divider-svg",
                 alt: "Flying saucer divider",
