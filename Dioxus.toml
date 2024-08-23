@@ -14,7 +14,7 @@ asset_dir = "public"
 
 [web.wasm_opt]
 # The level wasm-opt should target. z is the smallest. 4 is the fastest.
-level = "z"
+level = "s"
 
 [web.app]
 
