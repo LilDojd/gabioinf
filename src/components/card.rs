@@ -103,9 +103,9 @@ pub fn Card(props: CardProps) -> Element {
         CardType::Skeleton => {
             rsx! {
                 div { class: "{base_class} {props.class} p-6",
-                    div { class: "h-4 bg-onyx rounded w-3/4 mb-12" }
-                    div { class: "h-4 bg-onyx rounded w-1/4 mb-2" }
-                    div { class: "h-4 bg-onyx rounded w-1/2" }
+                    div { class: "h-4 bg-onyx rounded w-3/4 mb-12 animate-pulse" }
+                    div { class: "h-4 bg-onyx rounded w-1/4 mb-2 animate-pulse" }
+                    div { class: "h-4 bg-onyx rounded w-1/2 animate-pulse" }
                 }
             }
         }
