@@ -9,6 +9,8 @@ on:
       - reopened
       - synchronize
       - closed
+    branches-ignore:
+      - "dependabot/**"
 
 env:
   NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
@@ -102,7 +104,7 @@ jobs:
           name: gabioinf-pr-${{ github.event.number }}
       # Points to a recent commit instead of `main` to avoid supply chain attacks. (The latest tag is very old.)
       - name: 🎟 Get GitHub App token
-        uses: navikt/github-app-token-generator@a3831f44404199df32d8f39f7c0ad9bb8fa18b1c
+        uses: navikt/github-app-token-generator@b96ff604b2300989cd1105e3fad09199fca56681
         id: get-token
         with:
           app-id: ${{ secrets.GH_APP_ID }}
