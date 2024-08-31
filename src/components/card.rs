@@ -1,6 +1,7 @@
 use crate::shared::models::GuestbookEntry;
 use dioxus::prelude::*;
 use serde::Deserialize;
+use time::UtcOffset;
 #[derive(Props, Clone, Debug, PartialEq)]
 pub struct CardProps {
     card_type: CardType,
@@ -70,8 +71,11 @@ pub fn Card(props: CardProps) -> Element {
             close_button,
         } => {
             let sigb64 = entry.signature.clone().unwrap_or_default();
-            let date = entry
-                .created_at
+            let date = entry.created_at;
+            let offset = UtcOffset::local_offset_at(date).unwrap_or(date.offset());
+
+            let date = date
+                .to_offset(offset)
                 .format(time::macros::format_description!(
                     "[day] [month repr:short], [year], [hour repr:24]:[minute]"
                 ))
