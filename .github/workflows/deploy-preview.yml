@@ -3,14 +3,11 @@ on:
   pull_request:
     branches:
       - main
-      - develop
     types:
       - opened
       - reopened
       - synchronize
       - closed
-    branches-ignore:
-      - "dependabot/**"
 
 env:
   NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
