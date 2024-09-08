@@ -2,7 +2,7 @@
 
 A personal website built with Dioxus and wasm, showcasing projects, blog (coming soon), guestbook, and more.
 
-[![Dioxus](https://img.shields.io/badge/Dioxus-0.4-blue.svg)](https://dioxuslabs.com/)
+[![Dioxus](https://img.shields.io/badge/Dioxus-0.6.0-blue.svg)](https://dioxuslabs.com/)
 [![MIT licensed](https://img.shields.io/github/license/LilDojd/gabioinf)](./LICENSE)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/LilDojd/gabioinf/fly-deploy.yml?label=deployment)](https://github.com/LilDojd/gabioinf/deployments)
 
