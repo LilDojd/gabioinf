@@ -75,7 +75,7 @@ jobs:
           name: gabioinf-pr-${{ github.event.number }}
 
       - name: Comment on Pull Request
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           message: |
