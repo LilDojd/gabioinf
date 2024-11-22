@@ -2,7 +2,6 @@ use crate::backend::config::AppConfig;
 use crate::backend::domain::logic::oauth::build_oauth_client;
 use crate::backend::domain::logic::AuthBackend;
 use crate::backend::extractors::CookieExtractor;
-use crate::backend::utils::LocalRouterExt;
 use crate::backend::wapi::api_router;
 use crate::backend::AppState;
 use axum::Router;
@@ -69,14 +68,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
 
     let app = Router::new()
         .nest("/v1/", api_router(state.clone(), governor_conf))
-        .serve_static_assets_etagged()
-        .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
-            Box::new(state.clone())
-        })]))
-        .fallback(
-            axum::routing::get(render_handler)
-                .with_state(RenderHandleState::new(cfg, dxapp).with_ssr_state(ssr_state)),
-        )
+        .serve_dioxus_application(cfg, dxapp)
         .layer(auth_layer);
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);

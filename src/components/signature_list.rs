@@ -1,8 +1,8 @@
 use crate::components::{Card, CardType, CloseButton, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
+use document::eval;
 const SIGNATURES_PER_PAGE: usize = 8;
-const INTERSECTION_THRESHOLD: f64 = 0.5;
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
     #[default]
@@ -25,42 +25,7 @@ pub fn SignatureList() -> Element {
     let mut endless_signatures = use_signal(std::vec::Vec::new);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
     let mut is_intersecting = use_signal(|| false);
-    use_effect(move || {
-        let mut eval = eval(
-            format!(
-                r#"
-            const callback = (entries, observer) => {{
-                entries.forEach((entry) => {{
-                    dioxus.send(entry.isIntersecting);
-                }});
-            }};
 
-            const options = {{ root: null, threshold: {INTERSECTION_THRESHOLD} }};
-            const observer = new IntersectionObserver(callback, options);
-
-            const target = document.getElementById('signature-loader');
-            if (target) {{
-                observer.observe(target);
-            }}
-
-            // Cleanup function
-            () => {{
-                if (target) {{
-                    observer.unobserve(target);
-                }}
-            }}
-            "#,
-            )
-            .as_ref(),
-        );
-        spawn(async move {
-            while let Ok(is_intersecting_js) = eval.recv().await {
-                if let Some(value) = is_intersecting_js.as_bool() {
-                    is_intersecting.set(value);
-                }
-            }
-        });
-    });
     use_effect(move || {
         if *is_intersecting.read()
             && matches!(*load_state.read(), SignatureListState::MoreAvailable(_))
@@ -150,8 +115,8 @@ pub fn SignatureList() -> Element {
                     _ => rsx! {  },
                 }
             }
-            div { id: "signature-loader", class: "h-5" }
-        
+            // div { onvisible: move |_| is_intersecting.set(true), id: "signature-loader", class: "h-5"}
+
         }
     }
 }
@@ -160,7 +125,7 @@ fn use_signature_list(
     mut batches: Signal<Vec<Vec<GuestbookEntry>>>,
 ) -> Coroutine<()> {
     use futures::StreamExt as _;
-    let load_task = use_coroutine(|mut rx: UnboundedReceiver<Option<u32>>| async move {
+    let load_task = use_coroutine(move |mut rx: UnboundedReceiver<Option<u32>>| async move {
         while let Some(next_cursor) = rx.next().await {
             let original_state = *state.read();
             state.set(SignatureListState::Loading(if next_cursor.is_some() {
@@ -185,7 +150,7 @@ fn use_signature_list(
             }
         }
     });
-    use_coroutine(|mut rx: UnboundedReceiver<()>| async move {
+    use_coroutine(move |mut rx: UnboundedReceiver<()>| async move {
         load_task.send(None);
         while rx.next().await.is_some() {
             if let SignatureListState::MoreAvailable(cursor) = *state.read() {

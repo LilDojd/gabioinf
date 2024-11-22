@@ -1,6 +1,7 @@
 use crate::Route;
 use async_std::task;
 use dioxus::prelude::*;
+use document::eval;
 use rand::Rng;
 const TYPING_MILLIS: u64 = 2000;
 const BLINK_MILLIS: u64 = 3500;

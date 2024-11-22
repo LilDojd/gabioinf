@@ -5,8 +5,6 @@ name = "gabioinf"
 
 # Dioxus App Default Platform
 # web, desktop, fullstack
-default_platform = "fullstack"
-
 # `build` & `serve` dist path
 out_dir = "dist"
 
