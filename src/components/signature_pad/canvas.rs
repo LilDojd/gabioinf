@@ -114,8 +114,8 @@ impl Canvas {
             self.canvas.width() as f64,
             self.canvas.height() as f64,
         );
-        ctx.set_stroke_style(&JsValue::from_str("#f2f2f2"));
-        ctx.set_fill_style(&JsValue::from_str("#f2f2f2"));
+        ctx.set_stroke_style_str("#f2f2f2");
+        ctx.set_fill_style_str("#f2f2f2");
         ctx.set_image_smoothing_enabled(true);
         ctx.translate(0.5, 0.5).unwrap();
         self.draw_lines();

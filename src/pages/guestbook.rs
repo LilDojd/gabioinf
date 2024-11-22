@@ -47,7 +47,7 @@ pub fn Guestbook() -> Element {
                                         user_signature.set(None);
                                     });
                                 },
-                                icon: Some("/logout.svg".to_string()),
+                                icon: Some(asset!("/public/logout.svg").to_string()),
                             }
                         },
                         (Some(Ok(Some(_user))), Some(_signature)) => {

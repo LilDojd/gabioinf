@@ -11,8 +11,6 @@ pub async fn load_signatures(
     page: u32,
     per_page: usize,
 ) -> Result<Vec<GuestbookEntry>, ServerFnError> {
-    dioxus_logger::tracing::info!("Loading signatures");
-    let context = server_context();
     let FromContext(state): FromContext<AppState> = extract().await?;
     let guestbook_repo = state.guestbook_repo;
     let signatures = guestbook_repo.read_page(page, per_page).await?;

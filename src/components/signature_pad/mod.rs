@@ -1,10 +1,8 @@
 use canvas::Canvas;
 use dioxus::prelude::*;
 use dioxus::web::WebEventExt;
-use wasm_bindgen::closure::Closure;
-use web_sys::js_sys::Array;
 use web_sys::wasm_bindgen::JsCast;
-use web_sys::{HtmlCanvasElement, ResizeObserver};
+use web_sys::HtmlCanvasElement;
 mod canvas;
 mod point;
 mod popup;
@@ -27,29 +25,18 @@ pub struct SignaturePadProps {
 #[component]
 pub fn SignaturePad(props: SignaturePadProps) -> Element {
     let mut canvas = use_signal(|| None::<Canvas>);
-    let mut observer = use_signal(|| None::<ResizeObserver>);
     let set_canvas = use_callback(move |event: MountedEvent| {
         let html_canvas = event
             .as_web_event()
             .clone()
             .dyn_into::<HtmlCanvasElement>()
             .unwrap();
-        let mut canvas_ref = Canvas::new(html_canvas);
+        let canvas_ref = Canvas::new(html_canvas);
         canvas_ref.beautify();
         canvas.set(Some(canvas_ref.clone()));
         if let Some(on_canvas_ready) = &props.on_canvas_ready {
             on_canvas_ready.call(canvas_ref.clone());
         }
-        let on_resize = Closure::<
-            dyn FnMut(Array),
-        >::new(move |_entries: Array| {
-                canvas_ref.on_resize();
-            })
-            .into_js_value();
-        let resize_observer = ResizeObserver::new(on_resize.as_ref().unchecked_ref())
-            .unwrap();
-        resize_observer.observe(event.downcast::<web_sys::Element>().unwrap());
-        observer.set(Some(resize_observer));
     });
     let on_signature_change = move || {
         if let Some(c) = canvas.read().as_ref() {
@@ -75,6 +62,11 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
             on_signature_change();
         }
     };
+    let on_resize = move |_| {
+        if let Some(c) = canvas.write().as_mut() {
+            c.on_resize()
+        }
+    };
     rsx! {
         div {
             class: format!(
@@ -89,6 +81,7 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                 onpointerdown: on_pointer_down,
                 onpointermove: on_pointer_move,
                 onpointerup: on_pointer_up,
+                onresize: on_resize,
             }
             div { class: "absolute bottom-4 left-4 flex gap-2",
                 button {
