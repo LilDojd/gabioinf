@@ -68,7 +68,7 @@ pub fn SignatureList() -> Element {
                                         Card {
                                             card_type: CardType::Signature {
                                                 entry: entry.clone(),
-                                                close_button: rsx! {  },
+                                                close_button: rsx! {},
                                             },
                                         }
                                     })
@@ -87,7 +87,7 @@ pub fn SignatureList() -> Element {
                                         Card {
                                             card_type: CardType::Signature {
                                                 entry: entry.clone(),
-                                                close_button: rsx! {  },
+                                                close_button: rsx! {},
                                             },
                                         }
                                     })
@@ -112,10 +112,10 @@ pub fn SignatureList() -> Element {
                             Loading {}
                         }
                     }
-                    _ => rsx! {  },
+                    _ => rsx! {},
                 }
             }
-            // div { onvisible: move |_| is_intersecting.set(true), id: "signature-loader", class: "h-5"}
+                // div { onvisible: move |_| is_intersecting.set(true), id: "signature-loader", class: "h-5"}
 
         }
     }

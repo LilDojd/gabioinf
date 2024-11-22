@@ -104,30 +104,33 @@ fn LeftColumn() -> Element {
 }
 #[component]
 fn RightColumn() -> Element {
-    let uaparser = r#"
-        function checkBrowser() {
+    const ALIENPNG: Asset = asset!("/public/alien_white.png");
+    let uaparser = format!(
+        r#"
+        function checkBrowser() {{
             var parser = new UAParser();
             var result = parser.getResult();
             var browserName = result.browser.name.toLowerCase();
             var supportedBrowsers = ['chrome', 'safari', 'opera', 'firefox'];
             
-            if (!supportedBrowsers.some(browser => browserName.startsWith(browser))) {
+            if (!supportedBrowsers.some(browser => browserName.startsWith(browser))) {{
                 document.getElementById('alien-video').style.display = 'none';
                 var img = document.createElement('img');
                 img.id = 'alien-image';
                 img.className = 'w-full h-auto object-cover';
-                img.src = '/alien_white.png';
+                img.src = '{ALIENPNG}';
                 img.alt = 'Alien';
                 document.getElementById('alien-container').appendChild(img);
-            }
-        }
+            }}
+        }}
         // Wait for UA Parser to load
-        if (typeof UAParser !== 'undefined') {
+        if (typeof UAParser !== 'undefined') {{
             checkBrowser();
-        } else {
+        }} else {{
             window.addEventListener('load', checkBrowser);
-        }
-    "#;
+        }}
+    "#,
+    );
 
     rsx! {
         div { class: "w-full md:w-1/2 text-left", id: "alien-container",
@@ -138,8 +141,14 @@ fn RightColumn() -> Element {
                 autoplay: true,
                 muted: true,
                 r#loop: "false",
-                source { src: "/alien_white.mov", r#type: "video/mp4;codecs=hvc1" }
-                source { src: "/alien_white.webm", r#type: "video/webm" }
+                source {
+                    src: asset!("/public/alien_white.mov"),
+                    r#type: "video/mp4;codecs=hvc1",
+                }
+                source {
+                    src: asset!("/public/alien_white.webm"),
+                    r#type: "video/webm",
+                }
             }
             script { dangerous_inner_html: "{uaparser}" }
         }
@@ -211,17 +220,17 @@ fn SaucerDivier(animate: Signal<bool>) -> Element {
 
             object {
                 class: "h-full",
-                data: "/saucer_divider.svg",
+                data: asset!("/public/saucer_divider.svg"),
                 aria_label: "Flying saucer divider",
                 id: "divider-svg",
                 r#type: "image/svg+xml",
                 onload: |_| {
                     _ = eval(
                         r#"var el = document.getElementById("divider-svg");
-                                                                                                                                                                           if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
-                                                                                                                                                                               var ks = el.contentDocument.defaultView.KeyshapeJS;
-                                                                                                                                                                               ks.globalPause();
-                                                                                                                                                                        }"#,
+                                                                                                                                                                                                                                       if (el.contentDocument && el.contentDocument.defaultView.KeyshapeJS) {
+                                                                                                                                                                                                                                           var ks = el.contentDocument.defaultView.KeyshapeJS;
+                                                                                                                                                                                                                                           ks.globalPause();
+                                                                                                                                                                                                                                    }"#,
                     )
                 },
             }

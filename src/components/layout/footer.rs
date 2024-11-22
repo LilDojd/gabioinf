@@ -108,10 +108,12 @@ fn AreciboIcons() -> Element {
             0..3,
             GridElement::new(
                 rsx! {
-                    div {
-                        class: "w-2 h-2 bg-[#eca72c]",
-                        style: if matches!(route, Route::Home {}) { "box-shadow: 0 40px 20px #eca72c" } else { "" },
-                        title: "Sun",
+                    Link { to: Route::Home {},
+                        div {
+                            class: "w-2 h-2 bg-[#eca72c]",
+                            style: if matches!(route, Route::Home {}) { "box-shadow: 0 40px 20px #eca72c" } else { "" },
+                            title: "Sun",
+                        }
                     }
                 },
             ),
@@ -121,15 +123,20 @@ fn AreciboIcons() -> Element {
             4,
             GridElement::new(
                 rsx! {
-                    if matches!(route, Route::Blog {}) {
-                        div { class: "w-2 h-2 bg-stone-400", title: "Mercury" }
-                    } else {
-                        div {
-                            class: "w-2 h-2 bg-stone-300 hover:bg-stone-400",
-                            title: "Mercury",
+                    Link { to: Route::Blog {},
+                        if matches!(route, Route::Blog {}) {
+                            div {
+                                class: "w-2 h-2 bg-stone-400",
+                                title: "Mercury",
+                            }
+                        } else {
+                            div {
+                                class: "w-2 h-2 bg-stone-300 hover:bg-stone-400",
+                                title: "Mercury",
+                            }
                         }
                     }
-                },
+                }
             ),
         )
         .with(
@@ -137,12 +144,17 @@ fn AreciboIcons() -> Element {
             6,
             GridElement::new(
                 rsx! {
-                    if matches!(route, Route::Projects {}) {
-                        div { class: "w-2 h-2 bg-orange-300", title: "Venus" }
-                    } else {
-                        div {
-                            class: "w-2 h-2 bg-stone-300 hover:bg-orange-300",
-                            title: "Venus",
+                    Link { to: Route::Projects {},
+                        if matches!(route, Route::Projects {}) {
+                            div {
+                                class: "w-2 h-2 bg-orange-300",
+                                title: "Venus",
+                            }
+                        } else {
+                            div {
+                                class: "w-2 h-2 bg-stone-300 hover:bg-orange-300",
+                                title: "Venus",
+                            }
                         }
                     }
                 },
@@ -153,12 +165,14 @@ fn AreciboIcons() -> Element {
             8,
             GridElement::new(
                 rsx! {
-                    if matches!(route, Route::AboutMe {}) {
-                        div { class: "w-2 h-2 bg-glaucolus", title: "Earth" }
-                    } else {
-                        div {
-                            class: "w-2 h-2 bg-stone-300 hover:bg-glaucolus",
-                            title: "Earth",
+                    Link { to: Route::AboutMe {},
+                        if matches!(route, Route::AboutMe {}) {
+                            div { class: "w-2 h-2 bg-glaucolus", title: "Earth" }
+                        } else {
+                            div {
+                                class: "w-2 h-2 bg-stone-300 hover:bg-glaucolus",
+                                title: "Earth",
+                            }
                         }
                     }
                 },
@@ -169,12 +183,14 @@ fn AreciboIcons() -> Element {
             10,
             GridElement::new(
                 rsx! {
-                    if matches!(route, Route::Guestbook {}) {
-                        div { class: "w-2 h-2 bg-coral", title: "Mars" }
-                    } else {
-                        div {
-                            class: "w-2 h-2 bg-stone-300 hover:bg-coral",
-                            title: "Mars",
+                    Link { to: Route::Guestbook {},
+                        if matches!(route, Route::Guestbook {}) {
+                            div { class: "w-2 h-2 bg-coral", title: "Mars" }
+                        } else {
+                            div {
+                                class: "w-2 h-2 bg-stone-300 hover:bg-coral",
+                                title: "Mars",
+                            }
                         }
                     }
                 },
@@ -222,7 +238,7 @@ fn AreciboIcons() -> Element {
             {Grid(grid)}
             img {
                 class: "w-4 h-4",
-                src: "/heart.svg",
+                src: asset!("/public/heart.svg"),
                 alt: "Pluto",
                 title: "With love, Pluto",
             }

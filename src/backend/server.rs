@@ -68,8 +68,16 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
 
     let app = Router::new()
         .nest("/v1/", api_router(state.clone(), governor_conf))
-        .serve_dioxus_application(cfg, dxapp)
+        .serve_static_assets()
+        .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
+            Box::new(state.clone())
+        })]))
+        .fallback(
+            axum::routing::get(render_handler)
+                .with_state(RenderHandleState::new(cfg, dxapp).with_ssr_state(ssr_state)),
+        )
         .layer(auth_layer);
+
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
     dioxus_logger::tracing::info!("Listening on {}", listen_address);

@@ -60,7 +60,7 @@ pub fn Card(props: CardProps) -> Element {
                                 }
                             }
                         } else {
-                            rsx! {  }
+                            rsx! {}
                         }
                     }
                 }

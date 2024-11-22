@@ -62,7 +62,7 @@ pub fn Guestbook() -> Element {
                                             user_signature.set(None);
                                         });
                                     },
-                                    icon: Some("/logout.svg".to_string()),
+                                    icon: Some(asset!("/public/logout.svg").to_string()),
                                 }
                             }
                         }
@@ -72,7 +72,7 @@ pub fn Guestbook() -> Element {
                                     text: "Sign in with GitHub",
                                     variant: ButtonVariant::Primary,
                                     onclick: |_| (),
-                                    icon: Some("/github-mark-white.svg".to_string()),
+                                    icon: Some(asset!("/public/github-mark-white.svg").to_string()),
                                 }
                             }
                         },
@@ -125,7 +125,7 @@ pub fn Guestbook() -> Element {
                         }
                     }
                 } else {
-                    rsx! {  }
+                    rsx! {}
                 }
             }
             SignatureList {}
