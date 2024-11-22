@@ -281,14 +281,16 @@ pub fn get_stroke_outline_points(points: &[StrokePoint], options: &StrokeOptions
     } else {
         if taper_start > 0.0 || (taper_end > 0.0 && points.len() == 1) {
         } else if options.start.cap {
-            for t in (1..=8).map(|step| step as f64 / 8.0) {
+            for t in (1..=13).map(|step| step as f64 / 13.0) {
                 let pt = rotate_around(
                     right_pts[0].as_vector(),
                     first_point.as_vector(),
-                    FIXED_PI * t * 3.0,
+                    FIXED_PI * t,
                 );
                 start_cap.push(pt);
             }
+            dioxus_logger::tracing::info!("capped");
+            dioxus_logger::tracing::info!("start_cap: {:?}", start_cap);
         } else {
             let corners_vector = PointExt::subp(left_pts[0], right_pts[0]);
             let offset_a = PointExt::mulp(corners_vector, 0.5).as_vector();
@@ -331,7 +333,7 @@ pub fn get_stroke_outline_points(points: &[StrokePoint], options: &StrokeOptions
     let mut result = left_pts;
     result.extend(end_cap.into_iter().map(|p| Point::new(p[0], p[1])));
     result.extend(right_pts.into_iter().rev());
-    result.extend(start_cap.into_iter().rev().map(|p| Point::new(p[0], p[1])));
+    result.extend(start_cap.into_iter().map(|p| Point::new(p[0], p[1])));
     result
 }
 fn get_stroke_radius(size: f64, thinning: f64, pressure: f32, easing: fn(f64) -> f64) -> f64 {
