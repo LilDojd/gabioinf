@@ -3,6 +3,7 @@ use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
 use document::eval;
 const SIGNATURES_PER_PAGE: usize = 8;
+const INTERSECTION_THRESHOLD: f64 = 0.5;
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
     #[default]
@@ -20,12 +21,49 @@ pub enum MaybeFirst {
 
 #[component]
 pub fn SignatureList() -> Element {
-    let load_state = use_signal(SignatureListState::default);
+    let mut load_state = use_signal(SignatureListState::default);
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
     let mut endless_signatures = use_signal(std::vec::Vec::new);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
     let mut is_intersecting = use_signal(|| false);
 
+    use_effect(move || {
+        let mut eval = eval(
+            format!(
+                r#"
+            const callback = (entries, observer) => {{
+                entries.forEach((entry) => {{
+                    dioxus.send(entry.isIntersecting);
+                }});
+            }};
+
+            const options = {{ root: null, threshold: {INTERSECTION_THRESHOLD} }};
+            const observer = new IntersectionObserver(callback, options);
+
+            const target = document.getElementById('signature-loader');
+            if (target) {{
+                observer.observe(target);
+            }}
+
+            // Cleanup function
+            () => {{
+                if (target) {{
+                    observer.unobserve(target);
+                }}
+            }}
+            "#,
+            )
+            .as_ref(),
+        );
+        spawn(async move {
+            is_intersecting.set(false);
+            while let Ok(is_intersecting_js) = eval.recv().await {
+                if let Some(value) = is_intersecting_js {
+                    is_intersecting.set(value);
+                }
+            }
+        });
+    });
     use_effect(move || {
         if *is_intersecting.read()
             && matches!(*load_state.read(), SignatureListState::MoreAvailable(_))
@@ -37,41 +75,55 @@ pub fn SignatureList() -> Element {
         div {
             {
                 if user_signature.read().is_some() {
-                    rsx! {
-                        div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                            Card {
-                                card_type: CardType::Signature {
-                                    entry: user_signature.read().clone().unwrap(),
-                                    close_button: rsx! {
-                                        CloseButton {
-                                            layout: "absolute top-2 right-2 w-6 h-6",
-                                            onclick: move |_| {
-                                                spawn(async move {
-                                                    server_fns::delete_signature(user_signature.read().clone().unwrap())
-                                                        .await
-                                                        .unwrap();
-                                                    user_signature.set(None);
-                                                    endless_signatures.write().clear();
-                                                });
+                    match *load_state.read() {
+                        SignatureListState::Initial
+                        | SignatureListState::Loading(MaybeFirst::First) => {
+                            rsx! {}
+                        }
+                        _ => {
+                            rsx! {
+                                div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+                                    Card {
+                                        card_type: CardType::Signature {
+                                            entry: user_signature.read().clone().unwrap(),
+                                            close_button: rsx! {
+                                                CloseButton {
+                                                    layout: "absolute top-2 right-2 w-6 h-6",
+                                                    onclick: move |_| {
+                                                        spawn(async move {
+                                                            match server_fns::delete_signature(user_signature.read().clone().unwrap())
+                                                                .await
+                                                            {
+                                                                Ok(_) => {}
+                                                                Err(e) => {
+                                                                    dioxus_logger::tracing::error!("Error deleting signature: {e}");
+                                                                }
+                                                            }
+                                                            user_signature.set(None);
+                                                            endless_signatures.write().clear();
+                                                            load_state.set(SignatureListState::Initial);
+                                                        });
+                                                    },
+                                                }
                                             },
-                                        }
-                                    },
-                                },
-                            }
-                            {
-                                endless_signatures
-                                    .read()
-                                    .iter()
-                                    .flatten()
-                                    .filter(|entry| entry.id != user_signature.read().as_ref().unwrap().id)
-                                    .map(|entry| rsx! {
-                                        Card {
-                                            card_type: CardType::Signature {
-                                                entry: entry.clone(),
-                                                close_button: rsx! {},
-                                            },
-                                        }
-                                    })
+                                        },
+                                    }
+                                    {
+                                        endless_signatures
+                                            .read()
+                                            .iter()
+                                            .flatten()
+                                            .filter(|entry| entry.id != user_signature.read().as_ref().unwrap().id)
+                                            .map(|entry| rsx! {
+                                                Card {
+                                                    card_type: CardType::Signature {
+                                                        entry: entry.clone(),
+                                                        close_button: rsx! {},
+                                                    },
+                                                }
+                                            })
+                                    }
+                                }
                             }
                         }
                     }
@@ -115,7 +167,7 @@ pub fn SignatureList() -> Element {
                     _ => rsx! {},
                 }
             }
-                // div { onvisible: move |_| is_intersecting.set(true), id: "signature-loader", class: "h-5"}
+            div { id: "signature-loader", class: "h-5" }
 
         }
     }
@@ -137,6 +189,9 @@ fn use_signature_list(
                 Ok(signatures) => {
                     if signatures.is_empty() {
                         state.set(SignatureListState::Finished);
+                    } else if signatures.len() < SIGNATURES_PER_PAGE {
+                        state.set(SignatureListState::Finished);
+                        batches.write().push(signatures);
                     } else {
                         let next_page = next_cursor.map_or(2, |c| c + 1);
                         state.set(SignatureListState::MoreAvailable(next_page));

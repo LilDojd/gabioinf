@@ -72,14 +72,12 @@ fn get_stroke_points(points: &[Point], options: &StrokeOptions) -> Vec<StrokePoi
         _ => {}
     }
     let t = 0.15 + (1.0 - options.streamline) * 0.85;
-    let mut stroke_points: Vec<StrokePoint> = vec![
-        StrokePoint {
-            point: points[0],
-            vector: [1.0, 1.0],
-            distance: 0.0,
-            running_length: 0.0,
-        },
-    ];
+    let mut stroke_points: Vec<StrokePoint> = vec![StrokePoint {
+        point: points[0],
+        vector: [1.0, 1.0],
+        distance: 0.0,
+        running_length: 0.0,
+    }];
     let mut has_reached_minimum_length = false;
     let mut running_length = 0.0;
     for (i, point) in points.iter().enumerate().skip(1) {
@@ -113,10 +111,7 @@ fn get_stroke_points(points: &[Point], options: &StrokeOptions) -> Vec<StrokePoi
     stroke_points
 }
 /// Get an array of points (as `[x, y]`) representing the outline of a stroke.
-pub fn get_stroke_outline_points(
-    points: &[StrokePoint],
-    options: &StrokeOptions,
-) -> Vec<Point> {
+pub fn get_stroke_outline_points(points: &[StrokePoint], options: &StrokeOptions) -> Vec<Point> {
     if points.is_empty() || options.size <= 0.0 {
         return vec![];
     }
@@ -125,26 +120,25 @@ pub fn get_stroke_outline_points(
         .start
         .taper
         .unwrap_or_else(|| options.size.max(total_length));
-    let taper_end = options.end.taper.unwrap_or_else(|| options.size.max(total_length));
+    let taper_end = options
+        .end
+        .taper
+        .unwrap_or_else(|| options.size.max(total_length));
     let min_distance = (options.size * options.smoothing).powi(2);
     let mut left_pts = Vec::new();
     let mut right_pts = Vec::new();
     let mut prev_pressure = points
         .iter()
         .take(10)
-        .fold(
-            points[0].point.pressure,
-            |acc, curr| {
-                let mut pressure = curr.point.pressure;
-                if options.simulate_pressure {
-                    let sp = (curr.distance / options.size).min(1.0) as f32;
-                    let rp = (1.0 - sp).min(1.0);
-                    pressure = (acc + (rp - acc) * (sp * RATE_OF_PRESSURE_CHANGE))
-                        .min(1.0);
-                }
-                (acc + pressure) / 2.0
-            },
-        );
+        .fold(points[0].point.pressure, |acc, curr| {
+            let mut pressure = curr.point.pressure;
+            if options.simulate_pressure {
+                let sp = (curr.distance / options.size).min(1.0) as f32;
+                let rp = (1.0 - sp).min(1.0);
+                pressure = (acc + (rp - acc) * (sp * RATE_OF_PRESSURE_CHANGE)).min(1.0);
+            }
+            (acc + pressure) / 2.0
+        });
     let mut radius = get_stroke_radius(
         options.size,
         options.thinning,
@@ -160,7 +154,13 @@ pub fn get_stroke_outline_points(
     let mut is_prev_point_sharp_corner = false;
     for (i, point) in points.iter().enumerate() {
         let mut pressure = point.point.pressure;
-        let StrokePoint { point, vector, distance, running_length, .. } = *point;
+        let StrokePoint {
+            point,
+            vector,
+            distance,
+            running_length,
+            ..
+        } = *point;
         if i < points.len() - 1 && total_length - running_length < 3.0 {
             continue;
         }
@@ -168,16 +168,10 @@ pub fn get_stroke_outline_points(
             if options.simulate_pressure {
                 let sp = (distance / options.size).min(1.0) as f32;
                 let rp = (1.0 - sp).min(1.0);
-                pressure = (prev_pressure
-                    + (rp - prev_pressure) * (sp * RATE_OF_PRESSURE_CHANGE))
+                pressure = (prev_pressure + (rp - prev_pressure) * (sp * RATE_OF_PRESSURE_CHANGE))
                     .min(1.0);
             }
-            radius = get_stroke_radius(
-                options.size,
-                options.thinning,
-                pressure,
-                options.easing,
-            );
+            radius = get_stroke_radius(options.size, options.thinning, pressure, options.easing);
         } else {
             radius = options.size / 2.0;
         }
@@ -200,7 +194,11 @@ pub fn get_stroke_outline_points(
         } else {
             vector
         };
-        let next_dpr = if i < points.len() - 1 { vector.dpr(next_vector) } else { 1.0 };
+        let next_dpr = if i < points.len() - 1 {
+            vector.dpr(next_vector)
+        } else {
+            1.0
+        };
         let prev_dpr = vector.dpr(prev_vector);
         let is_point_sharp_corner = prev_dpr < 0.0 && !is_prev_point_sharp_corner;
         let is_next_point_sharp_corner = next_dpr < 0.0;
@@ -281,70 +279,53 @@ pub fn get_stroke_outline_points(
             return dot_pts;
         }
     } else {
-        if taper_start == 0.0 && !(taper_end > 0.0 && points.len() == 1) {
-            if options.start.cap {
-                for t in (1..=13).map(|step| step as f64 / 13.0) {
-                    let pt = rotate_around(
-                        right_pts[0].as_vector(),
-                        first_point.as_vector(),
-                        FIXED_PI * t,
-                    );
-                    start_cap.push(pt);
-                }
-            } else {
-                let corners_vector = PointExt::subp(left_pts[0], right_pts[0]);
-                let offset_a = PointExt::mulp(corners_vector, 0.5).as_vector();
-                let offset_b = PointExt::mulp(corners_vector, 0.51).as_vector();
-                start_cap
-                    .extend_from_slice(
-                        &[
-                            PointExt::subp(first_point.as_vector(), offset_a),
-                            PointExt::subp(first_point.as_vector(), offset_b),
-                            PointExt::addp(first_point.as_vector(), offset_b),
-                            PointExt::addp(first_point.as_vector(), offset_a),
-                        ],
-                    );
-            }
-        }
-        let direction = PointExt::per(PointExt::negp(points.last().unwrap().vector));
-        if taper_end == 0.0 && !(taper_start > 0.0 && points.len() == 1) {
-            if options.end.cap {
-                let start = PointExt::proj(last_point.as_vector(), direction, radius);
-                for t in (1..29).map(|step| step as f64 / 29.0) {
-                    end_cap
-                        .push(
-                            rotate_around(
-                                start,
-                                last_point.as_vector(),
-                                FIXED_PI * 3.0 * t,
-                            ),
-                        );
-                }
-            } else {
-                end_cap
-                    .extend_from_slice(
-                        &[
-                            PointExt::addp(
-                                last_point.as_vector(),
-                                PointExt::mulp(direction, radius),
-                            ),
-                            PointExt::addp(
-                                last_point.as_vector(),
-                                PointExt::mulp(direction, radius * 0.99),
-                            ),
-                            PointExt::subp(
-                                last_point.as_vector(),
-                                PointExt::mulp(direction, radius * 0.99),
-                            ),
-                            PointExt::subp(
-                                last_point.as_vector(),
-                                PointExt::mulp(direction, radius),
-                            ),
-                        ],
-                    );
+        if taper_start > 0.0 || (taper_end > 0.0 && points.len() == 1) {
+        } else if options.start.cap {
+            for t in (1..=8).map(|step| step as f64 / 8.0) {
+                let pt = rotate_around(
+                    right_pts[0].as_vector(),
+                    first_point.as_vector(),
+                    FIXED_PI * t * 3.0,
+                );
+                start_cap.push(pt);
             }
         } else {
+            let corners_vector = PointExt::subp(left_pts[0], right_pts[0]);
+            let offset_a = PointExt::mulp(corners_vector, 0.5).as_vector();
+            let offset_b = PointExt::mulp(corners_vector, 0.51).as_vector();
+            start_cap.extend_from_slice(&[
+                PointExt::subp(first_point.as_vector(), offset_a),
+                PointExt::subp(first_point.as_vector(), offset_b),
+                PointExt::addp(first_point.as_vector(), offset_b),
+                PointExt::addp(first_point.as_vector(), offset_a),
+            ]);
+        }
+
+        let direction = PointExt::per(PointExt::negp(points.last().unwrap().vector));
+        if taper_end > 0.0 || (taper_start > 0.0 && points.len() == 1) {
             end_cap.push(last_point.as_vector());
+        } else if options.end.cap {
+            let start = PointExt::proj(last_point.as_vector(), direction, radius);
+            for t in (1..29).map(|step| step as f64 / 29.0) {
+                end_cap.push(rotate_around(
+                    start,
+                    last_point.as_vector(),
+                    FIXED_PI * 3.0 * t,
+                ));
+            }
+        } else {
+            end_cap.extend_from_slice(&[
+                PointExt::addp(last_point.as_vector(), PointExt::mulp(direction, radius)),
+                PointExt::addp(
+                    last_point.as_vector(),
+                    PointExt::mulp(direction, radius * 0.99),
+                ),
+                PointExt::subp(
+                    last_point.as_vector(),
+                    PointExt::mulp(direction, radius * 0.99),
+                ),
+                PointExt::subp(last_point.as_vector(), PointExt::mulp(direction, radius)),
+            ]);
         }
     }
     let mut result = left_pts;
@@ -353,11 +334,6 @@ pub fn get_stroke_outline_points(
     result.extend(start_cap.into_iter().rev().map(|p| Point::new(p[0], p[1])));
     result
 }
-fn get_stroke_radius(
-    size: f64,
-    thinning: f64,
-    pressure: f32,
-    easing: fn(f64) -> f64,
-) -> f64 {
+fn get_stroke_radius(size: f64, thinning: f64, pressure: f32, easing: fn(f64) -> f64) -> f64 {
     size * easing(0.5 - thinning * (0.5 - pressure as f64))
 }
