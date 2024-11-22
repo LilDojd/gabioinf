@@ -80,9 +80,7 @@ fn expand_node(node: &Node) -> Element {
                 pre { "{yaml.value}" }
             }
         }
-        Node::Break(_) => rsx!(
-            br {}
-        ),
+        Node::Break(_) => rsx!(br {}),
         Node::InlineCode(ilc) => {
             rsx! {
                 code { "{ilc.value}" }
@@ -188,9 +186,7 @@ fn expand_node(node: &Node) -> Element {
         Node::Table(table) => rsx!(
             table { {table.children.iter().map(expand_node)} }
         ),
-        Node::ThematicBreak(_) => rsx!(
-            hr {}
-        ),
+        Node::ThematicBreak(_) => rsx!(hr {}),
         Node::TableRow(tr) => rsx!(
             tr { {tr.children.iter().map(expand_node)} }
         ),

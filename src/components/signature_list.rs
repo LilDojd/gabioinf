@@ -102,6 +102,7 @@ pub fn SignatureList() -> Element {
                                                             user_signature.set(None);
                                                             endless_signatures.write().clear();
                                                             load_state.set(SignatureListState::Initial);
+                                                            load_next_batch.send(());
                                                         });
                                                     },
                                                 }
@@ -179,6 +180,7 @@ fn use_signature_list(
     use futures::StreamExt as _;
     let load_task = use_coroutine(move |mut rx: UnboundedReceiver<Option<u32>>| async move {
         while let Some(next_cursor) = rx.next().await {
+            dioxus_logger::tracing::debug!("Loading signatures with cursor {next_cursor:?}");
             let original_state = *state.read();
             state.set(SignatureListState::Loading(if next_cursor.is_some() {
                 MaybeFirst::NotFirst

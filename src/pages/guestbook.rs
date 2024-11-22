@@ -11,7 +11,7 @@ pub fn Guestbook() -> Element {
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
-    let mut user = use_resource(server_fns::get_user);
+    let mut user = use_server_future(server_fns::get_user)?;
     use_effect(move || {
         let guest = user();
         if let Some(Ok(Some(guest))) = guest {

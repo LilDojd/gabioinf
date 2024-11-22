@@ -18,7 +18,9 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     let trim_on_submit = use_callback(move |_| {
         if let Some(canvas) = canvas_ref.read().as_ref() {
             let trimmed_signature = canvas.trim_to_image();
-            props.on_submit.call((message.read().clone(), trimmed_signature));
+            props
+                .on_submit
+                .call((message.read().clone(), trimmed_signature));
         }
     });
     let mut message_valid = use_context::<Signal<MessageValid>>();

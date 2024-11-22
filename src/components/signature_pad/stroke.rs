@@ -289,8 +289,6 @@ pub fn get_stroke_outline_points(points: &[StrokePoint], options: &StrokeOptions
                 );
                 start_cap.push(pt);
             }
-            dioxus_logger::tracing::info!("capped");
-            dioxus_logger::tracing::info!("start_cap: {:?}", start_cap);
         } else {
             let corners_vector = PointExt::subp(left_pts[0], right_pts[0]);
             let offset_a = PointExt::mulp(corners_vector, 0.5).as_vector();
