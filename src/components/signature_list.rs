@@ -179,8 +179,14 @@ fn use_signature_list(
     use_coroutine(move |mut rx: UnboundedReceiver<()>| async move {
         load_task.send(None);
         while rx.next().await.is_some() {
-            if let SignatureListState::MoreAvailable(cursor) = *state.read() {
-                load_task.send(Some(cursor));
+            match *state.read() {
+                SignatureListState::Initial => {
+                    load_task.send(None);
+                }
+                SignatureListState::MoreAvailable(cursor) => {
+                    load_task.send(Some(cursor));
+                }
+                _ => {}
             }
         }
     })

@@ -19,8 +19,8 @@ fn main() {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
-    #[cfg(feature = "web")]
-    dioxus_web::launch::launch_cfg(App, dioxus_web::Config::new().hydrate(true));
+    #[cfg(not(feature = "server"))]
+    dioxus::launch(App);
     #[cfg(feature = "server")]
     {
         let _guard = sentry::init(sentry::ClientOptions {

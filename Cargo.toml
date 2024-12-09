@@ -61,7 +61,6 @@ axum-server = { version = "0.7.1", optional = true }
 
 # Dioxus
 dioxus = { version = "0.6.0", features = ["fullstack", "router", "web"] }
-dioxus-web = { version = "0.6.0", features = ["hydrate"], optional = true }
 dioxus-logger = { version = "0.6.0" }
 
 # Web
@@ -125,7 +124,7 @@ server = [
   "dep:sentry",
   "dioxus/server",
 ]
-web = ["time/wasm-bindgen", "dep:dioxus-web"]
+web = ["time/wasm-bindgen"]
 
 [profile.release]
 opt-level = 3

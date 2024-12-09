@@ -1702,7 +1702,6 @@ dependencies = [
  "derive_more",
  "dioxus",
  "dioxus-logger",
- "dioxus-web",
  "forwarded-header-value",
  "futures",
  "getrandom",
