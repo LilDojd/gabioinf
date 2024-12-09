@@ -47,4 +47,4 @@ COPY --from=builder /app/config /usr/local/bin/config
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/gabioinf"] 
+ENTRYPOINT ["/usr/local/bin/server"] 
