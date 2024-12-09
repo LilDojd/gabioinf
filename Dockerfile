@@ -1,6 +1,6 @@
 ARG APPNAME=gabioinf
 
-ARG OUTDIR=target/dx/release/web
+ARG OUTDIR=target/dx/${APPNAME}/release/web
 
 FROM rust:bookworm AS chef
 
