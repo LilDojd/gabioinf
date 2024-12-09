@@ -60,15 +60,9 @@ axum-helmet = { version = "0.1.0", optional = true }
 axum-server = { version = "0.7.1", optional = true }
 
 # Dioxus
-dioxus = { git = "https://github.com/DioxusLabs/dioxus", features = [
-  "fullstack",
-  "router",
-  "web",
-] }
-dioxus-web = { git = "https://github.com/DioxusLabs/dioxus", features = [
-  "hydrate",
-], optional = true }
-dioxus-logger = { version = "0.5.1" }
+dioxus = { version = "0.6.0", features = ["fullstack", "router", "web"] }
+dioxus-web = { version = "0.6.0", features = ["hydrate"], optional = true }
+dioxus-logger = { version = "0.6.0" }
 
 # Web
 
@@ -91,7 +85,7 @@ web-sys = { version = "0.3.56", features = [
 
 futures = { version = "0.3.31" }
 
-sentry = { version = "0.34.0", default-features = false, features = [
+sentry = { version = "0.35.0", default-features = false, features = [
   "backtrace",
   "contexts",
   "panic",
@@ -100,8 +94,8 @@ sentry = { version = "0.34.0", default-features = false, features = [
   "reqwest",
   "rustls",
 ], optional = true }
-wasm-bindgen-futures = "0.4.43"
-wasm-bindgen = "0.2.95"
+wasm-bindgen-futures = "0.4.49"
+wasm-bindgen = "0.2.99"
 
 [features]
 default = []
@@ -145,3 +139,13 @@ codegen-units = 1
 debug = false
 opt-level = 3
 strip = "symbols"
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"

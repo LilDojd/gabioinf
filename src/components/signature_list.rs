@@ -1,9 +1,7 @@
 use crate::components::{Card, CardType, CloseButton, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
-use document::eval;
 const SIGNATURES_PER_PAGE: usize = 8;
-const INTERSECTION_THRESHOLD: f64 = 0.5;
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
     #[default]
@@ -27,43 +25,6 @@ pub fn SignatureList() -> Element {
     let load_next_batch = use_signature_list(load_state, endless_signatures);
     let mut is_intersecting = use_signal(|| false);
 
-    use_effect(move || {
-        let mut eval = eval(
-            format!(
-                r#"
-            const callback = (entries, observer) => {{
-                entries.forEach((entry) => {{
-                    dioxus.send(entry.isIntersecting);
-                }});
-            }};
-
-            const options = {{ root: null, threshold: {INTERSECTION_THRESHOLD} }};
-            const observer = new IntersectionObserver(callback, options);
-
-            const target = document.getElementById('signature-loader');
-            if (target) {{
-                observer.observe(target);
-            }}
-
-            // Cleanup function
-            () => {{
-                if (target) {{
-                    observer.unobserve(target);
-                }}
-            }}
-            "#,
-            )
-            .as_ref(),
-        );
-        spawn(async move {
-            is_intersecting.set(false);
-            while let Ok(is_intersecting_js) = eval.recv().await {
-                if let Some(value) = is_intersecting_js {
-                    is_intersecting.set(value);
-                }
-            }
-        });
-    });
     use_effect(move || {
         if *is_intersecting.read()
             && matches!(*load_state.read(), SignatureListState::MoreAvailable(_))
@@ -168,8 +129,17 @@ pub fn SignatureList() -> Element {
                     _ => rsx! {},
                 }
             }
-            div { id: "signature-loader", class: "h-5" }
-
+            div {
+                id: "signature-loader",
+                class: "h-5",
+                onvisible: move |evt| {
+                    let data = evt.data();
+                    if let Ok(intersecting) = data.is_intersecting() {
+                        is_intersecting.set(intersecting);
+                    }
+                },
+            }
+        
         }
     }
 }
