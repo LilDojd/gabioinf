@@ -21,14 +21,10 @@ impl MarkdownType {
 #[component(no_case_check)]
 pub fn Markdown(
     value: String,
-    #[props(default)]
-    class: String,
-    #[props(default)]
-    style: String,
-    #[props(default)]
-    md_type: MarkdownType,
-    #[props(extends = div)]
-    rest_attributes: Vec<Attribute>,
+    #[props(default)] class: String,
+    #[props(default)] style: String,
+    #[props(default)] md_type: MarkdownType,
+    #[props(extends = div)] rest_attributes: Vec<Attribute>,
 ) -> Element {
     let nodes = match to_mdast(&value, &md_type.to_settings()) {
         Ok(nodes) => nodes,
@@ -48,7 +44,7 @@ fn expand_node(node: &Node) -> Element {
                 {root.children.iter().map(expand_node)}
             }
         }
-        Node::BlockQuote(bq) => {
+        Node::Blockquote(bq) => {
             rsx! {
                 blockquote { {bq.children.iter().map(expand_node)} }
             }

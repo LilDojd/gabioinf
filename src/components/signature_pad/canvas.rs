@@ -6,7 +6,7 @@ use super::{
 use crate::components::signature_pad::utils::PointExt;
 use dioxus::prelude::*;
 use std::cell::RefCell;
-use web_sys::wasm_bindgen::{JsCast, JsValue};
+use web_sys::wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 pub const DPI: f64 = 2.0;
 #[derive(Debug, Clone)]
@@ -79,14 +79,15 @@ impl Canvas {
         *self.is_pressed.borrow_mut() = true;
         let point = Point::from_event(event, &self.canvas);
         self.current_line.borrow_mut().push(point);
+        self.draw_lines();
     }
     pub fn on_mouse_move(&self, event: &PointerEvent) {
         if !*self.is_pressed.borrow() {
             return;
         }
-        let point = Point::from_event(event, &self.canvas);
         let mut nextpoint = None;
         if let Some(last_point) = self.current_line.borrow().last() {
+            let point = Point::from_event(event, &self.canvas);
             if point.dist(*last_point) > 5.0 {
                 nextpoint = Some(point);
             }
@@ -114,8 +115,8 @@ impl Canvas {
             self.canvas.width() as f64,
             self.canvas.height() as f64,
         );
-        ctx.set_stroke_style(&JsValue::from_str("#f2f2f2"));
-        ctx.set_fill_style(&JsValue::from_str("#f2f2f2"));
+        ctx.set_stroke_style_str("#f2f2f2");
+        ctx.set_fill_style_str("#f2f2f2");
         ctx.set_image_smoothing_enabled(true);
         ctx.translate(0.5, 0.5).unwrap();
         self.draw_lines();

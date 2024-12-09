@@ -4,7 +4,10 @@
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
 use crate::{
-    backend::{db::DbConnPool, repos::{GroupsAndPermissionsRepo, PgRepository}},
+    backend::{
+        db::DbConnPool,
+        repos::{GroupsAndPermissionsRepo, PgRepository},
+    },
     shared::models::{Guest, GuestbookEntry},
 };
 use axum::extract::FromRef;
@@ -15,7 +18,7 @@ use reqwest::Client as ReqwestClient;
 ///
 /// This struct holds various shared resources and configuration that can be
 /// accessed throughout the application, particularly in request handlers.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct AppState {
     /// The database connection pool.
     pub db: DbConnPool,

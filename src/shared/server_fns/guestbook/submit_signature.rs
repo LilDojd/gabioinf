@@ -47,7 +47,7 @@ pub async fn submit_signature(
         message: payload.message.trim().to_string(),
         signature: payload.signature,
     }
-        .into();
+    .into();
     let entry = state.guestbook_repo.create(&new_entry).await?;
     Ok(Some(entry))
 }

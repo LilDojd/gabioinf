@@ -1,6 +1,6 @@
 ARG APPNAME=gabioinf
 
-ARG OUTDIR=dist
+ARG OUTDIR=target/dx/${APPNAME}/release/web
 
 FROM rust:bookworm AS chef
 
@@ -8,7 +8,7 @@ FROM rust:bookworm AS chef
 RUN rustup target add wasm32-unknown-unknown
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 RUN cargo binstall cargo-chef -y
-RUN cargo install --git https://github.com/dioxuslabs/dioxus dioxus-cli --rev 851abe8 --locked
+RUN cargo install --git https://github.com/dioxuslabs/dioxus dioxus-cli
 WORKDIR /app
 
 FROM chef AS planner
@@ -31,7 +31,7 @@ RUN cargo chef cook --release --recipe-path recipe.json --features web --target 
 COPY . .
 # Copy tailwind.css we generated earlier
 COPY --from=tailwind /app/public/tailwind.css ./public/tailwind.css
-RUN dx build --platform fullstack --release
+RUN dx build --release
 
 FROM debian:bookworm-slim AS runtime
 
@@ -47,4 +47,4 @@ COPY --from=builder /app/config /usr/local/bin/config
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/gabioinf"] 
+ENTRYPOINT ["/usr/local/bin/server"] 

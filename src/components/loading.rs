@@ -7,8 +7,8 @@ pub fn Loading() -> Element {
 }
 fn Spinner() -> Element {
     rsx! {
-        div { class: "relative rounded-xl overflow-auto p-6",
-            div { class: "flex items-center justify-center",
+        div { class: "relative rounded-xl mt-6",
+            div { class: "flex justify-center",
                 button {
                     r#type: "button",
                     disabled: "",

@@ -11,7 +11,7 @@ pub fn Guestbook() -> Element {
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
-    let mut user = use_resource(server_fns::get_user);
+    let mut user = use_server_future(server_fns::get_user)?;
     use_effect(move || {
         let guest = user();
         if let Some(Ok(Some(guest))) = guest {
@@ -47,7 +47,7 @@ pub fn Guestbook() -> Element {
                                         user_signature.set(None);
                                     });
                                 },
-                                icon: Some("/logout.svg".to_string()),
+                                icon: Some(asset!("/public/logout.svg").to_string()),
                             }
                         },
                         (Some(Ok(Some(_user))), Some(_signature)) => {
@@ -62,7 +62,7 @@ pub fn Guestbook() -> Element {
                                             user_signature.set(None);
                                         });
                                     },
-                                    icon: Some("/logout.svg".to_string()),
+                                    icon: Some(asset!("/public/logout.svg").to_string()),
                                 }
                             }
                         }
@@ -72,7 +72,7 @@ pub fn Guestbook() -> Element {
                                     text: "Sign in with GitHub",
                                     variant: ButtonVariant::Primary,
                                     onclick: |_| (),
-                                    icon: Some("/github-mark-white.svg".to_string()),
+                                    icon: Some(asset!("/public/github-mark-white.svg").to_string()),
                                 }
                             }
                         },
@@ -125,7 +125,7 @@ pub fn Guestbook() -> Element {
                         }
                     }
                 } else {
-                    rsx! {  }
+                    rsx! {}
                 }
             }
             SignatureList {}

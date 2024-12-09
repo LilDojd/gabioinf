@@ -1,4 +1,4 @@
 domain = "gabioinf.dev"
 [ratelimiting]
-requests_per_second = 10
-burst_size = 20
+requests_per_second = 20
+burst_size = 40

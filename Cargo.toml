@@ -45,7 +45,7 @@ tower = { version = "0.5", optional = true, features = ["timeout", "util"] }
 tower-http = { version = "0.6.1", features = ["cors", "fs"], optional = true }
 oauth2 = { version = "4.4.2", optional = true }
 rustrict = { version = "0.7.31", optional = true }
-governor = { version = "0.7.0", optional = true }
+governor = { version = "0.6", optional = true }
 tower_governor = { version = "0.4.3", features = [
   "tracing",
   "axum",
@@ -60,15 +60,8 @@ axum-helmet = { version = "0.1.0", optional = true }
 axum-server = { version = "0.7.1", optional = true }
 
 # Dioxus
-dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", features = [
-  "fullstack",
-  "router",
-  "web",
-] }
-dioxus-web = { git = "https://github.com/DioxusLabs/dioxus.git", features = [
-  "hydrate",
-], optional = true }
-dioxus-logger = { version = "0.5.1" }
+dioxus = { version = "0.6.0", features = ["fullstack", "router", "web"] }
+dioxus-logger = { version = "0.6.0" }
 
 # Web
 
@@ -85,15 +78,13 @@ web-sys = { version = "0.3.56", features = [
   "ImageData",
   "ImageBitmap",
   "Path2d",
-  "ResizeObserver",
-  "ResizeObserverEntry",
   "Element",
   "DomRectReadOnly",
 ] }
 
 futures = { version = "0.3.31" }
 
-sentry = { version = "0.34.0", default-features = false, features = [
+sentry = { version = "0.35.0", default-features = false, features = [
   "backtrace",
   "contexts",
   "panic",
@@ -102,11 +93,8 @@ sentry = { version = "0.34.0", default-features = false, features = [
   "reqwest",
   "rustls",
 ], optional = true }
-wasm-bindgen-futures = "0.4.43"
-wasm-bindgen = "0.2.95"
-tower-etag-cache = { git = "https://github.com/LilDojd/tower-etag-cache.git", features = [
-  "const-lru-provider",
-], optional = true }
+wasm-bindgen-futures = "0.4.49"
+wasm-bindgen = "0.2.99"
 
 [features]
 default = []
@@ -128,16 +116,15 @@ server = [
   "dep:forwarded-header-value",
   "dep:tower-sessions",
   "dep:tower-sessions-sqlx-store",
-  "dep:tower-etag-cache",
   "dep:axum-login",
   "dep:axum-helmet",
   "dep:serde_json",
   "dep:config",
   "dep:thiserror",
   "dep:sentry",
-  "dioxus/axum",
+  "dioxus/server",
 ]
-web = ["time/wasm-bindgen", "dep:dioxus-web"]
+web = ["time/wasm-bindgen"]
 
 [profile.release]
 opt-level = 3
@@ -151,3 +138,13 @@ codegen-units = 1
 debug = false
 opt-level = 3
 strip = "symbols"
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"

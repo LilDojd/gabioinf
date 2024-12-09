@@ -3,13 +3,6 @@
 # App (Project) Name
 name = "gabioinf"
 
-# Dioxus App Default Platform
-# web, desktop, fullstack
-default_platform = "fullstack"
-
-# `build` & `serve` dist path
-out_dir = "dist"
-
 asset_dir = "public"
 
 # [web.wasm_opt]
@@ -31,9 +24,6 @@ watch_path = ["src", "public"]
 
 # include `assets` in web platform
 [web.resource]
-
-# CSS style file
-style = ["/tailwind.css", "/main.css", "/navbar.css", "/alien_links.css"]
 
 # Javascript code file
 script = ["https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js"]
