@@ -139,7 +139,6 @@ pub fn SignatureList() -> Element {
                     }
                 },
             }
-        
         }
     }
 }

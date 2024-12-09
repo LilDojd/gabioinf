@@ -88,6 +88,7 @@ fn App() -> Element {
         }
         document::Meta { name: "twitter:image:width", content: "1200" }
         document::Meta { name: "twitter:image:height", content: "630" }
+        document::Link { rel: "icon", href: asset!("/public/favicon.ico") }
         document::Link {
             rel: "preconnect",
             href: "https://fonts.gstatic.com",
