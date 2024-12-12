@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
-use dioxus::prelude::*;
-use shared::models::GuestbookEntry;
+use dioxus::{prelude::*, CapturedError};
+use shared::{
+    models::{Guest, GuestbookEntry},
+    server_fns,
+};
 use std::str::FromStr;
 use tracing::Level;
 #[cfg(feature = "server")]
@@ -56,6 +59,13 @@ enum Route {
 fn App() -> Element {
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
+    let user = use_server_future(server_fns::get_user)?
+        .cloned()
+        .unwrap()
+        .map_err(CapturedError::from_display)?;
+
+    use_context_provider(|| Signal::new(user));
+
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }

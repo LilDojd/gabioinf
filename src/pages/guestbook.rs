@@ -1,6 +1,9 @@
 use crate::{
     components::{ButtonVariant, SignatureList, SignaturePopup, StyledButton},
-    shared::{models::GuestbookEntry, server_fns},
+    shared::{
+        models::{Guest, GuestbookEntry},
+        server_fns,
+    },
     MessageValid,
 };
 use dioxus::prelude::*;
@@ -11,10 +14,10 @@ pub fn Guestbook() -> Element {
     let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
-    let mut user = use_server_future(server_fns::get_user)?;
+    let mut user = use_context::<Signal<Option<Guest>>>();
     use_effect(move || {
-        let guest = user();
-        if let Some(Ok(Some(guest))) = guest {
+        let guest_ = user();
+        if let Some(guest) = guest_ {
             spawn(async move {
                 dioxus_logger::tracing::debug!("Checking for user signature");
                 if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
@@ -31,7 +34,7 @@ pub fn Guestbook() -> Element {
             div { class: "mb-6 flex w-full justify-between items-center",
                 {
                     match (&*user.read(), &*user_signature.read()) {
-                        (Some(Ok(Some(_user))), None) => rsx! {
+                        (Some(_user), None) => rsx! {
                             StyledButton {
                                 text: "Sign Guestbook",
                                 variant: ButtonVariant::Primary,
@@ -43,14 +46,14 @@ pub fn Guestbook() -> Element {
                                 onclick: move |_| {
                                     spawn(async move {
                                         server_fns::logout().await.unwrap();
-                                        user.restart();
+                                        user.set(None);
                                         user_signature.set(None);
                                     });
                                 },
                                 icon: Some(asset!("/public/logout.svg").to_string()),
                             }
                         },
-                        (Some(Ok(Some(_user))), Some(_signature)) => {
+                        (Some(_user), Some(_signature)) => {
                             rsx! {
                                 StyledButton {
                                     text: "Sign out",
@@ -58,7 +61,7 @@ pub fn Guestbook() -> Element {
                                     onclick: move |_| {
                                         spawn(async move {
                                             server_fns::logout().await.unwrap();
-                                            user.restart();
+                                            user.set(None);
                                             user_signature.set(None);
                                         });
                                     },
@@ -85,7 +88,7 @@ pub fn Guestbook() -> Element {
                         SignaturePopup {
                             on_close: close_popup,
                             on_submit: move |(message, signature): (String, String)| async move {
-                                if let Some(Ok(Some(guest))) = &*user.read() {
+                                if let Some(guest) = &*user.read() {
                                     let entry_request = server_fns::CreateEntryRequest {
                                         message,
                                         signature: if signature.is_empty() { None } else { Some(signature) },
