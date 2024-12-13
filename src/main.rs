@@ -1,9 +1,6 @@
 #![allow(non_snake_case)]
 use dioxus::{prelude::*, CapturedError};
-use shared::{
-    models::{Guest, GuestbookEntry},
-    server_fns,
-};
+use shared::{models::GuestbookEntry, server_fns};
 use std::str::FromStr;
 use tracing::Level;
 #[cfg(feature = "server")]
@@ -23,7 +20,9 @@ fn main() {
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
     #[cfg(not(feature = "server"))]
-    dioxus::launch(App);
+    LaunchBuilder::new()
+        .with_cfg(web! {dioxus::web::Config::new().hydrate(true)})
+        .launch(App);
     #[cfg(feature = "server")]
     {
         let _guard = sentry::init(sentry::ClientOptions {
@@ -99,15 +98,6 @@ fn App() -> Element {
         document::Meta { name: "twitter:image:width", content: "1200" }
         document::Meta { name: "twitter:image:height", content: "630" }
         document::Link { rel: "icon", href: asset!("/public/favicon.ico") }
-        document::Link {
-            rel: "preconnect",
-            href: "https://fonts.gstatic.com",
-            crossorigin: "true",
-        }
-        document::Link {
-            rel: "stylesheet",
-            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap",
-        }
         document::Link { rel: "stylesheet", href: asset!("/public/tailwind.css") }
         document::Link { rel: "stylesheet", href: asset!("/public/alien_links.css") }
         document::Link { rel: "stylesheet", href: asset!("/public/main.css") }

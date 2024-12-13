@@ -22,12 +22,6 @@ reload_html = true
 # which files or dirs will be watcher monitoring
 watch_path = ["src", "public"]
 
-# include `assets` in web platform
-[web.resource]
-
-# Javascript code file
-script = ["https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js"]
-
 [web.resource.dev]
 
 script = []

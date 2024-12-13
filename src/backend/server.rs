@@ -78,10 +78,11 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         )
         .layer(auth_layer);
 
-    use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-    let listen_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
-    dioxus_logger::tracing::info!("Listening on {}", listen_address);
-    axum_server::bind(listen_address)
+    use std::net::SocketAddr;
+    let address = dioxus_cli_config::fullstack_address_or_localhost();
+
+    dioxus_logger::tracing::info!("Listening on {}", address);
+    axum_server::bind(address)
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
