@@ -27,8 +27,8 @@ pub fn AboutMe() -> Element {
                 }
                 figure { class: "max-w-prose ml-auto mr-auto block",
                     img {
-                        class: "w-full h-auto",
-                        src: asset!("/public/sesh.avif"),
+                        class: "w-full h-auto aspect-[1.18/1]",
+                        src: asset!("/public/sesh.avif", ImageAssetOptions::new().with_avif()),
                         alt: "Sesh the cat",
                     }
                     figcaption { "yes, he is a pirate" }
@@ -116,18 +116,10 @@ pub fn AboutMe() -> Element {
                 ul {
                     li {
                         a {
-                            href: "/CV_Georgy_Andreev_barebones.pdf",
+                            href: asset!("/public/CV_GeorgyAndreev_111124.pdf"),
                             class: "alien-link",
                             target: "_blank",
-                            r#""Professional" CV"#
-                        }
-                    }
-                    li {
-                        a {
-                            href: "https://lildojd.github.io/cv-pretty/en",
-                            class: "alien-link",
-                            target: "_blank",
-                            "CV"
+                            r"CV"
                         }
                     }
                 }

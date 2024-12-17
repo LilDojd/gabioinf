@@ -115,7 +115,7 @@ fn generate_general_helmet_headers() -> Helmet {
 /// Returns a default strict Content Security Policy.
 /// It's used whenever a custom CSP is not set.
 fn generate_default_csp() -> ContentSecurityPolicy<'static> {
-    return ContentSecurityPolicy::new()
+    ContentSecurityPolicy::new()
         .default_src(vec!["'self'"])
         .base_uri(vec!["'none'"])
         .font_src(vec!["'none'"])
@@ -127,7 +127,7 @@ fn generate_default_csp() -> ContentSecurityPolicy<'static> {
         .script_src(vec!["'none'"])
         .style_src(vec!["'none'"])
         .worker_src(vec!["'none'"])
-        .upgrade_insecure_requests();
+        .upgrade_insecure_requests()
 }
 /// Returns a default strict Content Security Policy as a static string.
 const fn fallback_static_str_csp() -> &'static str {

@@ -3,6 +3,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@font-face {
+  font-family: "Recursive";
+  src: url("/assets/recursive.woff2") format("woff2-variations");
+  font-weight: 300 1000;
 }
 
 #main {

@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
-use dioxus::prelude::*;
-use shared::models::GuestbookEntry;
+use dioxus::{prelude::*, CapturedError};
+use shared::{models::GuestbookEntry, server_fns};
 use std::str::FromStr;
 use tracing::Level;
 #[cfg(feature = "server")]
@@ -20,7 +20,9 @@ fn main() {
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
     #[cfg(not(feature = "server"))]
-    dioxus::launch(App);
+    LaunchBuilder::new()
+        .with_cfg(web! {dioxus::web::Config::new().hydrate(true)})
+        .launch(App);
     #[cfg(feature = "server")]
     {
         let _guard = sentry::init(sentry::ClientOptions {
@@ -56,6 +58,13 @@ enum Route {
 fn App() -> Element {
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
+    let user = use_server_future(server_fns::get_user)?
+        .cloned()
+        .unwrap()
+        .map_err(CapturedError::from_display)?;
+
+    use_context_provider(|| Signal::new(user));
+
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }
@@ -89,15 +98,6 @@ fn App() -> Element {
         document::Meta { name: "twitter:image:width", content: "1200" }
         document::Meta { name: "twitter:image:height", content: "630" }
         document::Link { rel: "icon", href: asset!("/public/favicon.ico") }
-        document::Link {
-            rel: "preconnect",
-            href: "https://fonts.gstatic.com",
-            crossorigin: "true",
-        }
-        document::Link {
-            rel: "stylesheet",
-            href: "https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL@-15..0,300..800,0..1&display=swap",
-        }
         document::Link { rel: "stylesheet", href: asset!("/public/tailwind.css") }
         document::Link { rel: "stylesheet", href: asset!("/public/alien_links.css") }
         document::Link { rel: "stylesheet", href: asset!("/public/main.css") }

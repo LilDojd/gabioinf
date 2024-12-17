@@ -10,8 +10,17 @@ pub struct StyledButtonProps {
     #[props(default = "button".to_string())]
     r#type: String,
     #[props(default)]
-    icon: Option<String>,
+    icon: IconVariant,
 }
+#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq, Default)]
+pub enum IconVariant {
+    #[default]
+    None,
+    Asset(String),
+    Rsx(Element),
+}
+
 #[derive(Clone, Debug, PartialEq, Default)]
 pub enum ButtonVariant {
     #[default]
@@ -36,12 +45,14 @@ pub fn StyledButton(props: StyledButtonProps) -> Element {
             r#type: "{props.r#type}",
             onclick: move |evt| props.onclick.call(evt),
             {
-                if let Some(icon_path) = props.icon {
-                    rsx! {
-                        img { src: "{icon_path}", alt: "Button icon", class: "w-5 h-5 mr-2" }
-                    }
-                } else {
-                    rsx! {}
+                match props.icon {
+                    IconVariant::Asset(asset) => rsx! {
+                        img { src: "{asset}", alt: "Button icon", class: "w-5 h-5 mr-2" }
+                    },
+                    IconVariant::Rsx(icon) => rsx! {
+                        div { class: "w-5 h-5 mr-2", {icon} }
+                    },
+                    IconVariant::None => rsx! {},
                 }
             }
             "{props.text}"
