@@ -33,7 +33,7 @@ pub fn AboutMe() -> Element {
                     }
                     figcaption { "yes, he is a pirate" }
                 }
-                Markdown { value: r#"I like learning new stuff, playing videogames competitively, scientific illustrations and renders, and I __*love*__ traveling and eating local foods."# }
+                Markdown { value: r#"I like learning new stuff, playing videogames competitively, doing scientific illustrations and renders and pick up a new hobby or two every friday."# }
                 p {
                     r#"This site is my digital garden.
                    I don't intend to put up paywalls, collect your data, or track your actions. 
@@ -65,7 +65,7 @@ pub fn AboutMe() -> Element {
                     }
                 }
                 h2 { "what i'm up to" }
-                Hr { comment: "aug 2024".to_string() }
+                Hr { comment: "dec 2024".to_string() }
                 Markdown { value: r#"
                 I currently work full-time as a software engineer at [InSilico Medicine](https://insilico.com/). 
                 We do some cool drug design-related stuff that involves a lot of AI. I am particularly proud
@@ -74,9 +74,8 @@ pub fn AboutMe() -> Element {
 
                 Also:
                 - tinkering with this website
-                - trying to build a molecular dynamics engine in Rust🦀
-                - mastering Tusk pos 4
-                - planning a trip to Tbilisi
+                - trying to build a molecular dynamics engine in Rust 🦀
+                - getting into embedded with [RMK](https://github.com/HaoboGu/rmk)
                 "# }
                 h2 { "what i'm using" }
                 Hr {}
@@ -106,7 +105,7 @@ pub fn AboutMe() -> Element {
                                     - PSU: [ASUS ROG Thor 1200W Platinum](https://rog.asus.com/power-supply-units/rog-thor/rog-thor-1200p-model/)
                                     - Case: [Lian Li O11 Dynamic Evo](https://lian-li.com/product/o11-dynamic-evo/)
                                 - Peripheral:
-                                    - Keys: [Logitech G915 LIGHTSPEED](https://www.logitechg.com/en-ae/products/gaming-keyboards/g915-low-profile-wireless-mechanical-gaming-keyboard.html)
+                                    - Keys: [Sofle V2](https://josefadamcik.github.io/SofleKeyboard/) and [Logitech G915 LIGHTSPEED](https://www.logitechg.com/en-ae/products/gaming-keyboards/g915-low-profile-wireless-mechanical-gaming-keyboard.html)
                                     - Monitors: [LG 32UN880-B 32](https://www.lg.com/ae/consumer-monitors/lg-32un880-b) and [LG 27GP950-B](https://www.lg.com/ae/consumer-monitors/lg-27gp950-b)
                                     - Headphones: [Sony WH-1000XM3](https://www.sony.com/en-ae/electronics/headband-headphones/wh-1000xm3)
             "#,
