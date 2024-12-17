@@ -1,7 +1,7 @@
 use crate::components::{Card, CardType, CloseButton, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
-const SIGNATURES_PER_PAGE: usize = 8;
+const SIGNATURES_PER_PAGE: usize = 10;
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
     #[default]
