@@ -24,8 +24,7 @@ A personal website built with Dioxus and wasm, showcasing projects, blog (coming
 1. Clone the repository
 2. Install Rust and cargo
 3. Set up environment variables
-4. Run `dx build --platform fullstack`
-5. Start the server `./dist/gabioinf`
+4. Run `dx serve`
 
 ## 📝 License
 
