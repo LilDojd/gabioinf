@@ -20,7 +20,7 @@ processes = ['app']
 strategy = "canary"
 
 [[vm]]
-size = "shared-cpu-2x"
-memory = '1gb'
+size = "shared-cpu-1x"
+memory = '256mb'
 cpu_kind = 'shared'
-cpus = 2
+cpus = 1
