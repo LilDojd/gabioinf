@@ -9,6 +9,7 @@ use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
 use dioxus::dioxus_core::Element;
 use dioxus::fullstack::prelude::*;
+use std::net::{IpAddr, Ipv4Addr};
 use std::sync::Arc;
 use std::time::Duration;
 use tower_governor::governor::GovernorConfigBuilder;
@@ -79,7 +80,8 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         .layer(auth_layer);
 
     use std::net::SocketAddr;
-    let address = dioxus_cli_config::fullstack_address_or_localhost();
+    let port = dioxus_cli_config::server_port().unwrap_or(8080);
+    let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
     dioxus_logger::tracing::info!("Listening on {}", address);
     axum_server::bind(address)
