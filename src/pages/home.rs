@@ -92,26 +92,10 @@ fn LeftColumn() -> Element {
 fn RightColumn() -> Element {
     rsx! {
         div { class: "w-full md:w-1/2 text-left", id: "alien-container",
-            video {
-                id: "alien-video",
-                class: "w-full h-auto object-cover aspect-square",
-                playsinline: true,
-                autoplay: true,
-                muted: true,
-                r#loop: "false",
-                source {
-                    src: asset!("/public/alien_white.webm"),
-                    r#type: "video/webm",
-                }
-                source {
-                    src: asset!("/public/alien_white.mov"),
-                    r#type: "video/mp4;codecs=hvc1",
-                }
                 img {
                     src: asset!("/public/alien_white.png", ImageAssetOptions::new().with_avif()),
-                    alt: "Fallback image",
+                    alt: "Alien behind a pc",
                 }
-            }
         }
     }
 }
