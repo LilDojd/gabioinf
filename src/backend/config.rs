@@ -39,13 +39,13 @@ impl AppConfig {
                 Environment::with_prefix("DATABASE")
                     .keep_prefix(true)
                     .separator("_")
-                    .convert_case(config::Case::UpperSnake),
+                    .convert_case(config::Case::Lower),
             )
             .add_source(
                 Environment::with_prefix("GABIOINF")
                     .keep_prefix(true)
                     .separator("_")
-                    .convert_case(config::Case::UpperSnake),
+                    .convert_case(config::Case::Lower),
             )
             .set_override_option("domain", domain)?
             .build()?;
