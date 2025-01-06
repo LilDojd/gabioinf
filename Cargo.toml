@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 anyhow = { version = "1.0.95" }
 
-reqwest = { version = "0.12.11", default-features = false, features = [
+reqwest = { version = "0.12.12", default-features = false, features = [
   "http2",
   "json",
   "rustls-tls",
@@ -28,10 +28,10 @@ thiserror = { version = "2.0.9", optional = true }
 
 
 # Backend
-axum = { version = "0.7", features = ["multipart", "macros"], optional = true }
+axum = { version = "0.8", features = ["multipart", "macros"], optional = true }
 validator = { version = "0.19.0", features = ["derive"], optional = true }
 tokio = { version = "1.41.1", features = ["full"], optional = true }
-axum-extra = { version = "0.9.3", features = [
+axum-extra = { version = "0.10.0", features = [
   "cookie-private",
   "typed-header",
 ], optional = true }
@@ -51,11 +51,11 @@ tower_governor = { version = "0.5.0", features = [
   "axum",
 ], optional = true }
 forwarded-header-value = { version = "0.1.1", optional = true }
-tower-sessions = { version = "0.13.0", features = ["signed"], optional = true }
-tower-sessions-sqlx-store = { version = "0.14", features = [
+tower-sessions = { version = "0.14.0", features = ["signed"], optional = true }
+tower-sessions-sqlx-store = { version = "0.15", features = [
   "postgres",
 ], optional = true }
-axum-login = { version = "0.16.0", optional = true }
+axum-login = { version = "0.17.0", optional = true }
 axum-helmet = { version = "0.1.0", optional = true }
 axum-server = { version = "0.7.1", optional = true }
 
