@@ -100,7 +100,7 @@ impl From<reqwest::Error> for ApiError {
 }
 /// Type alias for a complex OAuth error type
 type WeirdOauthError = oauth2::RequestTokenError<
-    oauth2::reqwest::Error<reqwest::Error>,
+    oauth2::reqwest::Error,
     oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
 >;
 /// Implements conversion from [`WeirdOauthError`] to [`ApiError`]

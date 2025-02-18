@@ -12,8 +12,9 @@ use crate::{
 };
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
-use oauth2::basic::BasicClient;
 use reqwest::Client as ReqwestClient;
+
+use super::domain::logic::oauth::SetOauthClient;
 /// Represents the shared state of the application.
 ///
 /// This struct holds various shared resources and configuration that can be
@@ -35,7 +36,7 @@ pub struct AppState {
     /// A key used for signing and verifying cookies.
     pub key: Key,
     /// The client for OAuth2 requests.
-    pub client: BasicClient,
+    pub client: SetOauthClient,
 }
 /// Allows extracting the `Key` from `AppState`.
 impl FromRef<AppState> for Key {
@@ -54,14 +55,20 @@ impl AppState {
     /// * `db` - The database connection pool.
     /// * `domain` - The domain name of the application.
     /// * `client` - The client for the OAuth2 requests.
+    /// * `reqwest_client` - The reqwest client.
     ///
     /// # Returns
     ///
     /// A new instance of `AppState`.
-    pub fn new(db: DbConnPool, domain: String, client: BasicClient) -> Self {
+    pub fn new(
+        db: DbConnPool,
+        domain: String,
+        client: SetOauthClient,
+        reqwest_client: ReqwestClient,
+    ) -> Self {
         Self {
             db: db.clone(),
-            ctx: ReqwestClient::new(),
+            ctx: reqwest_client,
             guest_repo: PgRepository::new(db.clone()),
             guestbook_repo: PgRepository::new(db.clone()),
             gp_repo: GroupsAndPermissionsRepo::new(db.clone()),

@@ -8,9 +8,7 @@ use crate::{
 };
 use axum_login::{AuthnBackend, AuthzBackend, UserId};
 use oauth2::{
-    basic::BasicClient,
     http::header::{AUTHORIZATION, USER_AGENT},
-    reqwest::async_http_client,
     AuthorizationCode, CsrfToken, Scope, TokenResponse,
 };
 use reqwest::Url;
@@ -19,18 +17,21 @@ use std::collections::HashSet;
 pub struct AuthBackend {
     guest_repo: PgRepository<Guest>,
     gp_repo: GroupsAndPermissionsRepo,
-    client: BasicClient,
+    client: SetOauthClient,
+    reqwest_client: reqwest::Client,
 }
 impl AuthBackend {
     pub fn new(
         guest_repo: PgRepository<Guest>,
         gp_repo: GroupsAndPermissionsRepo,
-        client: BasicClient,
+        client: SetOauthClient,
+        reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
             guest_repo,
             gp_repo,
             client,
+            reqwest_client,
         }
     }
     pub fn authorize_url<I>(&self, scopes: I) -> (Url, CsrfToken)
@@ -46,6 +47,7 @@ impl AuthBackend {
         self.authorize_url(std::iter::empty())
     }
 }
+
 #[axum::async_trait]
 impl AuthnBackend for AuthBackend {
     type User = Guest;
@@ -59,7 +61,7 @@ impl AuthnBackend for AuthBackend {
         let token = self
             .client
             .exchange_code(AuthorizationCode::new(creds.code))
-            .request_async(async_http_client)
+            .request_async(&self.reqwest_client)
             .await
             .map_err(|e| Self::Error::AuthenticationError(e.to_string()))?;
         dioxus_logger::tracing::debug!("Getting user data from GitHub API");
@@ -85,6 +87,7 @@ impl AuthnBackend for AuthBackend {
             .map(Some)
     }
 }
+
 #[axum::async_trait]
 impl AuthzBackend for AuthBackend {
     type Permission = PermissionTargets;
@@ -116,6 +119,8 @@ pub struct SessionWrapper {
     pub session: AuthSession,
 }
 use axum::{extract::FromRequestParts, http::request::Parts};
+
+use super::oauth::SetOauthClient;
 #[derive(Debug)]
 pub struct StateError;
 impl std::error::Error for StateError {}
@@ -133,6 +138,7 @@ impl axum::response::IntoResponse for StateError {
             .into_response()
     }
 }
+
 #[axum::async_trait]
 impl<S> FromRequestParts<S> for SessionWrapper
 where
