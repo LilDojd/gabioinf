@@ -9,10 +9,13 @@ use axum::{
     Router,
 };
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, TokenUrl};
-use oauth2::{CsrfToken, RedirectUrl};
+use oauth2::{CsrfToken, EndpointNotSet, EndpointSet, RedirectUrl};
 use serde::Deserialize;
 use tower_sessions::Session;
 pub const CSRF_STATE_KEY: &str = "oauth.csrf-state";
+
+pub(crate) type SetOauthClient =
+    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthzResp {
     code: String,
@@ -32,7 +35,11 @@ pub fn router() -> Router<()> {
 ///
 /// A `BasicClient` object for the GitHub OAuth provider
 ///
-pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S, domain: S) -> BasicClient {
+pub fn build_oauth_client<S: AsRef<str>>(
+    client_id: S,
+    client_secret: S,
+    domain: S,
+) -> SetOauthClient {
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .expect("Invalid authorization endpoint URL");
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
@@ -46,18 +53,17 @@ pub fn build_oauth_client<S: AsRef<str>>(client_id: S, client_secret: S, domain:
             .split('/')
             .next()
             .unwrap();
-        format!("http://localhost:{port}/v1/oauth/callback")
+        RedirectUrl::new(format!("http://localhost:{port}/v1/oauth/callback"))
     } else {
-        format!("https://{}/v1/oauth/callback", domain.as_ref())
-    };
+        RedirectUrl::new(format!("https://{}/v1/oauth/callback", domain.as_ref()))
+    }
+    .expect("Invalid redirect URL");
     dioxus_logger::tracing::debug!("OAuth redirect URI: {}", oauth_redirect_uri);
-    BasicClient::new(
-        ClientId::new(client_id.as_ref().to_owned()),
-        Some(ClientSecret::new(client_secret.as_ref().to_owned())),
-        auth_url,
-        Some(token_url),
-    )
-    .set_redirect_uri(RedirectUrl::new(oauth_redirect_uri).unwrap())
+    BasicClient::new(ClientId::new(client_id.as_ref().to_owned()))
+        .set_client_secret(ClientSecret::new(client_secret.as_ref().to_owned()))
+        .set_auth_uri(auth_url)
+        .set_token_uri(token_url)
+        .set_redirect_uri(oauth_redirect_uri)
 }
 mod get {
     use super::*;

@@ -33,7 +33,13 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         config.gabioinf.secret.as_str(),
     );
     let client = build_oauth_client(client_id, client_secret, domain);
-    let state = AppState::new(postgres.clone(), domain.to_string(), client.clone());
+    let reqwest_client = reqwest::Client::new();
+    let state = AppState::new(
+        postgres.clone(),
+        domain.to_string(),
+        client.clone(),
+        reqwest_client.clone(),
+    );
     let session_store = PostgresStore::new(postgres.clone());
     session_store.migrate().await.unwrap();
     let _deletion_task = tokio::task::spawn(
@@ -46,7 +52,12 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         .with_signed(state.clone().key)
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
-    let backend = AuthBackend::new(state.guest_repo.clone(), state.gp_repo.clone(), client);
+    let backend = AuthBackend::new(
+        state.guest_repo.clone(),
+        state.gp_repo.clone(),
+        client,
+        reqwest_client,
+    );
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()

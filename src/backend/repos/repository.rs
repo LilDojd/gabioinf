@@ -4,7 +4,6 @@ use serde::{de::DeserializeOwned, Serialize};
 ///
 /// This trait provides a standardized interface for CRUD operations
 /// on entities of type `T`.
-#[axum::async_trait]
 pub trait Repository<T>
 where
     T: Serialize + DeserializeOwned + Send + Sync,

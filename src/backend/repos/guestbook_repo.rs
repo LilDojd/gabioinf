@@ -13,7 +13,6 @@ pub enum GuestbookEntryCriteria {
     /// Query for the latest entry.
     Latest,
 }
-#[axum::async_trait]
 impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
     type Error = ApiError;
     type Criteria = GuestbookEntryCriteria;

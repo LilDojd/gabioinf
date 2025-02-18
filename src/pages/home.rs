@@ -24,22 +24,22 @@ fn LeftColumn() -> Element {
     let base_interval = TYPING_MILLIS / full_text.len() as u64;
     let _text_animation = use_effect(move || {
         spawn(async move {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             let mut current_index = 0;
             while current_index < full_text.len() {
-                let jitter = rng.gen_range(-10..=10);
+                let jitter = rng.random_range(-10..=10);
                 let interval = (base_interval as i64 + jitter).max(50) as u64;
                 task::sleep(std::time::Duration::from_millis(interval)).await;
-                if rng.gen_bool(ERROR_CHANCE) && current_index > 0 {
-                    let mistake_char = (rng.gen_range(b'a'..=b'z') as char).to_string();
+                if rng.random_bool(ERROR_CHANCE) && current_index > 0 {
+                    let mistake_char = (rng.random_range(b'a'..=b'z') as char).to_string();
                     visible_text.set(format!(
                         "{}{}",
                         full_text.chars().take(current_index).collect::<String>(),
                         mistake_char,
                     ));
-                    task::sleep(std::time::Duration::from_millis(rng.gen_range(100..300))).await;
+                    task::sleep(std::time::Duration::from_millis(rng.random_range(100..300))).await;
                     visible_text.set(full_text.chars().take(current_index).collect());
-                    task::sleep(std::time::Duration::from_millis(rng.gen_range(20..100))).await;
+                    task::sleep(std::time::Duration::from_millis(rng.random_range(20..100))).await;
                 } else {
                     current_index += 1;
                     visible_text.set(full_text.chars().take(current_index).collect());
