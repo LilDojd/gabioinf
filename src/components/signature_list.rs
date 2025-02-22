@@ -70,20 +70,18 @@ pub fn SignatureList() -> Element {
                                             },
                                         },
                                     }
+                                    for entry in endless_signatures
+                                        .read()
+                                        .iter()
+                                        .flatten()
+                                        .filter(|entry| entry.id != user_signature.read().as_ref().unwrap().id)
                                     {
-                                        endless_signatures
-                                            .read()
-                                            .iter()
-                                            .flatten()
-                                            .filter(|entry| entry.id != user_signature.read().as_ref().unwrap().id)
-                                            .map(|entry| rsx! {
-                                                Card {
-                                                    card_type: CardType::Signature {
-                                                        entry: entry.clone(),
-                                                        close_button: rsx! {},
-                                                    },
-                                                }
-                                            })
+                                        Card {
+                                            card_type: CardType::Signature {
+                                                entry: entry.clone(),
+                                                close_button: rsx! {},
+                                            },
+                                        }
                                     }
                                 }
                             }
@@ -92,19 +90,13 @@ pub fn SignatureList() -> Element {
                 } else {
                     rsx! {
                         div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                            {
-                                endless_signatures
-                                    .read()
-                                    .iter()
-                                    .flatten()
-                                    .map(|entry| rsx! {
-                                        Card {
-                                            card_type: CardType::Signature {
-                                                entry: entry.clone(),
-                                                close_button: rsx! {},
-                                            },
-                                        }
-                                    })
+                            for entry in endless_signatures.read().iter().flatten() {
+                                Card {
+                                    card_type: CardType::Signature {
+                                        entry: entry.clone(),
+                                        close_button: rsx! {},
+                                    },
+                                }
                             }
                         }
                     }
