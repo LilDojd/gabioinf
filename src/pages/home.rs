@@ -92,10 +92,10 @@ fn LeftColumn() -> Element {
 fn RightColumn() -> Element {
     rsx! {
         div { class: "w-full md:w-1/2 text-left", id: "alien-container",
-                img {
-                    src: asset!("/public/alien_white.png", ImageAssetOptions::new().with_avif()),
-                    alt: "Alien behind a pc",
-                }
+            img {
+                src: asset!("/public/alien_white.png", ImageAssetOptions::new().with_avif()),
+                alt: "Alien behind a pc",
+            }
         }
     }
 }
