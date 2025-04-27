@@ -34,7 +34,7 @@ jobs:
     name: Create Branch
     outputs:
       db_url: ${{ steps.create_branch_encode.outputs.db_url }}
-      db_url_with_pooler: ${{ steps.create_branch_encode.outputs.db_url_with_pooler }}
+      db_url_with_pooler: ${{ steps.create_branch_encode.outputs.db_url_pooled}}
     environment:
       name: pr-${{ github.event.number }}
       url: ${{ steps.deploy.outputs.url }}
@@ -53,13 +53,13 @@ jobs:
         uses: neondatabase/create-branch-action@v6
         with:
           project_id: ${{ env.NEON_PROJECT_ID }}
-          username: "gabioinf_owner"
+          role: "gabioinf_owner"
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
-          parent: main
+          parent_branch: main
           database: gabioinf
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: |
-          echo "DATABASE_URL=${{ steps.create_branch.outputs.db_url_with_pooler }}" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=${{ steps.create_branch.outputs.db_url_pooled }}" >> "$GITHUB_ENV"
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Migrate database
         run: |
@@ -69,7 +69,7 @@ jobs:
         uses: LilDojd/fly-pr-review-apps@1.2.1
         with:
           secrets: >
-            DATABASE_URL=${{ steps.create_branch.outputs.db_url_with_pooler }}
+            DATABASE_URL=${{ steps.create_branch.outputs.db_url_pooled }}
             SENTRY_DSN=${{ secrets.SENTRY_DSN }}
             GABIOINF_SECRET=${{ secrets.GABIOINF_SECRET }}
             DOMAIN_URL=gabioinf-pr-${{ github.event.number }}.fly.dev
