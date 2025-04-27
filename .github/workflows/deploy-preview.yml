@@ -85,7 +85,7 @@ jobs:
   delete_branch:
     name: Delete Branch
     needs: setup
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    if: github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' && github.event.action == 'closed' 
     permissions: write-all
     runs-on: ubuntu-latest
     steps:

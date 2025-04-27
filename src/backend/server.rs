@@ -1,12 +1,12 @@
+use crate::backend::AppState;
 use crate::backend::config::AppConfig;
-use crate::backend::domain::logic::oauth::build_oauth_client;
 use crate::backend::domain::logic::AuthBackend;
+use crate::backend::domain::logic::oauth::build_oauth_client;
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::wapi::api_router;
-use crate::backend::AppState;
 use axum::Router;
-use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use axum_login::AuthManagerLayerBuilder;
+use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use dioxus::dioxus_core::Element;
 use dioxus::fullstack::prelude::*;
 use std::net::{IpAddr, Ipv4Addr};
