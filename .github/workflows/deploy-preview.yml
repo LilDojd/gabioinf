@@ -50,7 +50,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create Neon branch
         id: create_branch
-        uses: neondatabase/create-branch-action@v5
+        uses: neondatabase/create-branch-action@v6
         with:
           project_id: ${{ env.NEON_PROJECT_ID }}
           username: "gabioinf_owner"
