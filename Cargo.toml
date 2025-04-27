@@ -31,7 +31,7 @@ thiserror = { version = "2.0.9", optional = true }
 # TODO: When switching to dx 0.7 we need to make sure axum 0.7 -> 0.8 does not break with RPIT
 axum = { version = "0.7", features = ["multipart", "macros"], optional = true }
 validator = { version = "0.20.0", features = ["derive"], optional = true }
-tokio = { version = "1.41.1", features = ["full"], optional = true }
+tokio = { version = "1.43.1", features = ["full"], optional = true }
 axum-extra = { version = "0.9", features = [
   "cookie-private",
   "typed-header",
