@@ -6,9 +6,9 @@ authors = ["LilDojd <yawner@protonmail.com>"]
 publish = false
 
 [dependencies]
-anyhow = { version = "1.0.95" }
+anyhow = { version = "1.0.98" }
 
-reqwest = { version = "0.12.11", default-features = false, features = [
+reqwest = { version = "0.12.15", default-features = false, features = [
   "http2",
   "json",
   "rustls-tls",
@@ -20,18 +20,18 @@ time = { version = "0.3", features = [
   "serde",
   "local-offset",
 ] }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = { version = "1.0.134", optional = true }
-config = { version = "0.15.4", features = ["convert-case"], optional = true }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140", optional = true }
+config = { version = "0.15.11", features = ["convert-case"], optional = true }
 derive_more = { version = "2.0.0", features = ["from", "into"] }
-thiserror = { version = "2.0.9", optional = true }
+thiserror = { version = "2.0.12", optional = true }
 
 
 # Backend
 # TODO: When switching to dx 0.7 we need to make sure axum 0.7 -> 0.8 does not break with RPIT
 axum = { version = "0.7", features = ["multipart", "macros"], optional = true }
 validator = { version = "0.20.0", features = ["derive"], optional = true }
-tokio = { version = "1.43.1", features = ["full"], optional = true }
+tokio = { version = "1.44.2", features = ["full"], optional = true }
 axum-extra = { version = "0.9", features = [
   "cookie-private",
   "typed-header",
@@ -45,20 +45,20 @@ sqlx = { version = "0.8", features = [
 tower = { version = "0.5", optional = true, features = ["timeout", "util"] }
 tower-http = { version = "0.6.1", features = ["cors", "fs"], optional = true }
 oauth2 = { version = "5.0.0", optional = true }
-rustrict = { version = "0.7.31", optional = true }
+rustrict = { version = "0.7.35", optional = true }
 governor = { version = "0.8", optional = true }
-tower_governor = { version = "0.5.0", features = [
+tower_governor = { version = "0.7.0", features = [
   "tracing",
   "axum",
 ], optional = true }
 forwarded-header-value = { version = "0.1.1", optional = true }
-tower-sessions = { version = "0.13.0", features = ["signed"], optional = true }
-tower-sessions-sqlx-store = { version = "0.14", features = [
+tower-sessions = { version = "0.14.0", features = ["signed"], optional = true }
+tower-sessions-sqlx-store = { version = "0.15", features = [
   "postgres",
 ], optional = true }
-axum-login = { version = "0.16.0", optional = true }
-axum-helmet = { version = "0.1.0", optional = true }
-axum-server = { version = "0.7.1", optional = true }
+axum-login = { version = "0.17.0", optional = true }
+axum-helmet = { version = "0.2.0", optional = true }
+axum-server = { version = "0.7.2", optional = true }
 
 # Dioxus
 dioxus = { version = "0.6.1", features = ["fullstack", "router", "web"] }
@@ -67,12 +67,12 @@ dioxus-cli-config = { version = "0.6.0" }
 
 # Web
 
-getrandom = { version = "0.3.1" }
+getrandom = { version = "0.3.2" }
 serde_yaml = { version = "0.9" }
-async-std = { version = "1.13.0" }
+async-std = { version = "1.13.1" }
 instant = { version = "0.1.13", features = ["inaccurate", "wasm-bindgen"] }
-rand = { version = "0.9.0" }
-markdown = { version = "1.0.0-alpha.21" }
+rand = { version = "0.9.1" }
+markdown = { version = "1.0.0" }
 web-sys = { version = "0.3.56", features = [
   "HtmlCanvasElement",
   "HtmlImageElement",
@@ -86,7 +86,7 @@ web-sys = { version = "0.3.56", features = [
 
 futures = { version = "0.3.31" }
 
-sentry = { version = "0.36.0", default-features = false, features = [
+sentry = { version = "0.37.0", default-features = false, features = [
   "backtrace",
   "contexts",
   "panic",
