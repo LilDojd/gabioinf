@@ -3,8 +3,6 @@
 # App (Project) Name
 name = "gabioinf"
 
-asset_dir = "public"
-
 # [web.wasm_opt]
 # # The level wasm-opt should target. z is the smallest. 4 is the fastest.
 # level = "0"
@@ -20,7 +18,7 @@ title = "gabioinf"
 reload_html = true
 
 # which files or dirs will be watcher monitoring
-watch_path = ["src", "public"]
+watch_path = ["src", "assets"]
 
 [web.resource.dev]
 

@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 use dioxus_logger::tracing::error;
-use markdown::{mdast::Node, to_mdast, ParseOptions};
+use markdown::{ParseOptions, mdast::Node, to_mdast};
 #[derive(Copy, Clone, Default, PartialEq)]
 #[allow(dead_code)]
 pub enum MarkdownType {
@@ -21,14 +21,10 @@ impl MarkdownType {
 #[component(no_case_check)]
 pub fn Markdown(
     value: String,
-    #[props(default)]
-    class: String,
-    #[props(default)]
-    style: String,
-    #[props(default)]
-    md_type: MarkdownType,
-    #[props(extends = div)]
-    rest_attributes: Vec<Attribute>,
+    #[props(default)] class: String,
+    #[props(default)] style: String,
+    #[props(default)] md_type: MarkdownType,
+    #[props(extends = div)] rest_attributes: Vec<Attribute>,
 ) -> Element {
     let nodes = match to_mdast(&value, &md_type.to_settings()) {
         Ok(nodes) => nodes,

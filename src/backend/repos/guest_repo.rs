@@ -91,7 +91,6 @@ impl Repository<Guest> for PgRepository<Guest> {
     }
 }
 impl PgRepository<Guest> {}
-#[axum::async_trait]
 impl FromRequestParts<AppState> for Guest {
     type Rejection = ApiError;
     /// Extracts a [`Guest`] instance from the request parts.

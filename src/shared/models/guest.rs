@@ -57,7 +57,7 @@ impl GuestId {
     }
 }
 /// Represents a guest in the system.
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 #[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct Guest {
     /// The unique identifier for the guest.

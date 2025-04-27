@@ -1,36 +1,18 @@
 use crate::{
-    components::{
-        ButtonVariant, IconVariant, SignatureList, SignaturePopup, StyledButton,
-    },
-    shared::{
-        models::{Guest, GuestbookEntry},
-        server_fns,
-    },
     MessageValid,
+    auth::AuthState,
+    components::{ButtonVariant, IconVariant, SignatureList, SignaturePopup, StyledButton},
+    shared::server_fns,
 };
 use dioxus::prelude::*;
 #[component]
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
-    let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
+
+    let mut auth_state = use_context::<Signal<AuthState>>();
     let mut show_signature_pad = use_signal(|| false);
     let close_popup = move |_| show_signature_pad.set(false);
-    let mut user = use_context::<Signal<Option<Guest>>>();
-    use_effect(move || {
-        let guest_ = user();
-        if let Some(guest) = guest_ {
-            spawn(async move {
-                dioxus_logger::tracing::debug!("Checking for user signature");
-                if let Ok(Some(signature)) = server_fns::load_user_signature(
-                        guest.clone(),
-                    )
-                    .await
-                {
-                    user_signature.set(Some(signature));
-                }
-            });
-        }
-    });
+
     rsx! {
         div { class: "container mx-auto px-4 py-8",
             article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
@@ -38,70 +20,70 @@ pub fn Guestbook() -> Element {
             }
             div { class: "mb-6 flex w-full justify-between items-center",
                 {
-                    match (&*user.read(), &*user_signature.read()) {
-                        (Some(_user), None) => rsx! {
-                            StyledButton {
-                                text: "Sign Guestbook",
-                                variant: ButtonVariant::Primary,
-                                onclick: move |_| show_signature_pad.set(true),
-                            }
-                            StyledButton {
-                                text: "Sign out",
-                                variant: ButtonVariant::Secondary,
-                                onclick: move |_| {
-                                    spawn(async move {
-                                        server_fns::logout().await.unwrap();
-                                        user.set(None);
-                                        user_signature.set(None);
-                                    });
-                                },
-                                icon: IconVariant::Rsx(rsx! {
-                                    svg {
-                                        fill: "none",
-                                        height: "20",
-                                        view_box: "0 0 24 24",
-                                        width: "20",
-                                        xmlns: "http://www.w3.org/2000/svg",
-                                        path {
-                                            stroke: "#f5f5f4",
-                                            stroke_width: "2",
-                                            d: "M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8",
-                                            stroke_linecap: "round",
-                                            stroke_linejoin: "round",
-                                        }
+                    match &*auth_state.read() {
+                        AuthState::Authenticated(user_state) => {
+                            match &user_state.entry {
+                                None => rsx! {
+                                    StyledButton {
+                                        text: "Sign Guestbook",
+                                        variant: ButtonVariant::Primary,
+                                        onclick: move |_| show_signature_pad.set(true),
                                     }
-                                }),
-                            }
-                        },
-                        (Some(_user), Some(_signature)) => {
-                            rsx! {
-                                StyledButton {
-                                    text: "Sign out",
-                                    variant: ButtonVariant::Secondary,
-                                    onclick: move |_| {
-                                        spawn(async move {
-                                            server_fns::logout().await.unwrap();
-                                            user.set(None);
-                                            user_signature.set(None);
-                                        });
-                                    },
-                                    icon: IconVariant::Rsx(rsx! {
-                                        svg {
-                                            fill: "none",
-                                            height: "20",
-                                            view_box: "0 0 24 24",
-                                            width: "20",
-                                            xmlns: "http://www.w3.org/2000/svg",
-                                            path {
-                                                stroke: "#f5f5f4",
-                                                stroke_width: "2",
-                                                d: "M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8",
-                                                stroke_linecap: "round",
-                                                stroke_linejoin: "round",
+                                    StyledButton {
+                                        text: "Sign out",
+                                        variant: ButtonVariant::Secondary,
+                                        onclick: move |_| {
+                                            spawn(async move {
+                                                server_fns::logout().await.unwrap();
+                                                auth_state.set(AuthState::Unauthenticated);
+                                            });
+                                        },
+                                        icon: IconVariant::Rsx(rsx! {
+                                            svg {
+                                                fill: "none",
+                                                height: "20",
+                                                view_box: "0 0 24 24",
+                                                width: "20",
+                                                xmlns: "http://www.w3.org/2000/svg",
+                                                path {
+                                                    stroke: "#f5f5f4",
+                                                    stroke_width: "2",
+                                                    d: "M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8",
+                                                    stroke_linecap: "round",
+                                                    stroke_linejoin: "round",
+                                                }
                                             }
-                                        }
-                                    }),
-                                }
+                                        }),
+                                    }
+                                },
+                                Some(_signature) => rsx! {
+                                    StyledButton {
+                                        text: "Sign out",
+                                        variant: ButtonVariant::Secondary,
+                                        onclick: move |_| {
+                                            spawn(async move {
+                                                server_fns::logout().await.unwrap();
+                                                auth_state.set(AuthState::Unauthenticated);
+                                            });
+                                        },
+                                        icon: IconVariant::Rsx(rsx! {
+                                            svg {
+                                                fill: "none",
+                                                height: "20",
+                                                view_box: "0 0 24 24",
+                                                width: "20",
+                                                xmlns: "http://www.w3.org/2000/svg",
+                                                path {
+                                                    stroke: "#f5f5f4",
+                                                    stroke_width: "2",
+                                                    d: "M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8",
+                                                    stroke_linecap: "round",
+                                                    stroke_linejoin: "round",
+                                                }
+                                            }
+                                        }),
+                                    }
+                                },
                             }
                         }
                         _ => rsx! {
@@ -136,45 +118,46 @@ pub fn Guestbook() -> Element {
                         SignaturePopup {
                             on_close: close_popup,
                             on_submit: move |(message, signature): (String, String)| async move {
-                                match &*user.read() {
-                                    Some(guest) => {
-                                        let entry_request = server_fns::CreateEntryRequest {
-                                            message,
-                                            signature: if signature.is_empty() { None } else { Some(signature) },
-                                        };
-                                        dioxus_logger::tracing::debug!("Submitting signature");
-                                        let resp = server_fns::submit_signature(entry_request, guest.clone())
-                                            .await;
-                                        match resp {
-                                            Ok(Some(entry)) => {
-                                                message_valid.write().0 = true;
-                                                message_valid.write().1 = String::new();
-                                                show_signature_pad.set(false);
-                                                user_signature.set(Some(entry.clone()));
+                                let state_: &mut AuthState = &mut auth_state.write();
+                                if let AuthState::Authenticated(user_state) = state_ {
+                                    let entry_request = server_fns::CreateEntryRequest {
+                                        message,
+                                        signature: if signature.is_empty() { None } else { Some(signature) },
+                                    };
+                                    dioxus_logger::tracing::debug!("Submitting signature");
+                                    let resp = server_fns::submit_signature(
+                                            entry_request,
+                                            user_state.guest.clone(),
+                                        )
+                                        .await;
+                                    match resp {
+                                        Ok(Some(entry)) => {
+                                            message_valid.write().0 = true;
+                                            message_valid.write().1 = String::new();
+                                            show_signature_pad.set(false);
+                                            user_state.entry = Some(entry);
+                                        }
+                                        Err(e) => {
+                                            message_valid.write().0 = false;
+                                            if let Some(error) = e
+                                                .to_string()
+                                                .strip_prefix("error running server function: message: ")
+                                            {
+                                                message_valid.write().1 = error.to_string();
+                                            } else {
+                                                message_valid.write().1 = "An internal error occurred"
+                                                    .to_string();
                                             }
-                                            Err(e) => {
-                                                message_valid.write().0 = false;
-                                                if let Some(error) = e
-                                                    .to_string()
-                                                    .strip_prefix("error running server function: message: ")
-                                                {
-                                                    message_valid.write().1 = error.to_string();
-                                                } else {
-                                                    message_valid.write().1 = "An internal error occurred"
-                                                        .to_string();
-                                                }
-                                                dioxus_logger::tracing::error!(
-                                                    "Error submitting signature: {:?}", e
-                                                );
-                                            }
-                                            Ok(None) => {
-                                                show_signature_pad.set(false);
-                                            }
+                                            dioxus_logger::tracing::error!(
+                                                "Error submitting signature: {:?}", e
+                                            );
+                                        }
+                                        Ok(None) => {
+                                            show_signature_pad.set(false);
                                         }
                                     }
-                                    _ => {
-                                        show_signature_pad.set(false);
-                                    }
+                                } else {
+                                    show_signature_pad.set(false);
                                 }
                             },
                         }

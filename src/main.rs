@@ -1,8 +1,9 @@
 #![allow(non_snake_case)]
-use dioxus::{prelude::*, CapturedError};
-use shared::{models::GuestbookEntry, server_fns};
+use dioxus::prelude::*;
+use shared::server_fns;
 use std::str::FromStr;
 use tracing::Level;
+mod auth;
 #[cfg(feature = "server")]
 mod backend;
 mod components;
@@ -10,21 +11,24 @@ mod hide;
 mod markdown;
 mod pages;
 mod shared;
+use auth::AuthState;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
+
+static STYLES: Asset = asset!("/assets/styles");
+
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
+
 fn main() {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
     #[cfg(not(feature = "server"))]
     LaunchBuilder::new()
-        .with_cfg(
-            web! {
-                dioxus::web::Config::new().hydrate(true)
-            },
-        )
+        .with_cfg(web! {
+            dioxus::web::Config::new().hydrate(true)
+        })
         .launch(App);
     #[cfg(feature = "server")]
     {
@@ -33,11 +37,13 @@ fn main() {
             ..Default::default()
         });
         dioxus_logger::tracing::info!("Starting server");
+        let config = ServeConfig::builder()
+            .incremental(IncrementalRendererConfig::new())
+            .enable_out_of_order_streaming()
+            .build();
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async move {
-                backend::server::serve(ServeConfig::new().unwrap(), App).await
-            });
+            .block_on(async move { backend::server::serve(config.unwrap(), App).await });
     }
 }
 #[derive(Routable, PartialEq, Clone)]
@@ -57,13 +63,45 @@ enum Route {
     NotFound { route: Vec<String> },
 }
 fn App() -> Element {
+    use_context_provider(|| Signal::new(AuthState::Loading));
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
-    use_context_provider(|| Signal::new(None::<GuestbookEntry>));
-    let user = use_server_future(server_fns::get_user)?
-        .cloned()
-        .unwrap()
-        .map_err(CapturedError::from_display)?;
-    use_context_provider(|| Signal::new(user));
+
+    let mut auth_state = use_context::<Signal<AuthState>>();
+
+    use_effect(move || {
+        spawn(async move {
+            if let Ok(user_result) = server_fns::get_user().await {
+                match user_result {
+                    Some(user) => {
+                        dioxus_logger::tracing::debug!(
+                            "Fetching user signature for authenticated user"
+                        );
+
+                        let signature = match server_fns::load_user_signature(user.clone()).await {
+                            Ok(signature) => signature,
+                            Err(e) => {
+                                dioxus_logger::tracing::error!(
+                                    "Failed to load user signature: {:?}",
+                                    e
+                                );
+                                None
+                            }
+                        };
+
+                        let user_state = auth::UserState {
+                            guest: user,
+                            entry: signature,
+                        };
+
+                        auth_state.set(AuthState::Authenticated(Box::new(user_state)));
+                    }
+                    None => {
+                        auth_state.set(AuthState::Unauthenticated);
+                    }
+                }
+            }
+        });
+    });
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }
@@ -76,7 +114,7 @@ fn App() -> Element {
         document::Meta { property: "og:url", content: "https://gabioinf.dev" }
         document::Meta {
             property: "og:image",
-            content: "https://github.com/LilDojd/gabioinf/blob/main/public/og-img.png?raw=true",
+            content: "https://github.com/LilDojd/gabioinf/blob/main/assets/og-img.png?raw=true",
         }
         document::Meta { property: "og:image:width", content: "1200" }
         document::Meta { property: "og:image:height", content: "630" }
@@ -88,15 +126,15 @@ fn App() -> Element {
         }
         document::Meta {
             name: "twitter:image",
-            content: "https://github.com/LilDojd/gabioinf/blob/main/public/og-img.png?raw=true",
+            content: "https://github.com/LilDojd/gabioinf/blob/main/assets/og-img.png?raw=true",
         }
         document::Meta { name: "twitter:image:width", content: "1200" }
         document::Meta { name: "twitter:image:height", content: "630" }
-        document::Link { rel: "icon", href: asset!("/public/favicon.ico") }
-        document::Link { rel: "stylesheet", href: asset!("/public/tailwind.css") }
-        document::Link { rel: "stylesheet", href: asset!("/public/alien_links.css") }
-        document::Link { rel: "stylesheet", href: asset!("/public/main.css") }
-        document::Link { rel: "stylesheet", href: asset!("/public/navbar.css") }
+        document::Link { rel: "icon", href: asset!("/assets/favicon.ico") }
+        document::Stylesheet { href: asset!("assets/tailwind.css") }
+        document::Stylesheet { href: "{STYLES}/alien_links.css" }
+        document::Stylesheet { href: "{STYLES}/main.css" }
+        document::Stylesheet { href: "{STYLES}/navbar.css" }
         ErrorBoundary {
             handle_error: |errors: ErrorContext| {
                 let error = &errors.errors()[0];

@@ -51,25 +51,25 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         let response = match self {
             Self::DatabaseError(e) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("DatabaseError: {}", e))
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("DatabaseError: {e}"))
             }
             Self::AuthenticationError(e) => {
-                (StatusCode::UNAUTHORIZED, format!("AuthenticationError: {}", e))
+                (StatusCode::UNAUTHORIZED, format!("AuthenticationError: {e}"))
             }
             Self::AuthorizationError(e) => {
-                (StatusCode::FORBIDDEN, format!("AuthorizationError: {}", e))
+                (StatusCode::FORBIDDEN, format!("AuthorizationError: {e}"))
             }
             Self::NotFoundError(e) => {
-                (StatusCode::NOT_FOUND, format!("NotFoundError: {}", e))
+                (StatusCode::NOT_FOUND, format!("NotFoundError: {e}"))
             }
             Self::AlreadyExistsError(e) => {
-                (StatusCode::CONFLICT, format!("AlreadyExistsError: {}", e))
+                (StatusCode::CONFLICT, format!("AlreadyExistsError: {e}"))
             }
             Self::ValidationError(e) => {
-                (StatusCode::BAD_REQUEST, format!("ValidationError: {}", e))
+                (StatusCode::BAD_REQUEST, format!("ValidationError: {e}"))
             }
             Self::ExternalServiceError(e) => {
-                (StatusCode::BAD_GATEWAY, format!("ExternalServiceError: {}", e))
+                (StatusCode::BAD_GATEWAY, format!("ExternalServiceError: {e}"))
             }
             Self::InternalServerError => {
                 (
@@ -78,15 +78,15 @@ impl IntoResponse for ApiError {
                 )
             }
             Self::UnhandledError(e) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("UnhandledError: {}", e))
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("UnhandledError: {e}"))
             }
             Self::NotImplementedErrpr(e) => {
-                (StatusCode::NOT_IMPLEMENTED, format!("NotImplementedError: {}", e))
+                (StatusCode::NOT_IMPLEMENTED, format!("NotImplementedError: {e}"))
             }
             Self::FromRequestPartsError(e) => {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("FromRequestPartsError: {}", e),
+                    format!("FromRequestPartsError: {e}"),
                 )
             }
         };

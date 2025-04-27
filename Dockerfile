@@ -18,7 +18,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM node:22-alpine as tailwind
 WORKDIR /app
 COPY . .
-RUN npm install && npx tailwindcss -i ./input.css -o ./public/tailwind.css --minify
+RUN npm install && npx tailwindcss -i ./input.css -o ./assets/tailwind.css --minify
 
 
 # Cook the dependencies using the recipe prepared earlier
@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y binaryen
 # Note that we control profiles for server and client by ./cargo/cargo.toml
 COPY . .
 # Copy tailwind.css we generated earlier
-COPY --from=tailwind /app/public/tailwind.css ./public/tailwind.css
+COPY --from=tailwind /app/assets/tailwind.css ./assets/tailwind.css
 RUN dx build --release
 
 FROM debian:bookworm-slim AS runtime

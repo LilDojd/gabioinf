@@ -33,7 +33,7 @@ impl AppConfig {
                 File::with_name(&format!("{base}/config/default")).required(true),
             )
             .add_source(
-                File::with_name(&format!("{base}/config/{}", run_mode)).required(false),
+                File::with_name(&format!("{base}/config/{run_mode}")).required(false),
             )
             .add_source(
                 Environment::with_prefix("DATABASE")
