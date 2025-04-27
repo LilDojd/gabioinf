@@ -26,6 +26,7 @@ FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json --features server
 RUN cargo chef cook --release --recipe-path recipe.json --features web --target wasm32-unknown-unknown
+RUN apt-get update && apt-get install -y binaryen
 # Copy over the source code and build the project
 # Note that we control profiles for server and client by ./cargo/cargo.toml
 COPY . .
