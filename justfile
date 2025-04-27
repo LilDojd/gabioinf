@@ -14,7 +14,7 @@ build:
 # Format Rust code
 format:
     dx fmt --all-code
-    cargo clippy --fix
+    cargo clippy --fix --all-features
 
 # Format Dioxus code
 dioxus-format:

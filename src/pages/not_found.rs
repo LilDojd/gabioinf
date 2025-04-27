@@ -2,8 +2,7 @@ use dioxus::prelude::*;
 #[component]
 pub fn NotFound(route: Vec<String>) -> Element {
     let galaxy = asset!(
-        "/public/galaxy.png",
-        ImageAssetOptions::new().with_avif().with_preload(true)
+        "/public/galaxy.png", ImageAssetOptions::new().with_avif().with_preload(true)
     );
     rsx! {
         div { class: "flex flex-col items-center justify-center text-center w-full select-none",

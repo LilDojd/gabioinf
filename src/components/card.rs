@@ -11,10 +11,7 @@ pub struct CardProps {
 #[derive(Clone, Debug, PartialEq)]
 pub enum CardType {
     Project(Project),
-    Signature {
-        entry: GuestbookEntry,
-        close_button: Element,
-    },
+    Signature { entry: GuestbookEntry, close_button: Element },
     Skeleton,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -66,19 +63,17 @@ pub fn Card(props: CardProps) -> Element {
                 }
             }
         }
-        CardType::Signature {
-            entry,
-            close_button,
-        } => {
+        CardType::Signature { entry, close_button } => {
             let sigb64 = entry.signature.clone().unwrap_or_default();
             let date = entry.created_at;
             let offset = UtcOffset::local_offset_at(date).unwrap_or(date.offset());
-
             let date = date
                 .to_offset(offset)
-                .format(time::macros::format_description!(
-                    "[day] [month repr:short], [year], [hour repr:24]:[minute]"
-                ))
+                .format(
+                    time::macros::format_description!(
+                        "[day] [month repr:short], [year], [hour repr:24]:[minute]"
+                    ),
+                )
                 .unwrap()
                 .to_string();
             rsx! {

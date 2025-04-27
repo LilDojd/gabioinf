@@ -16,7 +16,6 @@ pub enum MaybeFirst {
     First,
     NotFirst,
 }
-
 #[component]
 pub fn SignatureList() -> Element {
     let mut load_state = use_signal(SignatureListState::default);
@@ -24,7 +23,6 @@ pub fn SignatureList() -> Element {
     let mut endless_signatures = use_signal(std::vec::Vec::new);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
     let mut is_intersecting = use_signal(|| false);
-
     use_effect(move || {
         if *is_intersecting.read()
             && matches!(*load_state.read(), SignatureListState::MoreAvailable(_))
@@ -141,14 +139,26 @@ fn use_signature_list(
     use futures::StreamExt as _;
     let load_task = use_coroutine(move |mut rx: UnboundedReceiver<Option<u32>>| async move {
         while let Some(next_cursor) = rx.next().await {
-            dioxus_logger::tracing::debug!("Loading signatures with cursor {next_cursor:?}");
+            dioxus_logger::tracing::debug!(
+                "Loading signatures with cursor {next_cursor:?}"
+            );
             let original_state = *state.read();
-            state.set(SignatureListState::Loading(if next_cursor.is_some() {
-                MaybeFirst::NotFirst
-            } else {
-                MaybeFirst::First
-            }));
-            match server_fns::load_signatures(next_cursor.unwrap_or(1), SIGNATURES_PER_PAGE).await {
+            state
+                .set(
+                    SignatureListState::Loading(
+                        if next_cursor.is_some() {
+                            MaybeFirst::NotFirst
+                        } else {
+                            MaybeFirst::First
+                        },
+                    ),
+                );
+            match server_fns::load_signatures(
+                    next_cursor.unwrap_or(1),
+                    SIGNATURES_PER_PAGE,
+                )
+                .await
+            {
                 Ok(signatures) => {
                     if signatures.is_empty() {
                         state.set(SignatureListState::Finished);
@@ -162,7 +172,9 @@ fn use_signature_list(
                     }
                 }
                 Err(error) => {
-                    dioxus_logger::tracing::error!("Could not load signatures: {:?}", error);
+                    dioxus_logger::tracing::error!(
+                        "Could not load signatures: {:?}", error
+                    );
                     state.set(original_state);
                 }
             }

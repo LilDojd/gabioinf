@@ -4,16 +4,12 @@
 //! configuration for the application. It's designed to be shared across
 //! different parts of the application, particularly in request handlers.
 use crate::{
-    backend::{
-        db::DbConnPool,
-        repos::{GroupsAndPermissionsRepo, PgRepository},
-    },
+    backend::{db::DbConnPool, repos::{GroupsAndPermissionsRepo, PgRepository}},
     shared::models::{Guest, GuestbookEntry},
 };
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
 use reqwest::Client as ReqwestClient;
-
 use super::domain::logic::oauth::SetOauthClient;
 /// Represents the shared state of the application.
 ///

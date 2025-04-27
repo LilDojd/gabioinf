@@ -1,5 +1,7 @@
 use crate::{
-    components::{ButtonVariant, IconVariant, SignatureList, SignaturePopup, StyledButton},
+    components::{
+        ButtonVariant, IconVariant, SignatureList, SignaturePopup, StyledButton,
+    },
     shared::{
         models::{Guest, GuestbookEntry},
         server_fns,
@@ -7,7 +9,6 @@ use crate::{
     MessageValid,
 };
 use dioxus::prelude::*;
-
 #[component]
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
@@ -20,7 +21,11 @@ pub fn Guestbook() -> Element {
         if let Some(guest) = guest_ {
             spawn(async move {
                 dioxus_logger::tracing::debug!("Checking for user signature");
-                if let Ok(Some(signature)) = server_fns::load_user_signature(guest.clone()).await {
+                if let Ok(Some(signature)) = server_fns::load_user_signature(
+                        guest.clone(),
+                    )
+                    .await
+                {
                     user_signature.set(Some(signature));
                 }
             });
