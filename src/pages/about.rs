@@ -1,4 +1,4 @@
-use crate::{components::Hr, markdown::Markdown, Route};
+use crate::{Route, components::Hr, markdown::Markdown};
 use dioxus::prelude::*;
 #[component]
 pub fn AboutMe() -> Element {
@@ -65,6 +65,11 @@ pub fn AboutMe() -> Element {
                     }
                 }
                 h2 { "what i'm up to" }
+                Hr { comment: "apr 2025".to_string() }
+                Markdown { value: r#"
+                I am excited to share that I have joined [GenBio AI](https://genbio.ai/) as a Research Engineer on a quest to
+                build first-in-class foundational models for biology! Life is great.
+                "# }
                 Hr { comment: "dec 2024".to_string() }
                 Markdown { value: r#"
                 I currently work full-time as a software engineer at [InSilico Medicine](https://insilico.com/). 
@@ -115,7 +120,7 @@ pub fn AboutMe() -> Element {
                 ul {
                     li {
                         a {
-                            href: asset!("/public/CV_GeorgyAndreev_111124.pdf"),
+                            href: asset!("/public/CV_GeorgyAndreev_042025.pdf"),
                             class: "alien-link",
                             target: "_blank",
                             r"CV"
