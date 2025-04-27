@@ -9,7 +9,17 @@ use derive_more::{From, Into};
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with GitHub user IDs.
 #[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    From,
+    Into,
 )]
 pub struct GithubId(pub(crate) i64);
 impl GithubId {
@@ -22,7 +32,17 @@ impl GithubId {
 /// This type is a wrapper around `i64` to provide type safety and clarity
 /// when dealing with guest IDs.
 #[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    From,
+    Into,
 )]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestId(pub(crate) i64);

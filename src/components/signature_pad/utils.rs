@@ -49,7 +49,8 @@ impl PointExt for [f64; 2] {
         self[0] * other[0] + self[1] * other[1]
     }
     fn equal_to(self, other: Self) -> bool {
-        (self[0] - other[0]).abs() < f64::EPSILON && (self[1] - other[1]).abs() < f64::EPSILON
+        (self[0] - other[0]).abs() < f64::EPSILON
+            && (self[1] - other[1]).abs() < f64::EPSILON
     }
     fn as_vector(self) -> [f64; 2] {
         self
@@ -76,23 +77,25 @@ pub fn get_svg_path_from_stroke(points: Vec<[f64; 2]>, closed: bool) -> String {
     let a = points[0];
     let b = points[1];
     let c = points[2];
-    result.push_str(&format!(
-        "M{:.2},{:.2} Q{:.2},{:.2} {:.2},{:.2} T",
-        a[0],
-        a[1],
-        b[0],
-        b[1],
-        average(b[0], c[0]),
-        average(b[1], c[1]),
-    ));
+    result
+        .push_str(
+            &format!(
+                "M{:.2},{:.2} Q{:.2},{:.2} {:.2},{:.2} T",
+                a[0],
+                a[1],
+                b[0],
+                b[1],
+                average(b[0], c[0]),
+                average(b[1], c[1]),
+            ),
+        );
     for i in 2..len - 1 {
         let a = points[i];
         let b = points[i + 1];
-        result.push_str(&format!(
-            "{:.2},{:.2} ",
-            average(a[0], b[0]),
-            average(a[1], b[1])
-        ));
+        result
+            .push_str(
+                &format!("{:.2},{:.2} ", average(a[0], b[0]), average(a[1], b[1])),
+            );
     }
     if closed {
         result.push('Z');

@@ -15,18 +15,12 @@ use std::time::Duration;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
-
 pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     let config = AppConfig::new_local().expect("Failed to load local configuration");
     dioxus_logger::tracing::info!("Loaded config: {:?}", config);
-    let postgres = sqlx::PgPool::connect(config.database.url.as_str())
-        .await
-        .unwrap();
+    let postgres = sqlx::PgPool::connect(config.database.url.as_str()).await.unwrap();
     dioxus_logger::tracing::info!("Running database migration..");
-    sqlx::migrate!()
-        .run(&postgres)
-        .await
-        .expect("Failed to run migrations");
+    sqlx::migrate!().run(&postgres).await.expect("Failed to run migrations");
     let (domain, client_id, client_secret) = (
         config.domain.as_str(),
         config.gabioinf.id.as_str(),
@@ -71,29 +65,28 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     tokio::task::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            dioxus_logger::tracing::info!("rate limiting storage size: {}", governor_limiter.len());
+            dioxus_logger::tracing::info!(
+                "rate limiting storage size: {}", governor_limiter.len()
+            );
             governor_limiter.retain_recent();
         }
     });
     let cfg = cfg.into();
     let ssr_state = SSRState::new(&cfg);
-
     let app = Router::new()
         .nest("/v1/", api_router(state.clone(), governor_conf))
         .serve_static_assets()
-        .register_server_functions_with_context(Arc::new(vec![Box::new(move || {
-            Box::new(state.clone())
-        })]))
+        .register_server_functions_with_context(
+            Arc::new(vec![Box::new(move || { Box::new(state.clone()) })]),
+        )
         .fallback(
             axum::routing::get(render_handler)
                 .with_state(RenderHandleState::new(cfg, dxapp).with_ssr_state(ssr_state)),
         )
         .layer(auth_layer);
-
     use std::net::SocketAddr;
     let port = dioxus_cli_config::server_port().unwrap_or(8080);
     let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
-
     dioxus_logger::tracing::info!("Listening on {}", address);
     axum_server::bind(address)
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())

@@ -61,12 +61,10 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
         }
     }
 }
-
 #[component]
 fn TextArea(mut message: Signal<String>) -> Element {
     let mut char_count = use_signal(|| 0);
     let mut message_valid = use_context::<Signal<MessageValid>>();
-
     let update_message = move |evt: Event<FormData>| {
         let new_message = evt.value();
         match new_message.chars().count() {
@@ -87,7 +85,6 @@ fn TextArea(mut message: Signal<String>) -> Element {
             }
         }
     };
-
     rsx! {
         label { class: "block text-stone-400 mb-2", "leave a message" }
         div { class: "relative",

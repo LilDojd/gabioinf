@@ -10,11 +10,7 @@ pub struct Point {
 }
 impl Point {
     pub fn new(x: f64, y: f64) -> Self {
-        Self {
-            x,
-            y,
-            pressure: 0.5,
-        }
+        Self { x, y, pressure: 0.5 }
     }
     pub fn new_with_pressure(x: f64, y: f64, pressure: f32) -> Self {
         Self { x, y, pressure }
@@ -80,7 +76,8 @@ impl PointExt for Point {
         self.x * other.x + self.y * other.y
     }
     fn equal_to(self, other: Self) -> bool {
-        (self.x - other.x).abs() < f64::EPSILON && (self.y - other.y).abs() < f64::EPSILON
+        (self.x - other.x).abs() < f64::EPSILON
+            && (self.y - other.y).abs() < f64::EPSILON
     }
     fn as_vector(self) -> [f64; 2] {
         [self.x, self.y]

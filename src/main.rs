@@ -12,7 +12,6 @@ mod pages;
 mod shared;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
-
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
 fn main() {
@@ -21,7 +20,11 @@ fn main() {
         .expect("failed to init logger");
     #[cfg(not(feature = "server"))]
     LaunchBuilder::new()
-        .with_cfg(web! {dioxus::web::Config::new().hydrate(true)})
+        .with_cfg(
+            web! {
+                dioxus::web::Config::new().hydrate(true)
+            },
+        )
         .launch(App);
     #[cfg(feature = "server")]
     {
@@ -32,12 +35,11 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(
-                async move { backend::server::serve(ServeConfig::new().unwrap(), App).await },
-            );
+            .block_on(async move {
+                backend::server::serve(ServeConfig::new().unwrap(), App).await
+            });
     }
 }
-
 #[derive(Routable, PartialEq, Clone)]
 enum Route {
     #[layout(NavFooter)]
@@ -54,7 +56,6 @@ enum Route {
     #[route("/:..route")]
     NotFound { route: Vec<String> },
 }
-
 fn App() -> Element {
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     use_context_provider(|| Signal::new(None::<GuestbookEntry>));
@@ -62,13 +63,10 @@ fn App() -> Element {
         .cloned()
         .unwrap()
         .map_err(CapturedError::from_display)?;
-
     use_context_provider(|| Signal::new(user));
-
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }
-        // Open Graph
         document::Meta { property: "og:type", content: "website" }
         document::Meta { property: "og:title", content: "George Andreev personal website" }
         document::Meta {
@@ -76,15 +74,12 @@ fn App() -> Element {
             content: "Personal website of George Andreev, bioinformatician and developer. Explore projects, blog posts, and sign the guestbook.",
         }
         document::Meta { property: "og:url", content: "https://gabioinf.dev" }
-
         document::Meta {
             property: "og:image",
             content: "https://github.com/LilDojd/gabioinf/blob/main/public/og-img.png?raw=true",
         }
         document::Meta { property: "og:image:width", content: "1200" }
         document::Meta { property: "og:image:height", content: "630" }
-
-        // Twitter/X
         document::Meta { name: "twitter:card", content: "summary_large_image" }
         document::Meta { name: "twitter:title", content: "George Andreev personal website" }
         document::Meta {

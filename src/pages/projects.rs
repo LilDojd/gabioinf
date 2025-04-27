@@ -3,8 +3,8 @@ use dioxus::prelude::*;
 const PROJECTS_SOURCE: &str = include_str!("../../data/projects.yml");
 #[component]
 pub fn Projects() -> Element {
-    let projects: Vec<Project> =
-        serde_yaml::from_str(PROJECTS_SOURCE).expect("Unable to parse YAML");
+    let projects: Vec<Project> = serde_yaml::from_str(PROJECTS_SOURCE)
+        .expect("Unable to parse YAML");
     rsx! {
         div { class: "container mx-auto px-4 py-8",
             article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
