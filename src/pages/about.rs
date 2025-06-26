@@ -28,7 +28,7 @@ pub fn AboutMe() -> Element {
                 figure { class: "max-w-prose ml-auto mr-auto block",
                     img {
                         class: "w-full h-auto aspect-[1.18/1]",
-                        src: asset!("/public/sesh.avif", ImageAssetOptions::new().with_avif()),
+                        src: asset!("/assets/sesh.avif", ImageAssetOptions::new().with_avif()),
                         alt: "Sesh the cat",
                     }
                     figcaption { "yes, he is a pirate" }
@@ -120,7 +120,7 @@ pub fn AboutMe() -> Element {
                 ul {
                     li {
                         a {
-                            href: asset!("/public/CV_GeorgyAndreev_042025.pdf"),
+                            href: asset!("/assets/CV_GeorgyAndreev_042025.pdf"),
                             class: "alien-link",
                             target: "_blank",
                             r"CV"

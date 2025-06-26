@@ -1,7 +1,10 @@
+use crate::auth::AuthState;
 use crate::components::{Card, CardType, CloseButton, Loading};
 use crate::shared::{models::GuestbookEntry, server_fns};
 use dioxus::prelude::*;
+
 const SIGNATURES_PER_PAGE: usize = 10;
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SignatureListState {
     #[default]
@@ -10,19 +13,29 @@ pub enum SignatureListState {
     Finished,
     MoreAvailable(u32),
 }
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MaybeFirst {
     #[default]
     First,
     NotFirst,
 }
+
 #[component]
 pub fn SignatureList() -> Element {
     let mut load_state = use_signal(SignatureListState::default);
-    let mut user_signature = use_context::<Signal<Option<GuestbookEntry>>>();
+    let mut auth_state = use_context::<Signal<AuthState>>();
     let mut endless_signatures = use_signal(std::vec::Vec::new);
     let load_next_batch = use_signature_list(load_state, endless_signatures);
     let mut is_intersecting = use_signal(|| false);
+
+    let mut update_user_signature = move |new_entry: Option<GuestbookEntry>| {
+        let state_: &mut AuthState = &mut auth_state.write();
+        if let AuthState::Authenticated(user_state) = state_ {
+            user_state.entry = new_entry;
+        }
+    };
+
     use_effect(move || {
         if *is_intersecting.read()
             && matches!(*load_state.read(), SignatureListState::MoreAvailable(_))
@@ -30,56 +43,69 @@ pub fn SignatureList() -> Element {
             load_next_batch.send(());
         }
     });
+
     rsx! {
         div {
             {
-                if user_signature.read().is_some() {
-                    match *load_state.read() {
-                        SignatureListState::Initial
-                        | SignatureListState::Loading(MaybeFirst::First) => {
-                            rsx! {}
-                        }
-                        _ => {
-                            rsx! {
-                                div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                                    Card {
-                                        card_type: CardType::Signature {
-                                            entry: user_signature.read().clone().unwrap(),
-                                            close_button: rsx! {
-                                                CloseButton {
-                                                    layout: "absolute top-2 right-2 w-6 h-6",
-                                                    onclick: move |_| {
-                                                        spawn(async move {
-                                                            match server_fns::delete_signature(user_signature.read().clone().unwrap())
-                                                                .await
-                                                            {
-                                                                Ok(_) => {}
-                                                                Err(e) => {
-                                                                    dioxus_logger::tracing::error!("Error deleting signature: {e}");
-                                                                }
-                                                            }
-                                                            user_signature.set(None);
-                                                            endless_signatures.write().clear();
-                                                            load_state.set(SignatureListState::Initial);
-                                                            load_next_batch.send(());
-                                                        });
-                                                    },
-                                                }
-                                            },
-                                        },
-                                    }
-                                    for entry in endless_signatures
-                                        .read()
-                                        .iter()
-                                        .flatten()
-                                        .filter(|entry| entry.id != user_signature.read().as_ref().unwrap().id)
-                                    {
+                let state_ = auth_state.read();
+                if let AuthState::Authenticated(user_state) = &*state_ {
+                    if let Some(user_entry) = &user_state.entry {
+                        let user_entry_id = user_entry.id;
+                        let user_entry_clone = user_entry.clone();
+                        match *load_state.read() {
+                            SignatureListState::Initial
+                            | SignatureListState::Loading(MaybeFirst::First) => {
+                                rsx! {}
+                            }
+                            _ => {
+                                rsx! {
+                                    div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
                                         Card {
                                             card_type: CardType::Signature {
-                                                entry: entry.clone(),
-                                                close_button: rsx! {},
+                                                entry: user_entry_clone.clone(),
+                                                close_button: rsx! {
+                                                    CloseButton {
+                                                        layout: "absolute top-2 right-2 w-6 h-6",
+                                                        onclick: move |_| {
+                                                            let entry_to_delete = user_entry_clone.clone();
+                                                            spawn(async move {
+                                                                match server_fns::delete_signature(entry_to_delete).await {
+                                                                    Ok(_) => {}
+                                                                    Err(e) => {
+                                                                        dioxus_logger::tracing::error!("Error deleting signature: {e}");
+                                                                    }
+                                                                }
+                                                                update_user_signature(None);
+                                                                endless_signatures.write().clear();
+                                                                load_state.set(SignatureListState::Initial);
+                                                                load_next_batch.send(());
+                                                            });
+                                                        },
+                                                    }
+                                                },
                                             },
                                         }
+                                        for entry in endless_signatures.read().iter().flatten().filter(|entry| entry.id != user_entry_id) {
+                                            Card {
+                                                card_type: CardType::Signature {
+                                                    entry: entry.clone(),
+                                                    close_button: rsx! {},
+                                                },
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        rsx! {
+                            div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+                                for entry in endless_signatures.read().iter().flatten() {
+                                    Card {
+                                        card_type: CardType::Signature {
+                                            entry: entry.clone(),
+                                            close_button: rsx! {},
+                                        },
                                     }
                                 }
                             }
@@ -132,6 +158,7 @@ pub fn SignatureList() -> Element {
         }
     }
 }
+
 fn use_signature_list(
     mut state: Signal<SignatureListState>,
     mut batches: Signal<Vec<Vec<GuestbookEntry>>>,
@@ -139,26 +166,14 @@ fn use_signature_list(
     use futures::StreamExt as _;
     let load_task = use_coroutine(move |mut rx: UnboundedReceiver<Option<u32>>| async move {
         while let Some(next_cursor) = rx.next().await {
-            dioxus_logger::tracing::debug!(
-                "Loading signatures with cursor {next_cursor:?}"
-            );
+            dioxus_logger::tracing::debug!("Loading signatures with cursor {next_cursor:?}");
             let original_state = *state.read();
-            state
-                .set(
-                    SignatureListState::Loading(
-                        if next_cursor.is_some() {
-                            MaybeFirst::NotFirst
-                        } else {
-                            MaybeFirst::First
-                        },
-                    ),
-                );
-            match server_fns::load_signatures(
-                    next_cursor.unwrap_or(1),
-                    SIGNATURES_PER_PAGE,
-                )
-                .await
-            {
+            state.set(SignatureListState::Loading(if next_cursor.is_some() {
+                MaybeFirst::NotFirst
+            } else {
+                MaybeFirst::First
+            }));
+            match server_fns::load_signatures(next_cursor.unwrap_or(1), SIGNATURES_PER_PAGE).await {
                 Ok(signatures) => {
                     if signatures.is_empty() {
                         state.set(SignatureListState::Finished);
@@ -172,9 +187,7 @@ fn use_signature_list(
                     }
                 }
                 Err(error) => {
-                    dioxus_logger::tracing::error!(
-                        "Could not load signatures: {:?}", error
-                    );
+                    dioxus_logger::tracing::error!("Could not load signatures: {:?}", error);
                     state.set(original_state);
                 }
             }

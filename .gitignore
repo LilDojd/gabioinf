@@ -18,3 +18,13 @@ dist/
 node_modules/
 # Mac
 .DS_store
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

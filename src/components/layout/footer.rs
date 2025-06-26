@@ -11,7 +11,7 @@ impl AreciboDateProps {
 }
 fn AreciboDate(date: AreciboDateProps) -> Element {
     let year = date.year();
-    let binary_year = format!("{:012b}", year);
+    let binary_year = format!("{year:012b}");
     let grid: Vec<bool> = binary_year.chars().map(|c| c == '1').collect();
     rsx! {
         div { class: "grid grid-cols-6 gap-1", title: format!("{year}"),
@@ -44,9 +44,8 @@ struct GridPropsBuilder<const I: usize, const J: usize> {
 }
 impl<const I: usize, const J: usize> GridPropsBuilder<I, J> {
     fn new() -> Self {
-        let arr: [[Option<GridElement>; J]; I] = core::array::from_fn(|_| core::array::from_fn(|
-            _|
-        None));
+        let arr: [[Option<GridElement>; J]; I] =
+            core::array::from_fn(|_| core::array::from_fn(|_| None));
         Self { grid: arr }
     }
     fn with(mut self, i: usize, j: usize, element: GridElement) -> Self {
@@ -67,7 +66,9 @@ impl<const I: usize, const J: usize> GridPropsBuilder<I, J> {
         self
     }
     fn build(self) -> GridProps<I, J> {
-        let grid = self.grid.map(|row| row.map(|cell| cell.unwrap_or_default()));
+        let grid = self
+            .grid
+            .map(|row| row.map(|cell| cell.unwrap_or_default()));
         GridProps { grid }
     }
 }
@@ -237,7 +238,7 @@ fn AreciboIcons() -> Element {
             {Grid(grid)}
             img {
                 class: "w-4 h-4",
-                src: asset!("/public/heart.svg"),
+                src: asset!("/assets/heart.svg"),
                 alt: "Pluto",
                 title: "With love, Pluto",
             }

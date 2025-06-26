@@ -44,7 +44,6 @@ impl AuthBackend {
         self.authorize_url(std::iter::empty())
     }
 }
-#[axum::async_trait]
 impl AuthnBackend for AuthBackend {
     type User = Guest;
     type Credentials = Credentials;
@@ -85,7 +84,6 @@ impl AuthnBackend for AuthBackend {
         self.guest_repo.read(&GuestCriteria::WithGuestId(*user_id)).await.map(Some)
     }
 }
-#[axum::async_trait]
 impl AuthzBackend for AuthBackend {
     type Permission = PermissionTargets;
     async fn get_user_permissions(
@@ -131,7 +129,6 @@ impl axum::response::IntoResponse for StateError {
             .into_response()
     }
 }
-#[axum::async_trait]
 impl<S> FromRequestParts<S> for SessionWrapper
 where
     S: Send + Sync,

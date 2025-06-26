@@ -1,0 +1,31 @@
+.alien-link {
+  color: #c2f9bb;
+  text-decoration: none;
+  transition: font-variation-settings 0.2s ease;
+  font-variation-settings:
+    "wght" 400,
+    "casl" 0;
+}
+
+.alien-link:hover {
+  font-variation-settings:
+    "wght" 600,
+    "casl" 1;
+}
+
+
+.alien-link-muted {
+  color: #a8a29e;
+  text-decoration: none;
+  font-weight: bold;
+  transition: font-variation-settings 0.2s ease;
+  font-variation-settings:
+    "wght" 400,
+    "casl" 0;
+}
+
+.alien-link-muted:hover {
+  font-variation-settings:
+    "wght" 600,
+    "casl" 1;
+}

@@ -11,7 +11,10 @@ pub struct CardProps {
 #[derive(Clone, Debug, PartialEq)]
 pub enum CardType {
     Project(Project),
-    Signature { entry: GuestbookEntry, close_button: Element },
+    Signature {
+        entry: GuestbookEntry,
+        close_button: Element,
+    },
     Skeleton,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize)]
@@ -63,17 +66,18 @@ pub fn Card(props: CardProps) -> Element {
                 }
             }
         }
-        CardType::Signature { entry, close_button } => {
+        CardType::Signature {
+            entry,
+            close_button,
+        } => {
             let sigb64 = entry.signature.clone().unwrap_or_default();
             let date = entry.created_at;
             let offset = UtcOffset::local_offset_at(date).unwrap_or(date.offset());
             let date = date
                 .to_offset(offset)
-                .format(
-                    time::macros::format_description!(
-                        "[day] [month repr:short], [year], [hour repr:24]:[minute]"
-                    ),
-                )
+                .format(time::macros::format_description!(
+                    "[day] [month repr:short], [year], [hour repr:24]:[minute]"
+                ))
                 .unwrap()
                 .to_string();
             rsx! {
@@ -86,7 +90,13 @@ pub fn Card(props: CardProps) -> Element {
                         div { class: "flex flex-col justify-end h-full text-sm text-stone-400",
                             p {
                                 "by "
-                                span { class: "font-bold", "{entry.author_username}" }
+                                a {
+                                    href: format!("https://github.com/{}", entry.author_username),
+                                    class: "alien-link-muted",
+                                    rel: "noopener noreferrer",
+                                    target: "_blank",
+                                    "{entry.author_username}"
+                                }
                             }
                             p { "{date}" }
                         }

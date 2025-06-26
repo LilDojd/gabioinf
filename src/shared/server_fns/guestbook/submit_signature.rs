@@ -3,9 +3,9 @@
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
 #[cfg(feature = "server")]
-use crate::backend::repos::Repository;
-#[cfg(feature = "server")]
 use crate::backend::AppState;
+#[cfg(feature = "server")]
+use crate::backend::repos::Repository;
 use crate::shared::models::{Guest, GuestbookEntry};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
@@ -25,7 +25,7 @@ pub struct CreateEntryRequest {
             ),
             custom(
                 function = "crate::backend::utils::validate_not_offensive",
-                message = "Message is offensive"
+                message = "watch you mouth"
             )
         )
     )]
@@ -47,7 +47,7 @@ pub async fn submit_signature(
         message: payload.message.trim().to_string(),
         signature: payload.signature,
     }
-        .into();
+    .into();
     let entry = state.guestbook_repo.create(&new_entry).await?;
     Ok(Some(entry))
 }
