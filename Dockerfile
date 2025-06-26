@@ -8,7 +8,7 @@ FROM rust:bookworm AS chef
 RUN rustup target add wasm32-unknown-unknown
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 RUN cargo binstall cargo-chef -y
-RUN cargo binstall dioxus-cli
+RUN cargo cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cli --locked
 WORKDIR /app
 
 FROM chef AS planner
