@@ -7,13 +7,13 @@
 //! - A `CookieExtractor` struct that implements `KeyExtractor` trait
 //! - Functionality to extract rate limiting keys from the 'sid' cookie in requests and fall back to the client's IP address
 use axum::http::Request;
-use axum::http::{header::FORWARDED, HeaderMap};
+use axum::http::{HeaderMap, header::FORWARDED};
 use axum_extra::extract::CookieJar;
 use forwarded_header_value::{ForwardedHeaderValue, Identifier};
 use std::net::IpAddr;
 use tower_governor::{
-    key_extractor::{KeyExtractor, PeerIpKeyExtractor},
     GovernorError,
+    key_extractor::{KeyExtractor, PeerIpKeyExtractor},
 };
 const X_REAL_IP: &str = "x-real-ip";
 const X_FORWARDED_FOR: &str = "x-forwarded-for";
@@ -72,21 +72,18 @@ fn maybe_x_real_ip(headers: &HeaderMap) -> Option<IpAddr> {
 }
 /// Tries to parse `forwarded` headers
 fn maybe_forwarded(headers: &HeaderMap) -> Option<IpAddr> {
-    headers
-        .get_all(FORWARDED)
-        .iter()
-        .find_map(|hv| {
-            hv.to_str()
-                .ok()
-                .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
-                .and_then(|f| {
-                    f.iter()
-                        .filter_map(|fs| fs.forwarded_for.as_ref())
-                        .find_map(|ff| match ff {
-                            Identifier::SocketAddr(a) => Some(a.ip()),
-                            Identifier::IpAddr(ip) => Some(*ip),
-                            _ => None,
-                        })
-                })
-        })
+    headers.get_all(FORWARDED).iter().find_map(|hv| {
+        hv.to_str()
+            .ok()
+            .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
+            .and_then(|f| {
+                f.iter()
+                    .filter_map(|fs| fs.forwarded_for.as_ref())
+                    .find_map(|ff| match ff {
+                        Identifier::SocketAddr(a) => Some(a.ip()),
+                        Identifier::IpAddr(ip) => Some(*ip),
+                        _ => None,
+                    })
+            })
+    })
 }

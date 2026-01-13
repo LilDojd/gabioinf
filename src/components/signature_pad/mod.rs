@@ -1,8 +1,8 @@
 use canvas::Canvas;
 use dioxus::prelude::*;
 use dioxus::web::WebEventExt;
-use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
+use web_sys::wasm_bindgen::JsCast;
 mod canvas;
 mod point;
 mod popup;

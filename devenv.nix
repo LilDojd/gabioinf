@@ -7,20 +7,20 @@
 let
   dioxus-cli = pkgs.rustPlatform.buildRustPackage {
     name = "dioxus-cli";
-    useFetchCargoVendor = true;
     src = pkgs.fetchFromGitHub {
       owner = "DioxusLabs";
       repo = "dioxus";
-      rev = "0dd0f05db09311c26e618e90e60dae72e05d4fa7";
-      hash = "sha256-Wkx55o8CT7CBSkmhknT8DwTwsj8+zlJotfK4ElXgcos=";
+      rev = "8f8b58ea80ba0ec8057807bcd58fb609f7a5f2b1";
+      hash = "sha256-m4KJ3mchKlhOR45RVf0aGDqRPfRMId5HFnhauw+GHAM=";
     };
     buildAndTestSubdir = "packages/cli";
-    cargoHash = "sha256-tdAqX17F4vgV8dAOGBl8pMqi1aoucPAEleMOeXTWzAo=";
+    cargoHash = "sha256-b7O6uN8zZ1XdEY34GGslIJTcnAGZB6MsOQwi5WCT5YQ=";
 
     checkFlags = [
       "--skip=wasm_bindgen::test::test_cargo_install"
       "--skip=wasm_bindgen::test::test_github_install"
       "--skip=cli::autoformat::test_auto_fmt"
+      "--skip=test_harnesses::run_harness"
     ];
 
     buildFeatures = [
@@ -53,11 +53,13 @@ in
     pkgs.cargo-machete
     pkgs.cargo-audit
     pkgs.cargo-edit
+    pkgs.cargo-nextest
     dioxus-cli
     pkgs.wasm-bindgen-cli
     pkgs.lld
     pkgs.tailwindcss
     pkgs.sqlx-cli
     pkgs.binaryen
+    pkgs.openssl
   ];
 }

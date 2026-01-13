@@ -30,12 +30,13 @@ pub enum ButtonVariant {
 pub fn StyledButton(props: StyledButtonProps) -> Element {
     let base_classes = "px-4 py-2 rounded-lg font-semibold transition duration-200 ease-in-out flex items-center border";
     let (bg_color, text_color, hover_color, border_color) = match props.variant {
-        ButtonVariant::Primary => {
-            ("bg-jet", "text-stone-100", "hover:bg-onyx", "border-onyx")
-        }
-        ButtonVariant::Secondary => {
-            ("bg-transparent", "text-stone-100", "hover:bg-onyx", "border-transparent")
-        }
+        ButtonVariant::Primary => ("bg-jet", "text-stone-100", "hover:bg-onyx", "border-onyx"),
+        ButtonVariant::Secondary => (
+            "bg-transparent",
+            "text-stone-100",
+            "hover:bg-onyx",
+            "border-transparent",
+        ),
     };
     rsx! {
         button {

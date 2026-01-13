@@ -2,10 +2,6 @@
 //!
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
-#[cfg(feature = "server")]
-use crate::backend::AppState;
-#[cfg(feature = "server")]
-use crate::backend::repos::Repository;
 use crate::shared::models::{Guest, GuestbookEntry};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
@@ -25,7 +21,7 @@ pub struct CreateEntryRequest {
             ),
             custom(
                 function = "crate::backend::utils::validate_not_offensive",
-                message = "watch you mouth"
+                message = "watch you language"
             )
         )
     )]
@@ -33,14 +29,19 @@ pub struct CreateEntryRequest {
     pub signature: Option<String>,
 }
 use dioxus::prelude::*;
-#[server(SubmitSignature)]
+#[post("/submit_signature")]
 pub async fn submit_signature(
     payload: CreateEntryRequest,
     guest: Guest,
 ) -> Result<Option<GuestbookEntry>, ServerFnError> {
+    use crate::backend::AppState;
+    use crate::backend::repos::Repository;
     use crate::shared::models::NewGuestbookEntry;
-    payload.validate()?;
-    let FromContext(state): FromContext<AppState> = extract().await?;
+    payload
+        .validate()
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
+    let state = try_consume_context::<AppState>()
+        .ok_or_else(|| ServerFnError::new("AppState not found in context"))?;
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
         author_username: guest.username,
@@ -48,6 +49,10 @@ pub async fn submit_signature(
         signature: payload.signature,
     }
     .into();
-    let entry = state.guestbook_repo.create(&new_entry).await?;
+    let entry = state
+        .guestbook_repo
+        .create(&new_entry)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))?;
     Ok(Some(entry))
 }
