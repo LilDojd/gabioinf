@@ -2,7 +2,7 @@
 use crate::backend::domain::logic::SessionWrapper;
 use crate::shared::models::{Guest, GuestId};
 use dioxus::prelude::*;
-#[server(GetUserName)]
+#[server]
 pub async fn get_user() -> Result<Option<Guest>, ServerFnError> {
     let session: SessionWrapper = extract().await?;
     match session.session.user {
@@ -10,7 +10,7 @@ pub async fn get_user() -> Result<Option<Guest>, ServerFnError> {
         None => Ok(None),
     }
 }
-#[server(GetUserById)]
+#[server]
 pub async fn get_user_by_id(id: GuestId) -> Result<Option<Guest>, ServerFnError> {
     let session: SessionWrapper = extract().await?;
     match session.session.user {

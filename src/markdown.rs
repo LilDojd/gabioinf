@@ -198,8 +198,8 @@ fn expand_node(node: &Node) -> Element {
             td { {tc.children.iter().map(expand_node)} }
         ),
         Node::ListItem(li) => {
-            if li.children.len() == 1 {
-                if let Node::Paragraph(par) = &li.children[0] {
+            if li.children.len() == 1
+                && let Node::Paragraph(par) = &li.children[0] {
                     return rsx!(
                         li { style: if li.checked.is_some() { "display: flex" },
                             if let Some(checked) = li.checked {
@@ -213,7 +213,6 @@ fn expand_node(node: &Node) -> Element {
                         }
                     );
                 }
-            }
             rsx!(
                 li { style: if li.checked.is_some() { "display: flex" },
                     if let Some(checked) = li.checked {

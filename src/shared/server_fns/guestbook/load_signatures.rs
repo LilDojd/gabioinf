@@ -6,7 +6,7 @@ use crate::backend::{
 };
 use crate::shared::models::{Guest, GuestbookEntry};
 use dioxus::prelude::*;
-#[server(LoadSignatures)]
+#[server]
 pub async fn load_signatures(
     page: u32,
     per_page: usize,
@@ -16,7 +16,7 @@ pub async fn load_signatures(
     let signatures = guestbook_repo.read_page(page, per_page).await?;
     Ok(signatures)
 }
-#[server(LoadUserSignature)]
+#[server]
 pub async fn load_user_signature(user: Guest) -> Result<Option<GuestbookEntry>, ServerFnError> {
     let FromContext(state): FromContext<AppState> = extract().await?;
     let guestbook_repo = state.guestbook_repo;

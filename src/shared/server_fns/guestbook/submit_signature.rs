@@ -33,7 +33,7 @@ pub struct CreateEntryRequest {
     pub signature: Option<String>,
 }
 use dioxus::prelude::*;
-#[server(SubmitSignature)]
+#[server]
 pub async fn submit_signature(
     payload: CreateEntryRequest,
     guest: Guest,

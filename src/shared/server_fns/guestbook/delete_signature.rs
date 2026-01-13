@@ -4,7 +4,7 @@ use crate::backend::errors::ApiError;
 use crate::backend::{domain::logic::SessionWrapper, repos::Repository, AppState};
 use crate::shared::models::GuestbookEntry;
 use dioxus::prelude::*;
-#[server(DeleteSignature)]
+#[server]
 pub async fn delete_signature(entry: GuestbookEntry) -> Result<(), ServerFnError> {
     let session: SessionWrapper = extract().await?;
     match session.session.user {
