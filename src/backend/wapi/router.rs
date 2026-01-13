@@ -61,9 +61,7 @@ pub fn api_router(
         .layer(cors);
     Router::new().merge(api_router).layer(
         ServiceBuilder::new()
-            .layer(GovernorLayer {
-                config: governor_conf,
-            })
+            .layer(GovernorLayer::new(governor_conf))
             .layer(HandleErrorLayer::new(|error: BoxError| async move {
                 if error.is::<Elapsed>() {
                     return Ok(StatusCode::REQUEST_TIMEOUT);

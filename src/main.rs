@@ -37,13 +37,13 @@ fn main() {
             ..Default::default()
         });
         dioxus_logger::tracing::info!("Starting server");
-        let config = ServeConfig::builder()
-            .incremental(IncrementalRendererConfig::new())
-            .enable_out_of_order_streaming()
-            .build();
+        use dioxus::server::{IncrementalRendererConfig, ServeConfig};
+        let config = ServeConfig::new()
+            .incremental(IncrementalRendererConfig::default())
+            .enable_out_of_order_streaming();
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async move { backend::server::serve(config.unwrap(), App).await });
+            .block_on(async move { backend::server::serve(config, App).await });
     }
 }
 #[derive(Routable, PartialEq, Clone)]

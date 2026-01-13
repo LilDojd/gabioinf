@@ -199,20 +199,21 @@ fn expand_node(node: &Node) -> Element {
         ),
         Node::ListItem(li) => {
             if li.children.len() == 1
-                && let Node::Paragraph(par) = &li.children[0] {
-                    return rsx!(
-                        li { style: if li.checked.is_some() { "display: flex" },
-                            if let Some(checked) = li.checked {
-                                input {
-                                    r#type: "checkbox",
-                                    style: "pointer-events: none; margin-right: 0.5em;",
-                                    checked,
-                                }
+                && let Node::Paragraph(par) = &li.children[0]
+            {
+                return rsx!(
+                    li { style: if li.checked.is_some() { "display: flex" },
+                        if let Some(checked) = li.checked {
+                            input {
+                                r#type: "checkbox",
+                                style: "pointer-events: none; margin-right: 0.5em;",
+                                checked,
                             }
-                            {par.children.iter().map(expand_node)}
                         }
-                    );
-                }
+                        {par.children.iter().map(expand_node)}
+                    }
+                );
+            }
             rsx!(
                 li { style: if li.checked.is_some() { "display: flex" },
                     if let Some(checked) = li.checked {

@@ -44,9 +44,7 @@ pub fn Card(props: CardProps) -> Element {
                                         }
                                     }
                                 } else {
-                                    rsx! {
-                                    "{project.name}"
-                                    }
+                                    rsx! { "{project.name}" }
                                 }
                             }
                         }

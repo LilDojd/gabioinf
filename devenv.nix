@@ -60,5 +60,6 @@ in
     pkgs.tailwindcss
     pkgs.sqlx-cli
     pkgs.binaryen
+    pkgs.openssl
   ];
 }

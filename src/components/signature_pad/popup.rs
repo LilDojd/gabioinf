@@ -1,6 +1,6 @@
 use crate::{
-    components::{signature_pad::Canvas, ButtonVariant, SignaturePad, StyledButton},
     MessageValid,
+    components::{ButtonVariant, SignaturePad, StyledButton, signature_pad::Canvas},
 };
 use dioxus::prelude::*;
 const MAX_MESSAGE_LENGTH: usize = 255;
