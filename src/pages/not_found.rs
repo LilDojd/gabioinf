@@ -1,6 +1,10 @@
+use dioxus::fullstack::FullstackContext;
 use dioxus::prelude::*;
+
 #[component]
 pub fn NotFound(route: Vec<String>) -> Element {
+    FullstackContext::commit_http_status(StatusCode::NOT_FOUND, None);
+
     let galaxy = asset!(
         "/assets/galaxy.png",
         ImageAssetOptions::new().with_avif().with_preload(true)

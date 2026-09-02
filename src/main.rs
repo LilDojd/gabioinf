@@ -1,4 +1,5 @@
 #![allow(non_snake_case, unreachable_code)]
+use dioxus::fullstack::FullstackContext;
 use dioxus::prelude::*;
 use shared::server_fns;
 use std::str::FromStr;
@@ -32,9 +33,8 @@ fn main() {
         let _guard =
             sentry::init(sentry::ClientOptions::new().maybe_release(sentry::release_name!()));
         dioxus_logger::tracing::info!("Starting server");
-        let config = ServeConfig::new()
-            .incremental(dioxus::server::IncrementalRendererConfig::new())
-            .enable_out_of_order_streaming();
+        // Dioxus 0.7.10 incremental cache hits currently lose custom route statuses.
+        let config = ServeConfig::new().enable_out_of_order_streaming();
         tokio::runtime::Runtime::new()
             .unwrap()
             .block_on(async move { backend::server::serve(config, App).await });
@@ -92,29 +92,7 @@ fn App() -> Element {
         document::Stylesheet { href: "{STYLES}/main.css" }
         document::Stylesheet { href: "{STYLES}/navbar.css" }
         ErrorBoundary {
-            handle_error: |errors: ErrorContext| {
-                let error = errors.error().expect("error boundary must contain an error");
-                rsx! {
-                    div { class: "container mx-auto px-4 py-8",
-                        article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
-                            h1 { class: "text-3xl font-bold mb-6", "Error" }
-                            p { class: "text-lg", "An error occurred." }
-                            p { class: "text-lg",
-                                code { class: "text-red-500", "{error}" }
-                            }
-                            p { class: "text-lg",
-                                "If you think this is a mistake, please "
-                                a {
-                                    href: "https://github.com/LilDojd/gabioinf/issues/new",
-                                    target: "_blank",
-                                    "open an issue on GitHub"
-                                }
-                                "."
-                            }
-                        }
-                    }
-                }
-            },
+            handle_error: render_error,
             AppRouter {}
         }
     }
@@ -135,4 +113,76 @@ fn AppRouter() -> Element {
     use_context_provider(|| auth_state);
 
     rsx! { Router::<Route> {} }
+}
+
+fn render_error(errors: ErrorContext) -> Element {
+    let error = errors
+        .error()
+        .expect("error boundary must contain an error");
+    FullstackContext::commit_error_status(error.clone());
+
+    rsx! {
+        div { class: "container mx-auto px-4 py-8",
+            article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
+                h1 { class: "text-3xl font-bold mb-6", "Error" }
+                p { class: "text-lg", "An error occurred." }
+                p { class: "text-lg",
+                    code { class: "text-red-500", "{error}" }
+                }
+                p { class: "text-lg",
+                    "If you think this is a mistake, please "
+                    a {
+                        href: "https://github.com/LilDojd/gabioinf/issues/new",
+                        target: "_blank",
+                        "open an issue on GitHub"
+                    }
+                    "."
+                }
+            }
+        }
+    }
+}
+
+#[cfg(all(test, feature = "server"))]
+mod tests {
+    use super::*;
+    use axum::{body::Body, extract::State, http::Request};
+    use dioxus::server::FullstackState;
+
+    async fn render_status(app: fn() -> Element, uri: &str) -> StatusCode {
+        let state = FullstackState::new(ServeConfig::new(), app);
+        let request = Request::builder().uri(uri).body(Body::empty()).unwrap();
+
+        FullstackState::render_handler(State(state), request)
+            .await
+            .status()
+    }
+
+    #[tokio::test]
+    async fn not_found_route_returns_404() {
+        assert_eq!(render_status(App, "/missing").await, StatusCode::NOT_FOUND);
+    }
+
+    fn failing_app() -> Element {
+        rsx! {
+            ErrorBoundary {
+                handle_error: render_error,
+                FailingComponent {}
+            }
+        }
+    }
+
+    #[component]
+    fn FailingComponent() -> Element {
+        Err(std::io::Error::other("unexpected SSR failure"))?;
+        rsx! {}
+    }
+
+    #[tokio::test]
+    async fn unexpected_ssr_failure_returns_500() {
+        assert_eq!(
+            render_status(failing_app, "/").await,
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
 }
