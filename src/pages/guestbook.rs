@@ -9,7 +9,7 @@ use dioxus::prelude::*;
 pub fn Guestbook() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
 
-    let mut auth_state = use_context::<Signal<AuthState>>();
+    let mut auth_state = use_context::<dioxus::fullstack::Loader<AuthState>>();
     let mut show_signature_pad = use_signal(|| false);
     let mut submitting = use_signal(|| false);
     let close_popup = move |_| {

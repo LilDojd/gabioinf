@@ -10,7 +10,7 @@ const SIGNATURES_PER_PAGE: usize = 10;
 
 #[component]
 pub fn SignatureList() -> Element {
-    let mut auth_state = use_context::<Signal<AuthState>>();
+    let mut auth_state = use_context::<dioxus::fullstack::Loader<AuthState>>();
     let mut entries = use_signal(Vec::<GuestbookEntry>::new);
     let mut next_cursor = use_signal(|| None);
     let mut loaded_once = use_signal(|| false);

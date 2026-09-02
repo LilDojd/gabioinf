@@ -7,7 +7,7 @@ pub struct UserState {
     pub entry: Option<GuestbookEntry>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum AuthState {
     Loading,
     Authenticated(Box<UserState>),

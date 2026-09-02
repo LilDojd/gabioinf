@@ -57,40 +57,7 @@ enum Route {
     NotFound { route: Vec<String> },
 }
 fn App() -> Element {
-    use_context_provider(|| Signal::new(AuthState::Loading));
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
-    let mut auth_state = use_context::<Signal<AuthState>>();
-    use_effect(move || {
-        spawn(async move {
-            if let Ok(user_result) = server_fns::get_user().await {
-                match user_result {
-                    Some(user) => {
-                        dioxus_logger::tracing::debug!(
-                            "Fetching user signature for authenticated user"
-                        );
-                        let signature = match server_fns::load_user_signature(user.clone()).await {
-                            Ok(signature) => signature,
-                            Err(e) => {
-                                dioxus_logger::tracing::error!(
-                                    "Failed to load user signature: {:?}",
-                                    e
-                                );
-                                None
-                            }
-                        };
-                        let user_state = auth::UserState {
-                            guest: user,
-                            entry: signature,
-                        };
-                        auth_state.set(AuthState::Authenticated(Box::new(user_state)));
-                    }
-                    None => {
-                        auth_state.set(AuthState::Unauthenticated);
-                    }
-                }
-            }
-        });
-    });
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }
@@ -148,7 +115,24 @@ fn App() -> Element {
                     }
                 }
             },
-            Router::<Route> {}
+            AppRouter {}
         }
     }
+}
+
+#[component]
+fn AppRouter() -> Element {
+    let auth_state = use_loader(|| async {
+        let Some(user) = server_fns::get_user().await? else {
+            return Ok::<_, ServerFnError>(AuthState::Unauthenticated);
+        };
+        let entry = server_fns::load_user_signature(user.clone()).await?;
+        Ok(AuthState::Authenticated(Box::new(auth::UserState {
+            guest: user,
+            entry,
+        })))
+    })?;
+    use_context_provider(|| auth_state);
+
+    rsx! { Router::<Route> {} }
 }
