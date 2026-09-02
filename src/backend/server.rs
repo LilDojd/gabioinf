@@ -37,6 +37,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
         domain.to_string(),
         client.clone(),
         reqwest_client.clone(),
+        config.session.secret.clone(),
     );
     let session_store = PostgresStore::new(postgres.clone());
     session_store.migrate().await.unwrap();

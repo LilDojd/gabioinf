@@ -55,6 +55,7 @@ impl AppState {
     /// * `domain` - The domain name of the application.
     /// * `client` - The client for the OAuth2 requests.
     /// * `reqwest_client` - The reqwest client.
+    /// * `key` - The key used to sign and verify cookies.
     ///
     /// # Returns
     ///
@@ -64,6 +65,7 @@ impl AppState {
         domain: String,
         client: SetOauthClient,
         reqwest_client: ReqwestClient,
+        key: Key,
     ) -> Self {
         Self {
             db: db.clone(),
@@ -73,7 +75,7 @@ impl AppState {
             gp_repo: GroupsAndPermissionsRepo::new(db.clone()),
             domain,
             client,
-            key: Key::generate(),
+            key,
         }
     }
 }

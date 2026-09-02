@@ -1974,6 +1974,7 @@ dependencies = [
  "axum-extra 0.12.6",
  "axum-helmet",
  "axum-login",
+ "base64 0.22.1",
  "config",
  "derive_more",
  "dioxus",
