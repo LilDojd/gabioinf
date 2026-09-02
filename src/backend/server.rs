@@ -1,4 +1,5 @@
 use crate::backend::AppState;
+use crate::backend::blog;
 use crate::backend::config::AppConfig;
 use crate::backend::domain::logic::AuthBackend;
 use crate::backend::domain::logic::oauth::build_oauth_client;
@@ -73,6 +74,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let governor_limiter = governor_conf.limiter().clone();
     let application = Router::new()
         .serve_dioxus_application(cfg.into(), dxapp)
+        .merge(blog::router(domain))
         .nest("/v1/", api_router(state.clone(), governor_conf))
         .layer(middleware::from_fn(observability::sentry_user_context))
         .layer(Extension(state))

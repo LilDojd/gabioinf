@@ -16,11 +16,17 @@
     "slnt" 0;
 }
 
-.nav-link:hover {
+.nav-link:hover,
+.nav-link:focus-visible {
   color: #c2f9bb;
   font-variation-settings:
     "wght" 600,
     "slnt" -14;
+}
+
+.nav-link:focus-visible {
+  border-color: #c2f9bb;
+  outline: none;
 }
 
 .nav-link.active {

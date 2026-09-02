@@ -21,7 +21,7 @@ title = "gabioinf"
 reload_html = true
 
 # which files or dirs will be watcher monitoring
-watch_path = ["src", "assets"]
+watch_path = ["src", "assets", "content"]
 
 [web.resource.dev]
 

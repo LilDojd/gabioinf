@@ -102,6 +102,7 @@ fn Grid<const I: usize, const J: usize>(grid: GridProps<I, J>) -> Element {
 #[component]
 fn AreciboIcons() -> Element {
     let route: Route = use_route();
+    let is_blog = matches!(&route, Route::Blog {} | Route::BlogPost { .. });
     let grid = GridProps::<5, 19>::builder()
         .with_range(
             1..4,
@@ -119,12 +120,12 @@ fn AreciboIcons() -> Element {
             ),
         )
         .with(
-            if matches!(route, Route::Blog {}) { 1 } else { 2 },
+            if is_blog { 1 } else { 2 },
             4,
             GridElement::new(
                 rsx! {
                     Link { to: Route::Blog {},
-                        if matches!(route, Route::Blog {}) {
+                        if is_blog {
                             div {
                                 class: "w-2 h-2 bg-stone-400",
                                 title: "Mercury",

@@ -1,3 +1,7 @@
+mod blog;
+pub use blog::{BlogVideo, GcCalculator};
+mod comments;
+pub use comments::Comments;
 mod divider;
 pub mod layout;
 pub use divider::Hr;

@@ -4,7 +4,8 @@ use dioxus::prelude::*;
 pub fn Navbar() -> Element {
     rsx! {
         aside { class: "mb-8 mt-2 md:mt-4 tracking-tight",
-            nav { class: "flex flex-row justify-center px-0 pb-0 overflow-visible  md:space-x-8",
+            nav {
+                class: "flex flex-row flex-wrap justify-center gap-x-2 gap-y-1 overflow-visible px-0 pb-0 md:gap-x-8",
                 NavItem { to: Route::Home {}, label: "home" }
                 NavItem { to: Route::Blog {}, label: "blog" }
                 NavItem { to: Route::Projects {}, label: "projects" }
@@ -17,7 +18,8 @@ pub fn Navbar() -> Element {
 #[component]
 fn NavItem(to: Route, label: &'static str) -> Element {
     let route: Route = use_route();
-    let is_active = route.to_string() == to.to_string();
+    let is_active = route.to_string() == to.to_string()
+        || matches!((&route, &to), (Route::BlogPost { .. }, Route::Blog {}));
     rsx! {
         Link {
             to,

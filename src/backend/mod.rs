@@ -16,6 +16,8 @@
 /// Re-exports all items from the `app_state` module
 mod app_state;
 pub use app_state::*;
+/// Public blog feeds and sitemap
+pub mod blog;
 /// Application configuration management
 pub mod config;
 /// Database-related functionality

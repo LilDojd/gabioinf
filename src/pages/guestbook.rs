@@ -5,8 +5,26 @@ use crate::{
     shared::server_fns,
 };
 use dioxus::prelude::*;
+
 #[component]
 pub fn Guestbook() -> Element {
+    let auth_state = use_loader(|| async {
+        let Some(user) = server_fns::get_user().await? else {
+            return Ok::<_, server_fns::ServerError>(AuthState::Unauthenticated);
+        };
+        let entry = server_fns::load_user_signature(user.clone()).await?;
+        Ok(AuthState::Authenticated(Box::new(crate::auth::UserState {
+            guest: user,
+            entry,
+        })))
+    })?;
+    use_context_provider(|| auth_state);
+
+    rsx! { GuestbookContent {} }
+}
+
+#[component]
+fn GuestbookContent() -> Element {
     let mut message_valid = use_context::<Signal<MessageValid>>();
 
     let mut auth_state = use_context::<dioxus::fullstack::Loader<AuthState>>();

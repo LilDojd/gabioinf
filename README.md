@@ -1,6 +1,6 @@
 # 🛸 [gabioinf.dev](https://gabioinf.dev/)
 
-A personal website built with Dioxus and wasm, showcasing projects, blog (coming soon), guestbook, and more.
+A personal website built with Dioxus and WebAssembly, showcasing projects, writing, a guestbook, and more.
 
 [![Dioxus](https://img.shields.io/badge/Dioxus-0.7.10-blue.svg)](https://dioxuslabs.com/)
 [![MIT licensed](https://img.shields.io/github/license/LilDojd/gabioinf)](./LICENSE)
@@ -38,6 +38,35 @@ secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve
 ```
 
 Run `just prepare-sqlx` after changing a SQL query or migration.
+
+### Writing blog posts
+
+Create a draft with `just new-post my-post`, then edit the generated Markdown in
+`content/blog/`. Frontmatter is validated at compile time, drafts are excluded from
+routes and feeds, and posts are sorted newest-first. Set `draft: false` to publish.
+
+Post bodies use GitHub-flavoured Markdown and should start at heading level 2 because
+the page supplies the title. Reading time is estimated automatically at 200 words per
+minute. Rust code fences are highlighted with Tree-sitter during the build; unsupported
+fence languages remain readable plain text without shipping a highlighting runtime or
+JavaScript library to the browser.
+
+Two allowlisted Dioxus elements may appear on their own line:
+
+```md
+<GcCalculator />
+<Video src="https://example.com/demo.mp4" title="Optional caption" />
+```
+
+Unknown elements, unknown attributes, unsafe URLs, and arbitrary raw HTML fail the build.
+Add a new variant to `PostBlock` and its build-time parser when another component is
+actually needed.
+
+Published posts load Giscus comments lazily from the repository's GitHub Discussions.
+The post slug is the stable discussion key; changing it starts a new comment thread.
+Giscus is the blog's only handwritten-JavaScript exception.
+
+Run `just check-posts` before publishing.
 
 ### Publishing secrets to Fly.io
 
