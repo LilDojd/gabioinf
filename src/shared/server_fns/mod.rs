@@ -1,3 +1,5 @@
+mod error;
+pub use error::ServerError;
 mod get_user;
 pub use get_user::*;
 mod logout;

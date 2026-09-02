@@ -6,10 +6,12 @@
 use crate::backend::{
     AppState, domain::logic::SessionWrapper, errors::ApiError, repos::Repository,
 };
-use crate::shared::models::GuestbookEntry;
+use crate::shared::{models::GuestbookEntry, server_fns::ServerError};
+use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use validator::Validate;
+
 /// Request payload for creating a new guestbook entry.
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[cfg_attr(feature = "server", derive(Validate))]
@@ -32,35 +34,30 @@ pub struct CreateEntryRequest {
     pub message: String,
     pub signature: Option<String>,
 }
-use dioxus::prelude::*;
+
+#[cfg(feature = "server")]
+fn validation_message(errors: &validator::ValidationErrors) -> String {
+    errors
+        .field_errors()
+        .get("message")
+        .and_then(|errors| errors.first())
+        .and_then(|error| error.message.as_deref())
+        .unwrap_or("Invalid guestbook message")
+        .to_owned()
+}
+
 #[server(session:SessionWrapper, state:axum::Extension<AppState>)]
 pub async fn submit_signature(
     mut payload: CreateEntryRequest,
-) -> Result<GuestbookEntry, ServerFnError> {
+) -> Result<GuestbookEntry, ServerError> {
     use crate::shared::models::NewGuestbookEntry;
 
-    let guest = session
-        .session
-        .user
-        .ok_or_else(|| ServerFnError::ServerError {
-            message: "Sign in before signing the guestbook".to_string(),
-            code: 401,
-            details: None,
-        })?;
+    let guest = session.session.user.ok_or(ServerError::Unauthenticated)?;
     payload.message = payload.message.trim().to_string();
     payload
         .validate()
-        .map_err(|errors| ServerFnError::ServerError {
-            message: errors
-                .field_errors()
-                .values()
-                .flat_map(|errors| errors.iter())
-                .find_map(|error| error.message.as_deref())
-                .unwrap_or("Invalid guestbook entry")
-                .to_string(),
-            code: 400,
-            details: None,
-        })?;
+        .map_err(|errors| ServerError::Validation(validation_message(&errors)))?;
+
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
         author_username: guest.username,
@@ -68,17 +65,14 @@ pub async fn submit_signature(
         signature: payload.signature,
     }
     .into();
+
     match state.guestbook_repo.create(&new_entry).await {
         Ok(entry) => Ok(entry),
         Err(ApiError::DatabaseError(sqlx::Error::Database(error)))
             if error.is_unique_violation() =>
         {
-            Err(ServerFnError::ServerError {
-                message: "You have already signed the guestbook".to_string(),
-                code: 409,
-                details: None,
-            })
+            Err(ServerError::Conflict)
         }
-        Err(error) => Err(ServerFnError::new(error)),
+        Err(error) => Err(ServerError::internal("create guestbook entry", error)),
     }
 }

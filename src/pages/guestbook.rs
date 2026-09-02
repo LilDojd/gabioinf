@@ -171,10 +171,12 @@ pub fn Guestbook() -> Element {
     }
 }
 
-fn server_error_message(error: &ServerFnError, fallback: &str) -> String {
+fn server_error_message(error: &server_fns::ServerError, fallback: &str) -> String {
     match error {
-        ServerFnError::ServerError { message, code, .. } if *code < 500 => message.clone(),
-        _ => fallback.to_string(),
+        server_fns::ServerError::Internal | server_fns::ServerError::Unavailable => {
+            fallback.to_string()
+        }
+        error => error.to_string(),
     }
 }
 
@@ -184,11 +186,7 @@ mod tests {
 
     #[test]
     fn shows_safe_server_validation_errors() {
-        let error = ServerFnError::ServerError {
-            message: "Message is required".to_string(),
-            code: 400,
-            details: None,
-        };
+        let error = server_fns::ServerError::Validation("Message is required".to_string());
         assert_eq!(
             server_error_message(&error, "fallback"),
             "Message is required"
@@ -197,7 +195,7 @@ mod tests {
 
     #[test]
     fn hides_internal_server_errors() {
-        let error = ServerFnError::new("database details");
+        let error = server_fns::ServerError::Internal;
         assert_eq!(server_error_message(&error, "Try again"), "Try again");
     }
 }
