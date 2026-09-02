@@ -107,9 +107,10 @@ impl PgRepository<GuestbookEntry> {
         &self,
         cursor: Option<GuestbookCursor>,
         per_page: usize,
+        excluded_id: Option<GuestbookId>,
     ) -> BResult<GuestbookPage> {
         let per_page = per_page.clamp(1, 100);
-        let limit = per_page as i64 + 1;
+        let limit = per_page as i64 + 1 + i64::from(excluded_id.is_some());
         let mut entries = if let Some(cursor) = cursor {
             sqlx::query_as!(
                 GuestbookEntry,
@@ -134,6 +135,9 @@ impl PgRepository<GuestbookEntry> {
             .fetch_all(&self.pool)
             .await?
         };
+        if let Some(excluded_id) = excluded_id {
+            entries.retain(|entry| entry.id != excluded_id);
+        }
         let has_more = entries.len() > per_page;
         entries.truncate(per_page);
         let next_cursor = has_more.then(|| {
@@ -280,7 +284,7 @@ mod tests {
             .await
             .unwrap();
 
-        let first = repo.read_page(None, 2).await.unwrap();
+        let first = repo.read_page(None, 2, None).await.unwrap();
         assert_eq!(first.entries.len(), 2);
         assert!(first.entries[0].id.as_value() > first.entries[1].id.as_value());
         let first_ids = first
@@ -291,12 +295,35 @@ mod tests {
 
         let new_guest = create_guest(&pool, 4).await;
         let new_entry = create_entry_for(&repo, &new_guest).await;
-        let second = repo.read_page(first.next_cursor, 2).await.unwrap();
+        let second = repo.read_page(first.next_cursor, 2, None).await.unwrap();
 
         assert_eq!(second.entries.len(), 1);
         assert_eq!(second.entries[0].id, old_entries[0].id);
         assert!(!first_ids.contains(&second.entries[0].id));
         assert_ne!(second.entries[0].id, new_entry.id);
+        assert!(second.next_cursor.is_none());
+    }
+
+    #[sqlx::test]
+    async fn read_page_excludes_pinned_entry_without_shortening_pages(pool: PgPool) {
+        let repo = PgRepository::<GuestbookEntry>::new(pool.clone());
+        let mut entries = Vec::new();
+        for number in 1..=12 {
+            let guest = create_guest(&pool, number).await;
+            entries.push(create_entry_for(&repo, &guest).await);
+        }
+        let pinned_id = entries[5].id;
+
+        let first = repo.read_page(None, 9, Some(pinned_id)).await.unwrap();
+        assert_eq!(first.entries.len(), 9);
+        assert!(first.entries.iter().all(|entry| entry.id != pinned_id));
+
+        let second = repo
+            .read_page(first.next_cursor, 10, Some(pinned_id))
+            .await
+            .unwrap();
+        assert_eq!(second.entries.len(), 2);
+        assert!(second.entries.iter().all(|entry| entry.id != pinned_id));
         assert!(second.next_cursor.is_none());
     }
 

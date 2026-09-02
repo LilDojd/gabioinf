@@ -5,7 +5,7 @@ use crate::backend::{
     repos::{GuestbookEntryCriteria, Repository},
 };
 use crate::shared::{
-    models::{Guest, GuestbookCursor, GuestbookEntry, GuestbookPage},
+    models::{Guest, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage},
     server_fns::ServerError,
 };
 use dioxus::prelude::*;
@@ -16,10 +16,12 @@ const SIGNATURES_PER_PAGE: usize = 10;
 #[server(state:axum::Extension<AppState>)]
 pub async fn load_signatures(
     cursor: Option<GuestbookCursor>,
+    pinned_entry_id: Option<GuestbookId>,
 ) -> Result<GuestbookPage, ServerError> {
+    let per_page = SIGNATURES_PER_PAGE - usize::from(cursor.is_none() && pinned_entry_id.is_some());
     state
         .guestbook_repo
-        .read_page(cursor, SIGNATURES_PER_PAGE)
+        .read_page(cursor, per_page, pinned_entry_id)
         .await
         .map_err(|error| ServerError::internal("load guestbook entries", error))
 }

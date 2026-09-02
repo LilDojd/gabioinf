@@ -20,6 +20,12 @@ pub fn SignatureList() -> Element {
     let mut delete_error = use_signal(|| None::<String>);
     let mut deleted_entry_id = use_signal(|| None::<GuestbookId>);
 
+    let user_entry = match &*auth_state.read() {
+        AuthState::Authenticated(user_state) => user_state.entry.clone(),
+        _ => None,
+    };
+    let user_entry_id = user_entry.as_ref().map(|entry| entry.id);
+
     let load_more = use_callback(move |_| {
         if loading() || (loaded_once() && next_cursor().is_none()) {
             return;
@@ -28,7 +34,7 @@ pub fn SignatureList() -> Element {
         loading.set(true);
         load_error.set(None);
         spawn(async move {
-            match server_fns::load_signatures(cursor).await {
+            match server_fns::load_signatures(cursor, user_entry_id).await {
                 Ok(page) => {
                     append_unique(&mut entries.write(), page.entries, deleted_entry_id());
                     next_cursor.set(page.next_cursor);
@@ -50,12 +56,6 @@ pub fn SignatureList() -> Element {
             load_more.call(());
         }
     });
-
-    let user_entry = match &*auth_state.read() {
-        AuthState::Authenticated(user_state) => user_state.entry.clone(),
-        _ => None,
-    };
-    let user_entry_id = user_entry.as_ref().map(|entry| entry.id);
 
     rsx! {
         if let Some(error) = delete_error.read().as_ref() {
@@ -130,7 +130,7 @@ pub fn SignatureList() -> Element {
                 }
             }
             if loading() && !loaded_once() {
-                for _ in 0..SIGNATURES_PER_PAGE {
+                for _ in 0..SIGNATURES_PER_PAGE - usize::from(user_entry_id.is_some()) {
                     Card { card_type: CardType::Skeleton }
                 }
             }
@@ -149,12 +149,14 @@ pub fn SignatureList() -> Element {
                 }
             }
         } else if loaded_once() && next_cursor.read().is_some() {
-            div { class: "mt-6 flex justify-center",
-                StyledButton {
-                    text: "Load more",
-                    variant: ButtonVariant::Secondary,
-                    onclick: move |_| load_more.call(()),
-                }
+            div {
+                aria_hidden: "true",
+                class: "h-8",
+                onvisible: move |event| {
+                    if event.data().is_intersecting().unwrap_or(false) {
+                        load_more.call(());
+                    }
+                },
             }
         }
     }
