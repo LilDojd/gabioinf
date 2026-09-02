@@ -56,36 +56,79 @@ enum Route {
     #[route("/:..route")]
     NotFound { route: Vec<String> },
 }
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct RouteMetadata {
+    title: &'static str,
+    description: &'static str,
+}
+
+impl Route {
+    fn metadata(&self) -> RouteMetadata {
+        match self {
+            Self::Home {} => RouteMetadata {
+                title: "George Andreev | Bioinformatician and Developer",
+                description: "George Andreev's personal website about bioinformatics, software development, projects, and experiments.",
+            },
+            Self::Blog {} => RouteMetadata {
+                title: "Blog | George Andreev",
+                description: "Notes and articles from George Andreev about bioinformatics, software development, and other experiments.",
+            },
+            Self::Projects {} => RouteMetadata {
+                title: "Projects | George Andreev",
+                description: "Selected software projects, publications, and professional milestones from George Andreev.",
+            },
+            Self::AboutMe {} => RouteMetadata {
+                title: "About | George Andreev",
+                description: "Learn about George Andreev, a bioinformatician and software developer working on machine learning for biology.",
+            },
+            Self::Guestbook {} => RouteMetadata {
+                title: "Guestbook | George Andreev",
+                description: "Read messages from visitors and sign George Andreev's guestbook with GitHub.",
+            },
+            Self::NotFound { .. } => RouteMetadata {
+                title: "Page not found | George Andreev",
+                description: "The requested page could not be found on George Andreev's website.",
+            },
+        }
+    }
+}
+
+fn DocumentMetadata() -> Element {
+    let router = router();
+    let route: Route = router.current();
+    let metadata = route.metadata();
+    let initial_metadata = use_hook(|| metadata);
+
+    use_effect(move || {
+        #[cfg(feature = "web")]
+        {
+            let metadata = router.current::<Route>().metadata();
+            let description = web_sys::window()
+                .and_then(|window| window.document())
+                .and_then(|document| document.get_element_by_id("route-description"));
+
+            if let Some(description) = description {
+                _ = description.set_attribute("content", metadata.description);
+            }
+        }
+    });
+
+    rsx! {
+        document::Title { "{metadata.title}" }
+        document::Meta {
+            id: "route-description",
+            name: "description",
+            content: initial_metadata.description,
+        }
+    }
+}
+
 fn App() -> Element {
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }
-        document::Meta { property: "og:type", content: "website" }
-        document::Meta { property: "og:title", content: "George Andreev personal website" }
-        document::Meta {
-            property: "og:description",
-            content: "Personal website of George Andreev, bioinformatician and developer. Explore projects, blog posts, and sign the guestbook.",
-        }
-        document::Meta { property: "og:url", content: "https://gabioinf.dev" }
-        document::Meta {
-            property: "og:image",
-            content: "https://github.com/LilDojd/gabioinf/blob/main/assets/og-img.png?raw=true",
-        }
-        document::Meta { property: "og:image:width", content: "1200" }
-        document::Meta { property: "og:image:height", content: "630" }
-        document::Meta { name: "twitter:card", content: "summary_large_image" }
-        document::Meta { name: "twitter:title", content: "George Andreev personal website" }
-        document::Meta {
-            name: "twitter:description",
-            content: "Personal website of George Andreev, bioinformatician and developer. Explore projects, blog posts, and sign the guestbook.",
-        }
-        document::Meta {
-            name: "twitter:image",
-            content: "https://github.com/LilDojd/gabioinf/blob/main/assets/og-img.png?raw=true",
-        }
-        document::Meta { name: "twitter:image:width", content: "1200" }
-        document::Meta { name: "twitter:image:height", content: "630" }
         document::Link { rel: "icon", href: asset!("/assets/favicon.ico") }
         document::Stylesheet { href: asset!("assets/tailwind.css") }
         document::Stylesheet { href: "{STYLES}/alien_links.css" }
@@ -184,5 +227,30 @@ mod tests {
             render_status(failing_app, "/").await,
             StatusCode::INTERNAL_SERVER_ERROR
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_route_has_useful_metadata() {
+        let routes = [
+            Route::Home {},
+            Route::Blog {},
+            Route::Projects {},
+            Route::AboutMe {},
+            Route::Guestbook {},
+            Route::NotFound {
+                route: vec!["missing".to_string()],
+            },
+        ];
+
+        for route in routes {
+            let metadata = route.metadata();
+            assert!(metadata.title.contains("George Andreev"));
+            assert!(metadata.description.len() >= 60);
+        }
     }
 }
