@@ -11,10 +11,10 @@ use axum::error_handling::HandleErrorLayer;
 use axum::http::{Response, StatusCode};
 use axum::{Router, http};
 use axum_helmet::{
-    ContentSecurityPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet,
-    HelmetLayer, OriginAgentCluster, ReferrerPolicy, StrictTransportSecurity,
-    XContentTypeOptions, XDNSPrefetchControl, XDownloadOptions, XFrameOptions,
-    XPermittedCrossDomainPolicies, XXSSProtection,
+    ContentSecurityPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet, HelmetLayer,
+    OriginAgentCluster, ReferrerPolicy, StrictTransportSecurity, XContentTypeOptions,
+    XDNSPrefetchControl, XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies,
+    XXSSProtection,
 };
 use governor::clock::QuantaInstant;
 use governor::middleware::NoOpMiddleware;
@@ -61,36 +61,31 @@ pub fn api_router(
         .merge(auth_router)
         .merge(oauth_router)
         .layer(cors);
-    Router::new()
-        .merge(api_router)
-        .layer(
-            ServiceBuilder::new()
-                .layer(GovernorLayer::new(governor_conf))
-                .layer(
-                    HandleErrorLayer::new(|error: BoxError| async move {
-                        if error.is::<Elapsed>() {
-                            return Ok(StatusCode::REQUEST_TIMEOUT);
-                        }
-                        Err((
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            format!("Unhandled internal error: {error}"),
-                        ))
-                    }),
-                )
-                .timeout(std::time::Duration::from_secs(10))
-                .layer(helmet_layer)
-                .map_response(|mut res: Response<Body>| {
-                    if res.headers().get("content-security-policy").is_none() {
-                        res.headers_mut()
-                            .insert(
-                                "content-security-policy",
-                                generate_default_csp().to_string().parse().unwrap(),
-                            );
-                    }
-                    res
-                })
-                .into_inner(),
-        )
+    Router::new().merge(api_router).layer(
+        ServiceBuilder::new()
+            .layer(GovernorLayer::new(governor_conf))
+            .layer(HandleErrorLayer::new(|error: BoxError| async move {
+                if error.is::<Elapsed>() {
+                    return Ok(StatusCode::REQUEST_TIMEOUT);
+                }
+                Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Unhandled internal error: {error}"),
+                ))
+            }))
+            .timeout(std::time::Duration::from_secs(10))
+            .layer(helmet_layer)
+            .map_response(|mut res: Response<Body>| {
+                if res.headers().get("content-security-policy").is_none() {
+                    res.headers_mut().insert(
+                        "content-security-policy",
+                        generate_default_csp().to_string().parse().unwrap(),
+                    );
+                }
+                res
+            })
+            .into_inner(),
+    )
 }
 fn generate_general_helmet_headers() -> Helmet {
     Helmet::new()
@@ -98,7 +93,11 @@ fn generate_general_helmet_headers() -> Helmet {
         .add(CrossOriginResourcePolicy::same_origin())
         .add(OriginAgentCluster::new(true))
         .add(ReferrerPolicy::no_referrer())
-        .add(StrictTransportSecurity::new().max_age(15_552_000).include_sub_domains())
+        .add(
+            StrictTransportSecurity::new()
+                .max_age(15_552_000)
+                .include_sub_domains(),
+        )
         .add(XContentTypeOptions::nosniff())
         .add(XDNSPrefetchControl::off())
         .add(XDownloadOptions::noopen())

@@ -2,7 +2,7 @@
 //!
 //! This module provides types and functions for managing database connections
 //! and performing basic database operations.
-use super::{errors::BResult, AppState};
+use super::{AppState, errors::BResult};
 use axum::{extract::State, response::IntoResponse};
 /// A type alias for the PostgreSQL connection pool.
 ///

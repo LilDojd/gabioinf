@@ -23,17 +23,14 @@ fn main() {
         .expect("failed to init logger");
     #[cfg(not(feature = "server"))]
     LaunchBuilder::new()
-        .with_cfg(
-            web! {
-                dioxus::web::Config::new().hydrate(true)
-            },
-        )
+        .with_cfg(web! {
+            dioxus::web::Config::new().hydrate(true)
+        })
         .launch(App);
     #[cfg(feature = "server")]
     {
-        let _guard = sentry::init(
-            sentry::ClientOptions::new().maybe_release(sentry::release_name!()),
-        );
+        let _guard =
+            sentry::init(sentry::ClientOptions::new().maybe_release(sentry::release_name!()));
         dioxus_logger::tracing::info!("Starting server");
         let config = ServeConfig::new()
             .incremental(dioxus::server::IncrementalRendererConfig::new())
@@ -71,15 +68,12 @@ fn App() -> Element {
                         dioxus_logger::tracing::debug!(
                             "Fetching user signature for authenticated user"
                         );
-                        let signature = match server_fns::load_user_signature(
-                                user.clone(),
-                            )
-                            .await
-                        {
+                        let signature = match server_fns::load_user_signature(user.clone()).await {
                             Ok(signature) => signature,
                             Err(e) => {
                                 dioxus_logger::tracing::error!(
-                                    "Failed to load user signature: {:?}", e
+                                    "Failed to load user signature: {:?}",
+                                    e
                                 );
                                 None
                             }

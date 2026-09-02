@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 #[cfg(feature = "web")]
 use dioxus::web::WebEventExt;
 #[cfg(feature = "web")]
-use web_sys::{wasm_bindgen::JsCast, HtmlCanvasElement};
+use web_sys::{HtmlCanvasElement, wasm_bindgen::JsCast};
 mod canvas;
 mod point;
 mod popup;

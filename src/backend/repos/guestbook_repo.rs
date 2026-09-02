@@ -19,10 +19,11 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
     /// Retrieves all guestbook entries, ordered by creation date descending.
     async fn read_all(&self) -> BResult<Vec<GuestbookEntry>> {
         let entries = sqlx::query_as!(
-            GuestbookEntry, "SELECT * FROM guestbook ORDER BY created_at DESC"
+            GuestbookEntry,
+            "SELECT * FROM guestbook ORDER BY created_at DESC"
         )
-            .fetch_all(&self.pool)
-            .await?;
+        .fetch_all(&self.pool)
+        .await?;
         Ok(entries)
     }
     /// Retrieves a single guestbook entry based on the provided criteria.
@@ -30,26 +31,29 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
         let entry = match criteria {
             GuestbookEntryCriteria::WithId(id) => {
                 sqlx::query_as!(
-                    GuestbookEntry, "SELECT * FROM guestbook WHERE id = $1", id
-                    .as_value()
+                    GuestbookEntry,
+                    "SELECT * FROM guestbook WHERE id = $1",
+                    id.as_value()
                 )
-                    .fetch_one(&self.pool)
-                    .await?
+                .fetch_one(&self.pool)
+                .await?
             }
             GuestbookEntryCriteria::WithAuthorId(author_id) => {
                 sqlx::query_as!(
-                    GuestbookEntry, "SELECT * FROM guestbook WHERE author_id = $1",
+                    GuestbookEntry,
+                    "SELECT * FROM guestbook WHERE author_id = $1",
                     author_id.as_value()
                 )
-                    .fetch_one(&self.pool)
-                    .await?
+                .fetch_one(&self.pool)
+                .await?
             }
             GuestbookEntryCriteria::Latest => {
                 sqlx::query_as!(
-                    GuestbookEntry, "SELECT * FROM guestbook ORDER BY created_at DESC"
+                    GuestbookEntry,
+                    "SELECT * FROM guestbook ORDER BY created_at DESC"
                 )
-                    .fetch_one(&self.pool)
-                    .await?
+                .fetch_one(&self.pool)
+                .await?
             }
         };
         Ok(entry)
@@ -63,11 +67,13 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
             VALUES ($1, $2, $3, $4)
             RETURNING *
             "#,
-            entry.message, entry.signature, entry.author_id.as_value(), entry
-            .author_username,
+            entry.message,
+            entry.signature,
+            entry.author_id.as_value(),
+            entry.author_username,
         )
-            .fetch_one(&self.pool)
-            .await?;
+        .fetch_one(&self.pool)
+        .await?;
         Ok(created_entry)
     }
     /// Updates an existing guestbook entry.
@@ -80,10 +86,12 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
             WHERE id = $1
             RETURNING *
             "#,
-            entry.id.as_value(), entry.message, entry.signature,
+            entry.id.as_value(),
+            entry.message,
+            entry.signature,
         )
-            .fetch_one(&self.pool)
-            .await?;
+        .fetch_one(&self.pool)
+        .await?;
         Ok(updated_entry)
     }
     /// Deletes a guestbook entry.
@@ -95,18 +103,15 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
     }
 }
 impl PgRepository<GuestbookEntry> {
-    pub async fn read_page(
-        &self,
-        page: u32,
-        per_page: usize,
-    ) -> BResult<Vec<GuestbookEntry>> {
+    pub async fn read_page(&self, page: u32, per_page: usize) -> BResult<Vec<GuestbookEntry>> {
         let entries = sqlx::query_as!(
             GuestbookEntry,
             "SELECT * FROM guestbook ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-            per_page as i64, (page - 1) as i64 * per_page as i64
+            per_page as i64,
+            (page - 1) as i64 * per_page as i64
         )
-            .fetch_all(&self.pool)
-            .await?;
+        .fetch_all(&self.pool)
+        .await?;
         Ok(entries)
     }
 }
@@ -179,7 +184,9 @@ mod tests {
         };
         let created_entry = repo.create(&entry).await.unwrap();
         repo.delete(&created_entry).await.unwrap();
-        let result = repo.read(&GuestbookEntryCriteria::WithId(created_entry.id)).await;
+        let result = repo
+            .read(&GuestbookEntryCriteria::WithId(created_entry.id))
+            .await;
         assert!(result.is_err());
     }
 }

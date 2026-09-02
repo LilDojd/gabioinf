@@ -1,5 +1,5 @@
 #![allow(unused)]
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 /// A trait defining the common operations for a repository.
 ///
 /// This trait provides a standardized interface for CRUD operations

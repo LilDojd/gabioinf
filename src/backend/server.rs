@@ -17,9 +17,14 @@ use tower_sessions_sqlx_store::PostgresStore;
 pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     let config = AppConfig::new_local().expect("Failed to load local configuration");
     dioxus_logger::tracing::info!("Loaded config: {:?}", config);
-    let postgres = sqlx::PgPool::connect(config.database.url.as_str()).await.unwrap();
+    let postgres = sqlx::PgPool::connect(config.database.url.as_str())
+        .await
+        .unwrap();
     dioxus_logger::tracing::info!("Running database migration..");
-    sqlx::migrate!().run(&postgres).await.expect("Failed to run migrations");
+    sqlx::migrate!()
+        .run(&postgres)
+        .await
+        .expect("Failed to run migrations");
     let (domain, client_id, client_secret) = (
         config.domain.as_str(),
         config.gabioinf.id.as_str(),
@@ -64,9 +69,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     tokio::task::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            dioxus_logger::tracing::info!(
-                "rate limiting storage size: {}", governor_limiter.len()
-            );
+            dioxus_logger::tracing::info!("rate limiting storage size: {}", governor_limiter.len());
             governor_limiter.retain_recent();
         }
     });
@@ -78,7 +81,10 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
     let address = dioxus::cli_config::fullstack_address_or_localhost();
     dioxus_logger::tracing::info!("Listening on {}", address);
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
-        .await
-        .unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }

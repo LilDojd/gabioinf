@@ -25,16 +25,16 @@ pub struct AppConfig {
 }
 impl AppConfig {
     pub fn new<S: AsRef<str>>(base: S) -> Result<Self, ConfigError> {
-        let run_mode = if cfg!(debug_assertions) { "development" } else { "production" };
+        let run_mode = if cfg!(debug_assertions) {
+            "development"
+        } else {
+            "production"
+        };
         let domain = std::env::var("DOMAIN_URL").ok();
         let base = base.as_ref();
         let mut s = Config::builder()
-            .add_source(
-                File::with_name(&format!("{base}/config/default")).required(true),
-            )
-            .add_source(
-                File::with_name(&format!("{base}/config/{run_mode}")).required(false),
-            )
+            .add_source(File::with_name(&format!("{base}/config/default")).required(true))
+            .add_source(File::with_name(&format!("{base}/config/{run_mode}")).required(false))
             .add_source(
                 Environment::with_prefix("DATABASE")
                     .keep_prefix(true)
