@@ -4,12 +4,14 @@ use crate::backend::domain::logic::AuthBackend;
 use crate::backend::domain::logic::oauth::build_oauth_client;
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::health;
+use crate::backend::observability;
 use crate::backend::wapi::api_router;
 use anyhow::Context;
-use axum::{Extension, Router};
+use axum::{Extension, Router, extract::Request, middleware};
 use axum_login::AuthManagerLayerBuilder;
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use dioxus::prelude::{DioxusRouterExt, Element, ServeConfig};
+use sentry::integrations::tower::{NewSentryLayer, SentryHttpLayer};
 use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -72,8 +74,11 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let application = Router::new()
         .serve_dioxus_application(cfg.into(), dxapp)
         .nest("/v1/", api_router(state.clone(), governor_conf))
+        .layer(middleware::from_fn(observability::sentry_user_context))
         .layer(Extension(state))
-        .layer(auth_layer);
+        .layer(auth_layer)
+        .layer(SentryHttpLayer::new().enable_transaction())
+        .layer(NewSentryLayer::<Request>::new_from_top());
     let app = Router::new()
         .nest("/health", health::router(postgres.clone()))
         .merge(application);

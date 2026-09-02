@@ -20,8 +20,11 @@ static STYLES: Asset = asset!("/assets/styles");
 pub struct MessageValid(bool, String);
 fn main() -> anyhow::Result<()> {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-    dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
-        .expect("failed to init logger");
+    let log_level = Level::from_str(&log_level).unwrap_or(Level::INFO);
+    #[cfg(not(feature = "server"))]
+    dioxus_logger::init(log_level).expect("failed to init logger");
+    #[cfg(feature = "server")]
+    let _sentry = backend::observability::init(log_level);
     #[cfg(not(feature = "server"))]
     LaunchBuilder::new()
         .with_cfg(web! {
@@ -30,8 +33,6 @@ fn main() -> anyhow::Result<()> {
         .launch(App);
     #[cfg(feature = "server")]
     {
-        let _guard =
-            sentry::init(sentry::ClientOptions::new().maybe_release(sentry::release_name!()));
         dioxus_logger::tracing::info!("Starting server");
         // Dioxus 0.7.10 incremental cache hits currently lose custom route statuses.
         let config = ServeConfig::new().enable_out_of_order_streaming();

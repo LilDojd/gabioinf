@@ -28,6 +28,8 @@ pub mod errors;
 pub mod extractors;
 /// Liveness and readiness endpoints
 pub mod health;
+/// Logging and error reporting
+pub(crate) mod observability;
 /// CRUD operations for data models
 pub mod repos;
 /// Server
