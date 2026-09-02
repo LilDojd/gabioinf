@@ -47,7 +47,7 @@ jobs:
       || github.event.action == 'reopened')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Create Neon branch
         id: create_branch
         uses: neondatabase/create-branch-action@v6
@@ -92,7 +92,7 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Delete Neon Branch
         uses: neondatabase/delete-branch-action@v3
         with:
@@ -103,9 +103,8 @@ jobs:
         uses: LilDojd/fly-pr-review-apps@1.2.1
         with:
           name: gabioinf-pr-${{ github.event.number }}
-      # Points to a recent commit instead of `main` to avoid supply chain attacks. (The latest tag is very old.)
       - name: 🎟 Get GitHub App token
-        uses: navikt/github-app-token-generator@b96ff604b2300989cd1105e3fad09199fca56681
+        uses: actions/create-github-app-token@v2
         id: get-token
         with:
           app-id: ${{ secrets.GH_APP_ID }}
