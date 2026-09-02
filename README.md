@@ -2,7 +2,7 @@
 
 A personal website built with Dioxus and wasm, showcasing projects, blog (coming soon), guestbook, and more.
 
-[![Dioxus](https://img.shields.io/badge/Dioxus-0.6.1-blue.svg)](https://dioxuslabs.com/)
+[![Dioxus](https://img.shields.io/badge/Dioxus-0.7.10-blue.svg)](https://dioxuslabs.com/)
 [![MIT licensed](https://img.shields.io/github/license/LilDojd/gabioinf)](./LICENSE)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/LilDojd/gabioinf/fly-deploy.yml?label=deployment)](https://github.com/LilDojd/gabioinf/deployments)
 
@@ -21,10 +21,36 @@ A personal website built with Dioxus and wasm, showcasing projects, blog (coming
 
 ## 🏁 Getting Started
 
-1. Clone the repository
-2. Install Rust and cargo
-3. Set up environment variables
-4. Run `dx serve`
+1. Install [devenv](https://devenv.sh/getting-started/) and enter the shell with `devenv shell`.
+2. Store the GitHub OAuth secret locally:
+
+   ```sh
+   secretspec set GABIOINF_SECRET --provider local
+   ```
+
+3. Run `just serve`. This starts local PostgreSQL and the Dioxus development server with process-scoped secrets.
+
+To invoke Dioxus directly:
+
+```sh
+devenv processes up postgres --detach
+secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve
+```
+
+Run `just prepare-sqlx` after changing a SQL query or migration.
+
+### Publishing secrets to Fly.io
+
+SecretSpec's Fly provider requires SecretSpec 0.20 or newer and an authenticated `flyctl`:
+
+```sh
+just publish-fly-secret DATABASE_URL
+just publish-fly-secret GABIOINF_SECRET
+just publish-fly-secret SESSION_SECRET
+just publish-fly-secret SENTRY_DSN # optional
+```
+
+Fly secrets are write-only, so existing values cannot be pulled back into the local provider.
 
 ## 📝 License
 

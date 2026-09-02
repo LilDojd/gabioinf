@@ -3,6 +3,8 @@
 # App (Project) Name
 name = "gabioinf"
 default_platform = "web"
+tailwind_input = "input.css"
+tailwind_output = "assets/tailwind.css"
 
 # [web.wasm_opt]
 # # The level wasm-opt should target. z is the smallest. 4 is the fastest.

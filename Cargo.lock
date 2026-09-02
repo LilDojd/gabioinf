@@ -1893,7 +1893,6 @@ dependencies = [
  "dioxus",
  "dioxus-logger",
  "forwarded-header-value",
- "futures",
  "getrandom 0.4.3",
  "governor",
  "markdown",

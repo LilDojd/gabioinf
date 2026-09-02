@@ -1,17 +1,44 @@
 {
+  config,
   pkgs,
   inputs,
   ...
 }:
 let
+  databaseName = "gabioinf";
   wasmTooling = inputs.wasm_bindgen_cli.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 in
 {
+  env.DATABASE_URL = "postgresql://${databaseName}@localhost/${databaseName}?host=${config.env.PGHOST}";
+
+  services.postgres = {
+    enable = true;
+    initialDatabases = [
+      {
+        name = databaseName;
+        user = databaseName;
+      }
+    ];
+  };
+
+  processes.app = {
+    exec = ''secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve'';
+    after = [ "devenv:processes:postgres" ];
+  };
+
+  scripts.prepare-sqlx.exec = ''
+    sqlx migrate run
+    cargo sqlx prepare -- --all-targets --all-features
+  '';
+
   languages = {
     javascript = {
       enable = true;
       package = pkgs.nodejs_24;
-      npm.enable = true;
+      npm = {
+        enable = true;
+        install.enable = true;
+      };
     };
     rust = {
       enable = true;

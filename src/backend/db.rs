@@ -22,6 +22,6 @@ pub type DbConnPool = sqlx::Pool<sqlx::Postgres>;
 /// * `false` if the connection fails.
 pub async fn ping_db(State(state): State<AppState>) -> BResult<impl IntoResponse> {
     let conn = state.db;
-    let _z = sqlx::query("SELECT 1").execute(&conn).await?;
+    sqlx::query!("SELECT 1 AS one").fetch_one(&conn).await?;
     Ok((axum::http::StatusCode::OK, "Pong"))
 }

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE guestbook SET created_at = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0712fae32f5c15e3ffbbe9c2f8b0eb3830ac82ceaf0617ac776f1cf2648906bf"
+}

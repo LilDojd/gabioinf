@@ -13,7 +13,7 @@ async fn liveness() -> impl IntoResponse {
 }
 
 async fn readiness(State(db): State<DbConnPool>) -> impl IntoResponse {
-    if sqlx::query("SELECT 1").execute(&db).await.is_ok() {
+    if sqlx::query!("SELECT 1 AS one").fetch_one(&db).await.is_ok() {
         (StatusCode::OK, "ready")
     } else {
         dioxus_logger::tracing::warn!("readiness check failed");

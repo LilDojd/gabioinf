@@ -4,17 +4,21 @@ set shell := ["bash", "-c"]
 default:
     just --list
 
-# Serve the app with process-scoped secrets
+# Start local PostgreSQL, then serve with process-scoped secrets
 serve:
-    secretspec run -- dx serve
+    devenv processes up app
 
-# Publish one declared SecretSpec value to Fly without exposing it in argv
+# Regenerate SQLx's checked-in query cache against local PostgreSQL
+prepare-sqlx:
+    devenv processes up postgres --detach
+    devenv shell prepare-sqlx
+
+# Publish one local SecretSpec value through the Fly provider without exposing it in argv
 [positional-arguments]
 publish-fly-secret secret:
     #!/usr/bin/env bash
     set -euo pipefail
-    value="$(secretspec get "$1")"
-    printf '%s' "$value" | flyctl secrets set "$1=-" --app gabioinf
+    secretspec get "$1" --provider local | secretspec set "$1" --provider fly_prod
 
 build:
     dx build --fullstack

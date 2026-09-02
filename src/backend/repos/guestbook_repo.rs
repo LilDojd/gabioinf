@@ -275,8 +275,7 @@ mod tests {
             old_entries.push(create_entry_for(&repo, &guest).await);
         }
         let created_at = time::OffsetDateTime::from_unix_timestamp(1_700_000_000).unwrap();
-        sqlx::query("UPDATE guestbook SET created_at = $1")
-            .bind(created_at)
+        sqlx::query!("UPDATE guestbook SET created_at = $1", created_at)
             .execute(&pool)
             .await
             .unwrap();
