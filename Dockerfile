@@ -12,7 +12,7 @@ RUN rustup toolchain install nightly-2026-08-05 \
     && rustup default nightly-2026-08-05
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 RUN cargo binstall cargo-chef@0.1.78 --locked -y
-RUN cargo binstall dioxus-cli@0.7.10 --locked -y
+RUN cargo install dioxus-cli@0.7.10 --locked
 WORKDIR /app
 
 FROM chef AS planner
