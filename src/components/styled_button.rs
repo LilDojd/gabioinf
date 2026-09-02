@@ -11,6 +11,8 @@ pub struct StyledButtonProps {
     r#type: String,
     #[props(default)]
     icon: IconVariant,
+    #[props(default)]
+    disabled: bool,
 }
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -28,7 +30,7 @@ pub enum ButtonVariant {
 }
 #[component]
 pub fn StyledButton(props: StyledButtonProps) -> Element {
-    let base_classes = "px-4 py-2 rounded-lg font-semibold transition duration-200 ease-in-out flex items-center border";
+    let base_classes = "px-4 py-2 rounded-lg font-semibold transition duration-200 ease-in-out flex items-center border disabled:cursor-not-allowed disabled:opacity-60";
     let (bg_color, text_color, hover_color, border_color) = match props.variant {
         ButtonVariant::Primary => ("bg-jet", "text-stone-100", "hover:bg-onyx", "border-onyx"),
         ButtonVariant::Secondary => (
@@ -42,6 +44,7 @@ pub fn StyledButton(props: StyledButtonProps) -> Element {
         button {
             class: "{base_classes} {bg_color} {text_color} {hover_color} {border_color} {props.class}",
             r#type: "{props.r#type}",
+            disabled: props.disabled,
             onclick: move |evt| props.onclick.call(evt),
             {
                 match props.icon {

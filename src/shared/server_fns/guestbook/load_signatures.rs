@@ -4,19 +4,20 @@ use crate::backend::{
     errors::ApiError,
     repos::{GuestbookEntryCriteria, Repository},
 };
-use crate::shared::models::{Guest, GuestbookEntry};
+use crate::shared::models::{Guest, GuestbookCursor, GuestbookEntry, GuestbookPage};
 use dioxus::prelude::*;
+
+const SIGNATURES_PER_PAGE: usize = 10;
+
 #[server(state:axum::Extension<AppState>)]
 pub async fn load_signatures(
-    page: u32,
-    per_page: usize,
-) -> Result<Vec<GuestbookEntry>, ServerFnError> {
-    let signatures = state
+    cursor: Option<GuestbookCursor>,
+) -> Result<GuestbookPage, ServerFnError> {
+    state
         .guestbook_repo
-        .read_page(page, per_page)
+        .read_page(cursor, SIGNATURES_PER_PAGE)
         .await
-        .map_err(ServerFnError::new)?;
-    Ok(signatures)
+        .map_err(ServerFnError::new)
 }
 #[server(state:axum::Extension<AppState>)]
 pub async fn load_user_signature(user: Guest) -> Result<Option<GuestbookEntry>, ServerFnError> {

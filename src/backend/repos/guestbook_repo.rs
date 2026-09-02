@@ -1,7 +1,7 @@
 #![allow(unused)]
 use super::{PgRepository, Repository};
 use crate::backend::errors::{ApiError, BResult};
-use crate::shared::models::{GuestId, GuestbookEntry, GuestbookId};
+use crate::shared::models::{GuestId, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage};
 use serde::{Deserialize, Serialize};
 /// Criteria for querying guestbook entries.
 #[derive(Debug, Serialize, Deserialize)]
@@ -103,23 +103,99 @@ impl Repository<GuestbookEntry> for PgRepository<GuestbookEntry> {
     }
 }
 impl PgRepository<GuestbookEntry> {
-    pub async fn read_page(&self, page: u32, per_page: usize) -> BResult<Vec<GuestbookEntry>> {
-        let entries = sqlx::query_as!(
-            GuestbookEntry,
-            "SELECT * FROM guestbook ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-            per_page as i64,
-            (page - 1) as i64 * per_page as i64
+    pub async fn read_page(
+        &self,
+        cursor: Option<GuestbookCursor>,
+        per_page: usize,
+    ) -> BResult<GuestbookPage> {
+        let per_page = per_page.clamp(1, 100);
+        let limit = per_page as i64 + 1;
+        let mut entries = if let Some(cursor) = cursor {
+            sqlx::query_as!(
+                GuestbookEntry,
+                r#"
+                SELECT * FROM guestbook
+                WHERE (created_at, id) < ($1, $2)
+                ORDER BY created_at DESC, id DESC
+                LIMIT $3
+                "#,
+                cursor.created_at,
+                cursor.id.as_value(),
+                limit,
+            )
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query_as!(
+                GuestbookEntry,
+                "SELECT * FROM guestbook ORDER BY created_at DESC, id DESC LIMIT $1",
+                limit,
+            )
+            .fetch_all(&self.pool)
+            .await?
+        };
+        let has_more = entries.len() > per_page;
+        entries.truncate(per_page);
+        let next_cursor = has_more.then(|| {
+            let last = entries
+                .last()
+                .expect("a page with an extra row cannot be empty");
+            GuestbookCursor {
+                created_at: last.created_at,
+                id: last.id,
+            }
+        });
+        Ok(GuestbookPage {
+            entries,
+            next_cursor,
+        })
+    }
+
+    pub async fn delete_owned(&self, id: GuestbookId, author_id: GuestId) -> BResult<bool> {
+        let result = sqlx::query!(
+            "DELETE FROM guestbook WHERE id = $1 AND author_id = $2",
+            id.as_value(),
+            author_id.as_value(),
         )
-        .fetch_all(&self.pool)
+        .execute(&self.pool)
         .await?;
-        Ok(entries)
+        Ok(result.rows_affected() == 1)
     }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend::utils::setup_guest;
+    use crate::{
+        backend::utils::setup_guest,
+        shared::models::{GithubId, Guest},
+    };
     use sqlx::PgPool;
+
+    async fn create_guest(pool: &PgPool, number: i64) -> Guest {
+        PgRepository::<Guest>::new(pool.clone())
+            .create(&Guest {
+                github_id: GithubId(number),
+                name: format!("Test User {number}"),
+                username: format!("testuser{number}"),
+                ..Default::default()
+            })
+            .await
+            .unwrap()
+    }
+
+    async fn create_entry_for(
+        repo: &PgRepository<GuestbookEntry>,
+        guest: &Guest,
+    ) -> GuestbookEntry {
+        repo.create(&GuestbookEntry {
+            message: format!("Message from {}", guest.username),
+            author_id: guest.id,
+            author_username: guest.username.clone(),
+            ..Default::default()
+        })
+        .await
+        .unwrap()
+    }
     #[sqlx::test]
     #[should_panic]
     async fn create_entry_without_user(pool: PgPool) {
@@ -188,5 +264,56 @@ mod tests {
             .read(&GuestbookEntryCriteria::WithId(created_entry.id))
             .await;
         assert!(result.is_err());
+    }
+
+    #[sqlx::test]
+    async fn read_page_cursor_is_stable_when_new_entries_arrive(pool: PgPool) {
+        let repo = PgRepository::<GuestbookEntry>::new(pool.clone());
+        let mut old_entries = Vec::new();
+        for number in 1..=3 {
+            let guest = create_guest(&pool, number).await;
+            old_entries.push(create_entry_for(&repo, &guest).await);
+        }
+        let created_at = time::OffsetDateTime::from_unix_timestamp(1_700_000_000).unwrap();
+        sqlx::query("UPDATE guestbook SET created_at = $1")
+            .bind(created_at)
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        let first = repo.read_page(None, 2).await.unwrap();
+        assert_eq!(first.entries.len(), 2);
+        assert!(first.entries[0].id.as_value() > first.entries[1].id.as_value());
+        let first_ids = first
+            .entries
+            .iter()
+            .map(|entry| entry.id)
+            .collect::<Vec<_>>();
+
+        let new_guest = create_guest(&pool, 4).await;
+        let new_entry = create_entry_for(&repo, &new_guest).await;
+        let second = repo.read_page(first.next_cursor, 2).await.unwrap();
+
+        assert_eq!(second.entries.len(), 1);
+        assert_eq!(second.entries[0].id, old_entries[0].id);
+        assert!(!first_ids.contains(&second.entries[0].id));
+        assert_ne!(second.entries[0].id, new_entry.id);
+        assert!(second.next_cursor.is_none());
+    }
+
+    #[sqlx::test]
+    async fn delete_owned_cannot_delete_another_users_entry(pool: PgPool) {
+        let owner = create_guest(&pool, 1).await;
+        let other = create_guest(&pool, 2).await;
+        let repo = PgRepository::<GuestbookEntry>::new(pool.clone());
+        let entry = create_entry_for(&repo, &owner).await;
+
+        assert!(!repo.delete_owned(entry.id, other.id).await.unwrap());
+        assert!(
+            repo.read(&GuestbookEntryCriteria::WithId(entry.id))
+                .await
+                .is_ok()
+        );
+        assert!(repo.delete_owned(entry.id, owner.id).await.unwrap());
     }
 }

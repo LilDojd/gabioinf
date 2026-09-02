@@ -11,7 +11,12 @@ pub fn Guestbook() -> Element {
 
     let mut auth_state = use_context::<Signal<AuthState>>();
     let mut show_signature_pad = use_signal(|| false);
-    let close_popup = move |_| show_signature_pad.set(false);
+    let mut submitting = use_signal(|| false);
+    let close_popup = move |_| {
+        if !submitting() {
+            show_signature_pad.set(false);
+        }
+    };
 
     rsx! {
         div { class: "container mx-auto px-4 py-8",
@@ -27,7 +32,10 @@ pub fn Guestbook() -> Element {
                                     StyledButton {
                                         text: "Sign Guestbook",
                                         variant: ButtonVariant::Primary,
-                                        onclick: move |_| show_signature_pad.set(true),
+                                        onclick: move |_| {
+                                            *message_valid.write() = MessageValid(true, String::new());
+                                            show_signature_pad.set(true);
+                                        },
                                     }
                                     StyledButton {
                                         text: "Sign out",
@@ -117,48 +125,40 @@ pub fn Guestbook() -> Element {
                     rsx! {
                         SignaturePopup {
                             on_close: close_popup,
+                            submitting: submitting(),
                             on_submit: move |(message, signature): (String, String)| async move {
-                                let state_: &mut AuthState = &mut auth_state.write();
-                                if let AuthState::Authenticated(user_state) = state_ {
-                                    let entry_request = server_fns::CreateEntryRequest {
-                                        message,
-                                        signature: if signature.is_empty() { None } else { Some(signature) },
-                                    };
-                                    dioxus_logger::tracing::debug!("Submitting signature");
-                                    let resp = server_fns::submit_signature(
-                                            entry_request,
-                                            user_state.guest.clone(),
-                                        )
-                                        .await;
-                                    match resp {
-                                        Ok(Some(entry)) => {
-                                            message_valid.write().0 = true;
-                                            message_valid.write().1 = String::new();
-                                            show_signature_pad.set(false);
+                                if submitting() {
+                                    return;
+                                }
+                                if !matches!(&*auth_state.read(), AuthState::Authenticated(_)) {
+                                    show_signature_pad.set(false);
+                                    return;
+                                }
+                                submitting.set(true);
+                                *message_valid.write() = MessageValid(true, String::new());
+                                let entry_request = server_fns::CreateEntryRequest {
+                                    message,
+                                    signature: if signature.is_empty() { None } else { Some(signature) },
+                                };
+                                dioxus_logger::tracing::debug!("Submitting signature");
+                                match server_fns::submit_signature(entry_request).await {
+                                    Ok(entry) => {
+                                        if let AuthState::Authenticated(user_state) = &mut *auth_state.write() {
                                             user_state.entry = Some(entry);
                                         }
-                                        Err(e) => {
-                                            message_valid.write().0 = false;
-                                            if let Some(error) = e
-                                                .to_string()
-                                                .strip_prefix("error running server function: message: ")
-                                            {
-                                                message_valid.write().1 = error.to_string();
-                                            } else {
-                                                message_valid.write().1 = "An internal error occurred"
-                                                    .to_string();
-                                            }
-                                            dioxus_logger::tracing::error!(
-                                                "Error submitting signature: {:?}", e
-                                            );
-                                        }
-                                        Ok(None) => {
-                                            show_signature_pad.set(false);
-                                        }
+                                        show_signature_pad.set(false);
                                     }
-                                } else {
-                                    show_signature_pad.set(false);
+                                    Err(error) => {
+                                        *message_valid.write() = MessageValid(
+                                            false,
+                                            server_error_message(&error, "Could not sign the guestbook"),
+                                        );
+                                        dioxus_logger::tracing::error!(
+                                            "Error submitting signature: {error:?}"
+                                        );
+                                    }
                                 }
+                                submitting.set(false);
                             },
                         }
                     }
@@ -168,5 +168,36 @@ pub fn Guestbook() -> Element {
             }
             SignatureList {}
         }
+    }
+}
+
+fn server_error_message(error: &ServerFnError, fallback: &str) -> String {
+    match error {
+        ServerFnError::ServerError { message, code, .. } if *code < 500 => message.clone(),
+        _ => fallback.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shows_safe_server_validation_errors() {
+        let error = ServerFnError::ServerError {
+            message: "Message is required".to_string(),
+            code: 400,
+            details: None,
+        };
+        assert_eq!(
+            server_error_message(&error, "fallback"),
+            "Message is required"
+        );
+    }
+
+    #[test]
+    fn hides_internal_server_errors() {
+        let error = ServerFnError::new("database details");
+        assert_eq!(server_error_message(&error, "Try again"), "Try again");
     }
 }

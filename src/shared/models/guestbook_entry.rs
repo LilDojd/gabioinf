@@ -9,7 +9,7 @@ use derive_more::{From, Into};
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with guestbook IDs.
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, From, Into, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, From, Into, PartialEq, Eq)]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestbookId(pub(crate) i64);
 impl GuestbookId {
@@ -37,6 +37,20 @@ pub struct GuestbookEntry {
     /// The username of the guest who authored this entry.
     pub author_username: String,
 }
+/// Stable keyset cursor for guestbook pagination.
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub struct GuestbookCursor {
+    pub created_at: OffsetDateTime,
+    pub id: GuestbookId,
+}
+
+/// One page of guestbook entries and the cursor for the next page.
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct GuestbookPage {
+    pub entries: Vec<GuestbookEntry>,
+    pub next_cursor: Option<GuestbookCursor>,
+}
+
 impl Default for GuestbookEntry {
     fn default() -> Self {
         Self {

@@ -8,16 +8,26 @@ const MAX_MESSAGE_LENGTH: usize = 255;
 pub struct SignaturePopupProps {
     on_close: EventHandler<()>,
     on_submit: EventHandler<(String, String)>,
+    submitting: bool,
 }
 #[component]
 pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     let message = use_signal(String::new);
+    let mut message_valid = use_context::<Signal<MessageValid>>();
     let mut local_signature = use_signal(String::new);
     let mut canvas_ref = use_signal(|| None::<Canvas>);
     let trim_on_submit = use_callback(move |_| {
+        if props.submitting {
+            return;
+        }
+        let trimmed_message = message().trim().to_string();
+        if trimmed_message.is_empty() {
+            *message_valid.write() = MessageValid(false, "Message is required".to_string());
+            return;
+        }
         if let Some(canvas) = canvas_ref.read().as_ref() {
             let trimmed_signature = canvas.trim_to_image();
-            props.on_submit.call((message(), trimmed_signature));
+            props.on_submit.call((trimmed_message, trimmed_signature));
         }
     });
     rsx! {
@@ -28,14 +38,14 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                     class: "space-y-4",
                     onsubmit: move |evt| evt.prevent_default(),
                     div {
-                        TextArea { message }
+                        TextArea { message, disabled: props.submitting }
                     }
                     div {
                         label { class: "block text-stone-400 mb-2", "sign here" }
                         SignaturePad {
                             class: "border bg-jet border-onyx w-full h-48 rounded-md",
                             container_class: "w-full",
-                            disabled: false,
+                            disabled: props.submitting,
                             on_change: move |value: Option<String>| {
                                 local_signature.set(value.unwrap_or_default());
                             },
@@ -48,11 +58,13 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                         StyledButton {
                             text: "Cancel",
                             variant: ButtonVariant::Secondary,
+                            disabled: props.submitting,
                             onclick: move |_| props.on_close.call(()),
                         }
                         StyledButton {
-                            text: "Sign",
+                            text: if props.submitting { "Signing…" } else { "Sign" },
                             variant: ButtonVariant::Primary,
+                            disabled: props.submitting,
                             onclick: trim_on_submit,
                         }
                     }
@@ -62,26 +74,19 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     }
 }
 #[component]
-fn TextArea(mut message: Signal<String>) -> Element {
+fn TextArea(mut message: Signal<String>, disabled: bool) -> Element {
     let mut char_count = use_signal(|| 0);
     let mut message_valid = use_context::<Signal<MessageValid>>();
     let update_message = move |evt: Event<FormData>| {
         let new_message = evt.value();
         match new_message.chars().count() {
-            n if n < MAX_MESSAGE_LENGTH => {
-                message.set(new_message.clone());
+            n if n <= MAX_MESSAGE_LENGTH => {
+                message.set(new_message);
                 char_count.set(n);
-                message_valid.write().0 = true;
-            }
-            MAX_MESSAGE_LENGTH => {
-                message.set(new_message.clone());
-                char_count.set(MAX_MESSAGE_LENGTH);
-                message_valid.write().0 = false;
-                message_valid.write().1 = "Too long".to_string();
+                *message_valid.write() = MessageValid(true, String::new());
             }
             _ => {
-                message_valid.write().0 = false;
-                message_valid.write().1 = "Too long".to_string();
+                *message_valid.write() = MessageValid(false, "Too long".to_string());
             }
         }
     };
@@ -94,6 +99,7 @@ fn TextArea(mut message: Signal<String>) -> Element {
                 placeholder: "wow, you are the coolest dude i have ever seen...",
                 rows: "3",
                 maxlength: MAX_MESSAGE_LENGTH.to_string(),
+                disabled,
                 oninput: update_message,
             }
             span {
