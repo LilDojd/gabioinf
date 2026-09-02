@@ -1,3 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source("./src");
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-nasty-black: #1a1a1a;
+  --color-jet: #292929;
+  --color-onyx: #3d3d3d;
+  --color-alien-green: #c2f9bb;
+  --color-white: #f2f2f2;
+  --color-coral: #ef6f6c;
+  --color-glaucolus: #6b7fd7;
+}
