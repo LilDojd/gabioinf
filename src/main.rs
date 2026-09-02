@@ -145,7 +145,7 @@ fn App() -> Element {
 fn AppRouter() -> Element {
     let auth_state = use_loader(|| async {
         let Some(user) = server_fns::get_user().await? else {
-            return Ok::<_, ServerFnError>(AuthState::Unauthenticated);
+            return Ok::<_, server_fns::ServerError>(AuthState::Unauthenticated);
         };
         let entry = server_fns::load_user_signature(user.clone()).await?;
         Ok(AuthState::Authenticated(Box::new(auth::UserState {
@@ -187,7 +187,7 @@ fn render_error(errors: ErrorContext) -> Element {
 }
 
 #[cfg(all(test, feature = "server"))]
-mod tests {
+mod ssr_tests {
     use super::*;
     use axum::{body::Body, extract::State, http::Request};
     use dioxus::server::FullstackState;
@@ -201,9 +201,16 @@ mod tests {
             .status()
     }
 
+    fn not_found_app() -> Element {
+        rsx! { NotFound { route: vec!["missing".to_string()] } }
+    }
+
     #[tokio::test]
     async fn not_found_route_returns_404() {
-        assert_eq!(render_status(App, "/missing").await, StatusCode::NOT_FOUND);
+        assert_eq!(
+            render_status(not_found_app, "/missing").await,
+            StatusCode::NOT_FOUND
+        );
     }
 
     fn failing_app() -> Element {

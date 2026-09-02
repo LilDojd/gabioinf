@@ -90,9 +90,15 @@ mod tests {
 
     #[test]
     fn test_config() {
-        let config = AppConfig::new("./").unwrap();
-        assert_eq!(config.ratelimiting.requests_per_second, 5);
-        assert_eq!(config.ratelimiting.burst_size, 10);
+        let config = Config::builder()
+            .add_source(File::with_name("./config/default").required(true))
+            .build()
+            .unwrap();
+        assert_eq!(
+            config.get_int("ratelimiting.requests_per_second").unwrap(),
+            5
+        );
+        assert_eq!(config.get_int("ratelimiting.burst_size").unwrap(), 10);
     }
 
     #[test]

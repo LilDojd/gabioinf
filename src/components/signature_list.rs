@@ -62,7 +62,7 @@ pub fn SignatureList() -> Element {
             div {
                 role: "alert",
                 class: "mb-4 flex items-center gap-3 text-coral",
-                span { "{error}" }
+                span { {error.clone()} }
             }
         }
         div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
@@ -141,7 +141,7 @@ pub fn SignatureList() -> Element {
             div {
                 role: "alert",
                 class: "mt-6 flex flex-col items-center gap-3 text-coral",
-                span { "{error}" }
+                span { {error.clone()} }
                 StyledButton {
                     text: "Retry",
                     variant: ButtonVariant::Secondary,

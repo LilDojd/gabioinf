@@ -10,6 +10,7 @@ use crate::shared::{
 };
 use dioxus::prelude::*;
 
+#[cfg(feature = "server")]
 const SIGNATURES_PER_PAGE: usize = 10;
 
 #[server(state:axum::Extension<AppState>)]
