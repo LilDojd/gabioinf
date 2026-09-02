@@ -51,7 +51,7 @@ fn expand_node(node: &Node) -> Element {
         }
         Node::FootnoteDefinition(fnd) => {
             rsx! {
-                p { id: if let Some(id) = &fnd.label { "{id}" },
+                p { id: if let Some(id) = &fnd.label { id },
                     "[{fnd.identifier}]:"
                     {fnd.children.iter().map(expand_node)}
                 }
@@ -113,7 +113,7 @@ fn expand_node(node: &Node) -> Element {
                 img {
                     src: "{img.url}",
                     alt: "{img.alt}",
-                    title: if let Some(title) = &img.title { "{title}" },
+                    title: if let Some(title) = &img.title { title },
                 }
             }
         }
@@ -121,7 +121,7 @@ fn expand_node(node: &Node) -> Element {
             rsx! {
                 img { src: "{ir.identifier}", alt: "{ir.alt}" }
                 if let Some(label) = &ir.label {
-                    "{label}"
+                    {label.clone()}
                 }
             }
         }
@@ -131,14 +131,14 @@ fn expand_node(node: &Node) -> Element {
                     href: "{link.url}",
                     class: "alien-link",
                     target: "_blank",
-                    title: if let Some(title) = &link.title { "{title}" },
+                    title: if let Some(title) = &link.title { title },
                     {link.children.iter().map(expand_node)}
                 }
             )
         }
         Node::LinkReference(lr) => {
             rsx!(
-                a { aria_label: if let Some(label) = &lr.label { "{label}" },
+                a { aria_label: if let Some(label) = &lr.label { label },
                     "{lr.identifier}"
                     {lr.children.iter().map(expand_node)}
                 }
@@ -155,7 +155,7 @@ fn expand_node(node: &Node) -> Element {
         Node::Code(code) => {
             rsx!(
                 pre {
-                    code { language: if let Some(lang) = &code.lang { "{lang}" }, "{code.value}" }
+                    code { language: if let Some(lang) = &code.lang { lang }, "{code.value}" }
                 }
             )
         }
@@ -198,21 +198,21 @@ fn expand_node(node: &Node) -> Element {
             td { {tc.children.iter().map(expand_node)} }
         ),
         Node::ListItem(li) => {
-            if li.children.len() == 1 {
-                if let Node::Paragraph(par) = &li.children[0] {
-                    return rsx!(
-                        li { style: if li.checked.is_some() { "display: flex" },
-                            if let Some(checked) = li.checked {
-                                input {
-                                    r#type: "checkbox",
-                                    style: "pointer-events: none; margin-right: 0.5em;",
-                                    checked,
-                                }
+            if li.children.len() == 1
+                && let Node::Paragraph(par) = &li.children[0]
+            {
+                return rsx!(
+                    li { style: if li.checked.is_some() { "display: flex" },
+                        if let Some(checked) = li.checked {
+                            input {
+                                r#type: "checkbox",
+                                style: "pointer-events: none; margin-right: 0.5em;",
+                                checked,
                             }
-                            {par.children.iter().map(expand_node)}
                         }
-                    );
-                }
+                        {par.children.iter().map(expand_node)}
+                    }
+                );
             }
             rsx!(
                 li { style: if li.checked.is_some() { "display: flex" },
@@ -231,7 +231,7 @@ fn expand_node(node: &Node) -> Element {
             rsx!(
                 a {
                     href: "{def.url}",
-                    title: if let Some(title) = &def.title { "{title}" },
+                    title: if let Some(title) = &def.title { title },
                     "{def.identifier}"
                 }
             )

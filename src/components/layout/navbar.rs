@@ -25,7 +25,7 @@ fn NavItem(to: Route, label: &'static str) -> Element {
                 "nav-link flex items-center py-1 px-2 text-base md:text-lg {}",
                 if is_active { "active" } else { "" },
             ),
-            "{label}"
+            {label}
         }
     }
 }

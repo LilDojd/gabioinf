@@ -22,5 +22,3 @@ opt-level = 2
 [profile.dioxus-android]
 inherits = "dev"
 
-[target.wasm32-unknown-unknown]
-rustflags = "--cfg getrandom_backend=\"wasm_js\""

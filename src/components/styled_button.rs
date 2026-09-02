@@ -45,7 +45,7 @@ pub fn StyledButton(props: StyledButtonProps) -> Element {
             {
                 match props.icon {
                     IconVariant::Asset(asset) => rsx! {
-                        img { src: "{asset}", alt: "Button icon", class: "w-5 h-5 mr-2" }
+                        img { src: asset, alt: "Button icon", class: "w-5 h-5 mr-2" }
                     },
                     IconVariant::Rsx(icon) => rsx! {
                         div { class: "w-5 h-5 mr-2", {icon} }

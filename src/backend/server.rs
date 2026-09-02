@@ -4,12 +4,11 @@ use crate::backend::domain::logic::AuthBackend;
 use crate::backend::domain::logic::oauth::build_oauth_client;
 use crate::backend::extractors::CookieExtractor;
 use crate::backend::wapi::api_router;
-use axum::Router;
+use axum::{Extension, Router};
 use axum_login::AuthManagerLayerBuilder;
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
-use dioxus::dioxus_core::Element;
-use dioxus::fullstack::prelude::*;
-use std::net::{IpAddr, Ipv4Addr};
+use dioxus::prelude::{DioxusRouterExt, Element, ServeConfig};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tower_governor::governor::GovernorConfigBuilder;
@@ -71,25 +70,15 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) {
             governor_limiter.retain_recent();
         }
     });
-    let cfg = cfg.into();
-    let ssr_state = SSRState::new(&cfg);
     let app = Router::new()
+        .serve_dioxus_application(cfg.into(), dxapp)
         .nest("/v1/", api_router(state.clone(), governor_conf))
-        .serve_static_assets()
-        .register_server_functions_with_context(
-            Arc::new(vec![Box::new(move || { Box::new(state.clone()) })]),
-        )
-        .fallback(
-            axum::routing::get(render_handler)
-                .with_state(RenderHandleState::new(cfg, dxapp).with_ssr_state(ssr_state)),
-        )
+        .layer(Extension(state))
         .layer(auth_layer);
-    use std::net::SocketAddr;
-    let port = dioxus_cli_config::server_port().unwrap_or(8080);
-    let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+    let address = dioxus::cli_config::fullstack_address_or_localhost();
     dioxus_logger::tracing::info!("Listening on {}", address);
-    axum_server::bind(address)
-        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+    let listener = tokio::net::TcpListener::bind(address).await.unwrap();
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
 }

@@ -36,7 +36,7 @@ pub fn Card(props: CardProps) -> Element {
                                 if let Some(url) = &project.url {
                                     rsx! {
                                         a {
-                                            href: "{url}",
+                                            href: url,
                                             rel: "noopener noreferrer",
                                             target: "_blank",
                                             class: "flex items-center hover:text-alien-green",
@@ -44,9 +44,7 @@ pub fn Card(props: CardProps) -> Element {
                                         }
                                     }
                                 } else {
-                                    rsx! {
-                                    "{project.name}"
-                                    }
+                                    rsx! { "{project.name}" }
                                 }
                             }
                         }
@@ -98,7 +96,7 @@ pub fn Card(props: CardProps) -> Element {
                                     "{entry.author_username}"
                                 }
                             }
-                            p { "{date}" }
+                            p { {date} }
                         }
                         img {
                             class: "w-[200px] max-h-[175px] -mb-4 -mr-4",
@@ -124,7 +122,7 @@ pub fn Card(props: CardProps) -> Element {
 pub fn ProjectLink(url: String) -> Element {
     rsx! {
         a {
-            href: "{url}",
+            href: url,
             rel: "noopener noreferrer",
             target: "_blank",
             class: "inline-flex items-center text-stone-300 hover:text-alien-green transition-colors duration-200",

@@ -33,21 +33,24 @@ pub struct CreateEntryRequest {
     pub signature: Option<String>,
 }
 use dioxus::prelude::*;
-#[server(SubmitSignature)]
+#[server(state:axum::Extension<AppState>)]
 pub async fn submit_signature(
     payload: CreateEntryRequest,
     guest: Guest,
 ) -> Result<Option<GuestbookEntry>, ServerFnError> {
     use crate::shared::models::NewGuestbookEntry;
-    payload.validate()?;
-    let FromContext(state): FromContext<AppState> = extract().await?;
+    payload.validate().map_err(ServerFnError::new)?;
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
         author_username: guest.username,
         message: payload.message.trim().to_string(),
         signature: payload.signature,
     }
-    .into();
-    let entry = state.guestbook_repo.create(&new_entry).await?;
+        .into();
+    let entry = state
+        .guestbook_repo
+        .create(&new_entry)
+        .await
+        .map_err(ServerFnError::new)?;
     Ok(Some(entry))
 }

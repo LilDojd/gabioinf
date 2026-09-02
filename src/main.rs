@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+#![allow(non_snake_case, unreachable_code)]
 use dioxus::prelude::*;
 use shared::server_fns;
 use std::str::FromStr;
@@ -14,36 +14,33 @@ mod shared;
 use auth::AuthState;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
-
 static STYLES: Asset = asset!("/assets/styles");
-
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
-
 fn main() {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
     #[cfg(not(feature = "server"))]
     LaunchBuilder::new()
-        .with_cfg(web! {
-            dioxus::web::Config::new().hydrate(true)
-        })
+        .with_cfg(
+            web! {
+                dioxus::web::Config::new().hydrate(true)
+            },
+        )
         .launch(App);
     #[cfg(feature = "server")]
     {
-        let _guard = sentry::init(sentry::ClientOptions {
-            release: sentry::release_name!(),
-            ..Default::default()
-        });
+        let _guard = sentry::init(
+            sentry::ClientOptions::new().maybe_release(sentry::release_name!()),
+        );
         dioxus_logger::tracing::info!("Starting server");
-        let config = ServeConfig::builder()
-            .incremental(IncrementalRendererConfig::new())
-            .enable_out_of_order_streaming()
-            .build();
+        let config = ServeConfig::new()
+            .incremental(dioxus::server::IncrementalRendererConfig::new())
+            .enable_out_of_order_streaming();
         tokio::runtime::Runtime::new()
             .unwrap()
-            .block_on(async move { backend::server::serve(config.unwrap(), App).await });
+            .block_on(async move { backend::server::serve(config, App).await });
     }
 }
 #[derive(Routable, PartialEq, Clone)]
@@ -65,9 +62,7 @@ enum Route {
 fn App() -> Element {
     use_context_provider(|| Signal::new(AuthState::Loading));
     use_context_provider(|| Signal::new(MessageValid(true, String::new())));
-
     let mut auth_state = use_context::<Signal<AuthState>>();
-
     use_effect(move || {
         spawn(async move {
             if let Ok(user_result) = server_fns::get_user().await {
@@ -76,23 +71,23 @@ fn App() -> Element {
                         dioxus_logger::tracing::debug!(
                             "Fetching user signature for authenticated user"
                         );
-
-                        let signature = match server_fns::load_user_signature(user.clone()).await {
+                        let signature = match server_fns::load_user_signature(
+                                user.clone(),
+                            )
+                            .await
+                        {
                             Ok(signature) => signature,
                             Err(e) => {
                                 dioxus_logger::tracing::error!(
-                                    "Failed to load user signature: {:?}",
-                                    e
+                                    "Failed to load user signature: {:?}", e
                                 );
                                 None
                             }
                         };
-
                         let user_state = auth::UserState {
                             guest: user,
                             entry: signature,
                         };
-
                         auth_state.set(AuthState::Authenticated(Box::new(user_state)));
                     }
                     None => {
@@ -137,7 +132,7 @@ fn App() -> Element {
         document::Stylesheet { href: "{STYLES}/navbar.css" }
         ErrorBoundary {
             handle_error: |errors: ErrorContext| {
-                let error = &errors.errors()[0];
+                let error = errors.error().expect("error boundary must contain an error");
                 rsx! {
                     div { class: "container mx-auto px-4 py-8",
                         article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",

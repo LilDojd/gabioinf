@@ -59,11 +59,12 @@ impl AuthnBackend for AuthBackend {
         let token = self
             .client
             .exchange_code(AuthorizationCode::new(creds.code))
-            .request_async(&self.reqwest_client)
+            .request_async(&oauth2::reqwest::Client::new())
             .await
             .map_err(|e| Self::Error::AuthenticationError(e.to_string()))?;
         dioxus_logger::tracing::debug!("Getting user data from GitHub API");
-        let response = reqwest::Client::new()
+        let response = self
+            .reqwest_client
             .get("https://api.github.com/user")
             .header(USER_AGENT.as_str(), "ga-guestbook")
             .header(

@@ -9,7 +9,7 @@ serve:
     dx serve
 
 build:
-    dx build --platform fullstack
+    dx build --fullstack
 
 # Format Rust code
 format:
@@ -20,6 +20,6 @@ format:
 dioxus-format:
     dx fmt
 
-# Install required crates
+# Install the CLI version matching the Dioxus crates
 install-deps:
-    cargo install dioxus-cli cargo-clippy rustfmt
+    cargo install dioxus-cli --version 0.7.10 --locked
