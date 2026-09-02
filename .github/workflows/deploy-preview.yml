@@ -61,6 +61,9 @@ jobs:
       - run: |
           echo "DATABASE_URL=${{ steps.create_branch.outputs.db_url_pooled }}" >> "$GITHUB_ENV"
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          # Last nightly before rustc's LLVM 23 wasm regression.
+          toolchain: nightly-2026-08-05
       - name: Migrate database
         run: |
           cargo install sqlx-cli --no-default-features --features rustls,postgres

@@ -37,7 +37,8 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - stable
+          # Last nightly before rustc's LLVM 23 wasm regression.
+          - nightly-2026-08-05
 
     steps:
       - uses: actions/checkout@v5

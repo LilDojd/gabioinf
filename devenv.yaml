@@ -1,7 +1,5 @@
 # yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
 inputs:
-  dioxus:
-    url: github:DioxusLabs/dioxus
   fenix:
     url: github:nix-community/fenix
     inputs:
