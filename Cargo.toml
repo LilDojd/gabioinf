@@ -63,8 +63,7 @@ dioxus-logger = { version = "0.7.10" }
 
 getrandom = { version = "0.4.3" }
 serde_yaml = { version = "0.9.34" }
-async-std = { version = "1.13.2" }
-instant = { version = "0.1.13", features = ["inaccurate", "wasm-bindgen"] }
+wasmtimer = { version = "0.4.3", default-features = false, features = ["tokio"] }
 rand = { version = "0.10.2" }
 markdown = { version = "1.0.0" }
 web-sys = { version = "0.3.104", features = [

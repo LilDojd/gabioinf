@@ -1,7 +1,7 @@
 use crate::Route;
-use async_std::task;
 use dioxus::prelude::*;
 use rand::RngExt;
+use wasmtimer::{std::Instant, tokio::sleep};
 const TYPING_MILLIS: u64 = 2000;
 const BLINK_MILLIS: u64 = 3500;
 const ERROR_CHANCE: f64 = 0.03;
@@ -29,7 +29,7 @@ fn LeftColumn() -> Element {
             while current_index < full_text.len() {
                 let jitter = rng.random_range(-10..=10);
                 let interval = (base_interval as i64 + jitter).max(50) as u64;
-                task::sleep(std::time::Duration::from_millis(interval)).await;
+                sleep(std::time::Duration::from_millis(interval)).await;
                 if rng.random_bool(ERROR_CHANCE) && current_index > 0 {
                     let mistake_char = (rng.random_range(b'a'..=b'z') as char)
                         .to_string();
@@ -41,24 +41,18 @@ fn LeftColumn() -> Element {
                                 mistake_char,
                             ),
                         );
-                    task::sleep(
-                            std::time::Duration::from_millis(rng.random_range(100..300)),
-                        )
-                        .await;
+                    sleep(std::time::Duration::from_millis(rng.random_range(100..300))).await;
                     visible_text.set(full_text.chars().take(current_index).collect());
-                    task::sleep(
-                            std::time::Duration::from_millis(rng.random_range(20..100)),
-                        )
-                        .await;
+                    sleep(std::time::Duration::from_millis(rng.random_range(20..100))).await;
                 } else {
                     current_index += 1;
                     visible_text.set(full_text.chars().take(current_index).collect());
                 }
             }
-            task::sleep(std::time::Duration::from_millis(200)).await;
-            let blink_start = instant::Instant::now();
+            sleep(std::time::Duration::from_millis(200)).await;
+            let blink_start = Instant::now();
             while blink_start.elapsed().as_millis() < BLINK_MILLIS as u128 {
-                task::sleep(std::time::Duration::from_millis(500)).await;
+                sleep(std::time::Duration::from_millis(500)).await;
                 hide_cursor.toggle();
             }
             hide_cursor.set(true);
