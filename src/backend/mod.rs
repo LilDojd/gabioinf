@@ -26,6 +26,8 @@ pub mod domain;
 pub mod errors;
 /// Extractors for rate limiting and other middleware
 pub mod extractors;
+/// Liveness and readiness endpoints
+pub mod health;
 /// CRUD operations for data models
 pub mod repos;
 /// Server

@@ -18,7 +18,7 @@ use pages::{AboutMe, Blog, Guestbook, Home, NotFound, Projects};
 static STYLES: Asset = asset!("/assets/styles");
 #[derive(Clone, Debug)]
 pub struct MessageValid(bool, String);
-fn main() {
+fn main() -> anyhow::Result<()> {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     dioxus_logger::init(Level::from_str(&log_level).unwrap_or(Level::INFO))
         .expect("failed to init logger");
@@ -35,10 +35,9 @@ fn main() {
         dioxus_logger::tracing::info!("Starting server");
         // Dioxus 0.7.10 incremental cache hits currently lose custom route statuses.
         let config = ServeConfig::new().enable_out_of_order_streaming();
-        tokio::runtime::Runtime::new()
-            .unwrap()
-            .block_on(async move { backend::server::serve(config, App).await });
+        tokio::runtime::Runtime::new()?.block_on(backend::server::serve(config, App))?;
     }
+    Ok(())
 }
 #[derive(Routable, PartialEq, Clone)]
 enum Route {
