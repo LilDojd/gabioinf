@@ -1,7 +1,10 @@
 use super::{
-    point::Point, stroke::{get_stroke, CapOptions, StrokeOptions},
+    point::Point,
+    stroke::{get_stroke, StrokeOptions},
     utils::get_svg_path_from_stroke,
 };
+#[cfg(feature = "web")]
+use super::stroke::CapOptions;
 use crate::components::signature_pad::utils::PointExt;
 use dioxus::prelude::*;
 use std::cell::RefCell;
@@ -19,6 +22,7 @@ pub struct Canvas {
     stroke_options: StrokeOptions,
 }
 impl Canvas {
+    #[cfg(feature = "web")]
     pub fn new(canvas: HtmlCanvasElement) -> Self {
         let rect = canvas.get_bounding_client_rect();
         let current_canvas_width = RefCell::new((rect.width() * DPI) as u32);

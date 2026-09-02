@@ -1,8 +1,9 @@
 use canvas::Canvas;
 use dioxus::prelude::*;
+#[cfg(feature = "web")]
 use dioxus::web::WebEventExt;
-use web_sys::wasm_bindgen::JsCast;
-use web_sys::HtmlCanvasElement;
+#[cfg(feature = "web")]
+use web_sys::{wasm_bindgen::JsCast, HtmlCanvasElement};
 mod canvas;
 mod point;
 mod popup;
@@ -26,17 +27,22 @@ pub struct SignaturePadProps {
 pub fn SignaturePad(props: SignaturePadProps) -> Element {
     let mut canvas = use_signal(|| None::<Canvas>);
     let set_canvas = use_callback(move |event: MountedEvent| {
-        let html_canvas = event
-            .as_web_event()
-            .clone()
-            .dyn_into::<HtmlCanvasElement>()
-            .unwrap();
-        let canvas_ref = Canvas::new(html_canvas);
-        canvas_ref.beautify();
-        canvas.set(Some(canvas_ref.clone()));
-        if let Some(on_canvas_ready) = &props.on_canvas_ready {
-            on_canvas_ready.call(canvas_ref.clone());
+        #[cfg(feature = "web")]
+        {
+            let html_canvas = event
+                .as_web_event()
+                .clone()
+                .dyn_into::<HtmlCanvasElement>()
+                .unwrap();
+            let canvas_ref = Canvas::new(html_canvas);
+            canvas_ref.beautify();
+            canvas.set(Some(canvas_ref.clone()));
+            if let Some(on_canvas_ready) = &props.on_canvas_ready {
+                on_canvas_ready.call(canvas_ref.clone());
+            }
         }
+        #[cfg(not(feature = "web"))]
+        let _ = event;
     });
     let on_signature_change = move || {
         if let Some(c) = canvas.read().as_ref() {
