@@ -1,10 +1,10 @@
-use oauth2::CsrfToken;
+use oauth2::{CsrfToken, PkceCodeVerifier};
 use serde::Deserialize;
 /// Represents the credentials received during the OAuth2 authorization code flow.
 ///
 /// This struct is used to capture and validate the response from an OAuth2 authorization server.
 /// It includes the authorization code and CSRF tokens for security verification.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Credentials {
     /// The authorization code received from the OAuth2 server.
     ///
@@ -19,4 +19,6 @@ pub struct Credentials {
     ///
     /// This should match the `old_state` to verify the integrity of the OAuth2 flow.
     pub new_state: CsrfToken,
+    /// The one-time PKCE verifier generated for the authorization request.
+    pub pkce_verifier: PkceCodeVerifier,
 }

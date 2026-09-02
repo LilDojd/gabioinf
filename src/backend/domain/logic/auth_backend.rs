@@ -8,7 +8,7 @@ use crate::{
 };
 use axum_login::{AuthnBackend, AuthzBackend, UserId};
 use oauth2::{
-    AuthorizationCode, CsrfToken, Scope, TokenResponse,
+    AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope, TokenResponse,
     http::header::{AUTHORIZATION, USER_AGENT},
 };
 use reqwest::Url;
@@ -34,16 +34,26 @@ impl AuthBackend {
             reqwest_client,
         }
     }
-    pub fn authorize_url<I>(&self, scopes: I) -> (Url, CsrfToken)
+    pub fn authorize_url<I>(&self, scopes: I) -> (Url, PendingAuthorization)
     where
         I: IntoIterator<Item = Scope>,
     {
-        self.client
+        let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
+        let (url, csrf_state) = self
+            .client
             .authorize_url(CsrfToken::new_random)
             .add_scopes(scopes)
-            .url()
+            .set_pkce_challenge(pkce_challenge)
+            .url();
+        (
+            url,
+            PendingAuthorization {
+                csrf_state,
+                pkce_verifier,
+            },
+        )
     }
-    pub fn authorize_url_unscoped(&self) -> (Url, CsrfToken) {
+    pub fn authorize_url_unscoped(&self) -> (Url, PendingAuthorization) {
         self.authorize_url(std::iter::empty())
     }
 }
@@ -59,6 +69,7 @@ impl AuthnBackend for AuthBackend {
         let token = self
             .client
             .exchange_code(AuthorizationCode::new(creds.code))
+            .set_pkce_verifier(creds.pkce_verifier)
             .request_async(&oauth2::reqwest::Client::new())
             .await
             .map_err(|e| Self::Error::AuthenticationError(e.to_string()))?;
@@ -115,7 +126,7 @@ pub type AuthSession = axum_login::AuthSession<AuthBackend>;
 pub struct SessionWrapper {
     pub session: AuthSession,
 }
-use super::oauth::SetOauthClient;
+use super::oauth::{PendingAuthorization, SetOauthClient};
 use axum::{extract::FromRequestParts, http::request::Parts};
 #[derive(Debug)]
 pub struct StateError;
@@ -145,5 +156,50 @@ where
             Ok(session) => Ok(Self { session }),
             Err(_) => Err(StateError),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::domain::logic::oauth::build_oauth_client;
+    use sqlx::postgres::PgPoolOptions;
+
+    fn test_backend() -> AuthBackend {
+        let pool = PgPoolOptions::new()
+            .connect_lazy("postgres://postgres:postgres@localhost/gabioinf")
+            .unwrap();
+        AuthBackend::new(
+            PgRepository::new(pool.clone()),
+            GroupsAndPermissionsRepo::new(pool),
+            build_oauth_client("client-id", "client-secret", "example.com"),
+            reqwest::Client::new(),
+        )
+    }
+
+    #[tokio::test]
+    async fn authorization_url_uses_fresh_matching_s256_pkce_challenges() {
+        let backend = test_backend();
+        let (first_url, first_pending) = backend.authorize_url_unscoped();
+        let (second_url, _) = backend.authorize_url_unscoped();
+        let first_challenge = first_url
+            .query_pairs()
+            .find(|(key, _)| key == "code_challenge")
+            .map(|(_, value)| value.into_owned())
+            .unwrap();
+        let second_challenge = second_url
+            .query_pairs()
+            .find(|(key, _)| key == "code_challenge")
+            .map(|(_, value)| value.into_owned())
+            .unwrap();
+        let expected = PkceCodeChallenge::from_code_verifier_sha256(&first_pending.pkce_verifier);
+
+        assert_eq!(first_challenge, expected.as_str());
+        assert_ne!(first_challenge, second_challenge);
+        assert!(
+            first_url
+                .query_pairs()
+                .any(|(key, value)| key == "code_challenge_method" && value == "S256")
+        );
     }
 }

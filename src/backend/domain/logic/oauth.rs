@@ -9,16 +9,21 @@ use axum::{
     response::{IntoResponse, Redirect},
 };
 use oauth2::{AuthUrl, ClientId, ClientSecret, TokenUrl, basic::BasicClient};
-use oauth2::{CsrfToken, EndpointNotSet, EndpointSet, RedirectUrl};
-use serde::Deserialize;
+use oauth2::{CsrfToken, EndpointNotSet, EndpointSet, PkceCodeVerifier, RedirectUrl};
+use serde::{Deserialize, Serialize};
 use tower_sessions::Session;
-pub const CSRF_STATE_KEY: &str = "oauth.csrf-state";
+pub const PENDING_AUTHORIZATION_KEY: &str = "oauth.pending-authorization";
 pub(crate) type SetOauthClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthzResp {
     code: String,
     state: CsrfToken,
+}
+#[derive(Deserialize, Serialize)]
+pub(crate) struct PendingAuthorization {
+    pub(crate) csrf_state: CsrfToken,
+    pub(crate) pkce_verifier: PkceCodeVerifier,
 }
 pub fn router() -> Router<()> {
     Router::new().route("/oauth/callback", get(self::get::callback))
@@ -64,6 +69,11 @@ pub fn build_oauth_client<S: AsRef<str>>(
         .set_token_uri(token_url)
         .set_redirect_uri(oauth_redirect_uri)
 }
+async fn take_pending_authorization(
+    session: &Session,
+) -> Result<Option<PendingAuthorization>, tower_sessions::session::Error> {
+    session.remove(PENDING_AUTHORIZATION_KEY).await
+}
 mod get {
     use super::*;
     use crate::backend::domain::models::Credentials;
@@ -75,13 +85,14 @@ mod get {
             state: new_state,
         }): Query<AuthzResp>,
     ) -> impl IntoResponse {
-        let Ok(Some(old_state)) = session.get(CSRF_STATE_KEY).await else {
+        let Ok(Some(pending)) = take_pending_authorization(&session).await else {
             return StatusCode::BAD_REQUEST.into_response();
         };
         let creds = Credentials {
             code,
-            old_state,
+            old_state: pending.csrf_state,
             new_state,
+            pkce_verifier: pending.pkce_verifier,
         };
         let user = match auth_session.authenticate(creds).await {
             Ok(Some(user)) => user,
@@ -98,5 +109,40 @@ mod get {
         } else {
             Redirect::to("/").into_response()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use oauth2::PkceCodeChallenge;
+    use std::sync::Arc;
+    use tower_sessions::MemoryStore;
+
+    #[tokio::test]
+    async fn pkce_verifier_is_taken_once() {
+        let session = Session::new(None, Arc::new(MemoryStore::default()), None);
+        let (_, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
+        let pending = PendingAuthorization {
+            csrf_state: CsrfToken::new_random(),
+            pkce_verifier,
+        };
+        session
+            .insert(PENDING_AUTHORIZATION_KEY, pending)
+            .await
+            .unwrap();
+
+        assert!(
+            take_pending_authorization(&session)
+                .await
+                .unwrap()
+                .is_some()
+        );
+        assert!(
+            take_pending_authorization(&session)
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 }

@@ -1,4 +1,4 @@
-use crate::backend::domain::logic::{AuthSession, oauth::CSRF_STATE_KEY};
+use crate::backend::domain::logic::{AuthSession, oauth::PENDING_AUTHORIZATION_KEY};
 use axum::{
     Form, Router,
     response::{IntoResponse, Redirect},
@@ -22,9 +22,9 @@ mod get {
         Form(NextUrl { next }): Form<NextUrl>,
     ) -> impl IntoResponse {
         dioxus_logger::tracing::info!("Hit login route");
-        let (auth_url, csrf_state) = auth_session.backend.authorize_url_unscoped();
+        let (auth_url, pending_authorization) = auth_session.backend.authorize_url_unscoped();
         session
-            .insert(CSRF_STATE_KEY, csrf_state.secret())
+            .insert(PENDING_AUTHORIZATION_KEY, pending_authorization)
             .await
             .expect("Serialization should not fail.");
         session
