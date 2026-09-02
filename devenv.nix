@@ -1,4 +1,11 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  inputs,
+  ...
+}:
+let
+  wasmTooling = inputs.wasm_bindgen_cli.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+in
 {
   languages = {
     javascript = {
@@ -15,7 +22,8 @@
   };
 
   packages = [
-    pkgs.wasm-bindgen-cli
+    # Match the wasm-bindgen crate version locked by Dioxus.
+    wasmTooling.wasm-bindgen-cli
     pkgs.flyctl
     pkgs.just
     pkgs.cargo-machete

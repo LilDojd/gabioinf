@@ -79,7 +79,8 @@
         "devenv": "devenv",
         "fenix": "fenix",
         "nixpkgs": "nixpkgs",
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay",
+        "wasm_bindgen_cli": "wasm_bindgen_cli"
       }
     },
     "rust-analyzer-src": {
@@ -116,6 +117,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "wasm_bindgen_cli": {
+      "locked": {
+        "lastModified": 1788278324,
+        "narHash": "sha256-fWEPF0jGjnPz/3nODNDuiyYttkhZ3zyv+gmALxb8OEo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "f30aa4769a8db4d508a1e15947c7328de63bd256",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "f30aa4769a8db4d508a1e15947c7328de63bd256",
         "type": "github"
       }
     }

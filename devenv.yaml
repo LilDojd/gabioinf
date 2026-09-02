@@ -10,6 +10,8 @@ inputs:
         follows: nixpkgs
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
+  wasm_bindgen_cli:
+    url: github:NixOS/nixpkgs/f30aa4769a8db4d508a1e15947c7328de63bd256
   rust-overlay:
     url: github:oxalica/rust-overlay
     inputs:
