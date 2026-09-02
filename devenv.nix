@@ -1,10 +1,5 @@
+{ pkgs, ... }:
 {
-  pkgs,
-  lib,
-  ...
-}:
-{
-  dotenv.enable = true;
   languages = {
     javascript = {
       enable = true;
@@ -20,11 +15,13 @@
   };
 
   packages = [
+    pkgs.wasm-bindgen-cli
+    pkgs.flyctl
+    pkgs.just
     pkgs.cargo-machete
     pkgs.cargo-audit
     pkgs.cargo-edit
     pkgs.dioxus-cli
-    pkgs.wasm-bindgen-cli
     pkgs.lld
     pkgs.sqlx-cli
     pkgs.binaryen

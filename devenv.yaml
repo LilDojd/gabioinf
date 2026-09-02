@@ -1,4 +1,7 @@
 # yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
+secretspec:
+  enable: true
+  profile: default
 inputs:
   fenix:
     url: github:nix-community/fenix

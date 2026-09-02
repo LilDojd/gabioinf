@@ -2,11 +2,19 @@
 set shell := ["bash", "-c"]
 
 default:
-  just --list
+    just --list
 
-# Serve the frontend using dioxus-cli
+# Serve the app with process-scoped secrets
 serve:
-    dx serve
+    secretspec run -- dx serve
+
+# Publish one declared SecretSpec value to Fly without exposing it in argv
+[positional-arguments]
+publish-fly-secret secret:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    value="$(secretspec get "$1")"
+    printf '%s' "$value" | flyctl secrets set "$1=-" --app gabioinf
 
 build:
     dx build --fullstack
