@@ -49,8 +49,8 @@ pub fn ReactionBar(
                             on_change,
                         )
                     },
-                    span { aria_hidden: "true", "{count.emoji.glyph()}" }
-                    " {count.count}"
+                    span { class: "reaction-emoji", aria_hidden: "true", "{count.emoji.glyph()}" }
+                    span { class: "reaction-count", "{count.count}" }
                 }
             }
             button {

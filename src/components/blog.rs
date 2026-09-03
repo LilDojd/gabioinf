@@ -47,6 +47,7 @@ pub fn CodeBlock(
     source: &'static str,
 ) -> Element {
     let mut selection = use_signal(|| None::<LineRange>);
+    let mut selection_anchor = use_signal(|| None::<usize>);
     let mut wrap = use_signal(|| false);
     let mut copied = use_signal(|| false);
 
@@ -56,21 +57,28 @@ pub fn CodeBlock(
             && range.end <= lines.len()
             && selection().is_none()
         {
+            selection_anchor.set(Some(range.start));
             selection.set(Some(range));
         }
     });
 
     let mut select = move |line: usize, extend: bool| {
-        let range = match (extend, selection()) {
-            (true, Some(current)) => current.extend_to(line),
-            _ => LineRange::single(line),
+        let anchor = if extend {
+            selection_anchor().unwrap_or_else(|| {
+                selection_anchor.set(Some(line));
+                line
+            })
+        } else {
+            selection_anchor.set(Some(line));
+            line
         };
+        let range = LineRange::between(anchor, line);
         selection.set(Some(range));
         replace_hash(&range.to_hash());
     };
 
     rsx! {
-        figure { class: "code-block", class: if wrap() { "code-wrap" },
+        figure { class: if wrap() { "code-block code-wrap" } else { "code-block" },
             figcaption { class: "code-block-bar",
                 span { class: "code-title", {title.or(language).unwrap_or("text")} }
                 span { class: "code-actions",
@@ -81,6 +89,7 @@ pub fn CodeBlock(
                             class: "code-action",
                             onclick: move |_| {
                                 selection.set(None);
+                                selection_anchor.set(None);
                                 replace_hash("");
                             },
                             "clear"
@@ -126,6 +135,7 @@ pub fn CodeBlock(
                                         r#type: "button",
                                         class: "code-line-number",
                                         title: "select line {number} (shift-click for a range)",
+                                        aria_pressed: selected,
                                         onclick: move |event| select(number, event.modifiers().shift()),
                                         "{number}"
                                     }
@@ -149,17 +159,10 @@ struct LineRange {
 }
 
 impl LineRange {
-    fn single(line: usize) -> Self {
+    fn between(first: usize, second: usize) -> Self {
         Self {
-            start: line,
-            end: line,
-        }
-    }
-
-    fn extend_to(self, line: usize) -> Self {
-        Self {
-            start: self.start.min(line),
-            end: self.end.max(line),
+            start: first.min(second),
+            end: first.max(second),
         }
     }
 
@@ -281,11 +284,11 @@ mod tests {
 
     #[test]
     fn line_ranges_round_trip_through_the_url_hash() {
-        let range = LineRange::single(3).extend_to(7).extend_to(5);
+        let range = LineRange::between(7, 3);
         assert_eq!(range, LineRange { start: 3, end: 7 });
         assert_eq!(range.to_hash(), "#L3-L7");
         assert_eq!(LineRange::parse("#L3-L7"), Some(range));
-        assert_eq!(LineRange::parse("#L4"), Some(LineRange::single(4)));
+        assert_eq!(LineRange::parse("#L4"), Some(LineRange::between(4, 4)));
         assert_eq!(LineRange::parse("#L7-L3"), None);
         assert_eq!(LineRange::parse("#comments"), None);
     }

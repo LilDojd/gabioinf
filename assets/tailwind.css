@@ -389,8 +389,9 @@
   .reaction-chip {
     display: inline-flex;
     align-items: center;
+    gap: 5px;
     min-height: 26px;
-    padding: 2px 8px;
+    padding: 2px 8px 2px 7px;
     border: 1px solid var(--color-card);
     border-radius: 999px;
     background: var(--color-surface);
@@ -898,6 +899,9 @@
     border-color: var(--color-accent);
     background: rgb(194 249 187 / .1);
     color: var(--color-accent);
+    & .reaction-count {
+      color: var(--color-accent);
+    }
   }
   .border-border-strong {
     border-color: var(--color-border-strong);
@@ -1091,6 +1095,11 @@
   .text-left {
     text-align: left;
   }
+  .reaction-emoji {
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1;
+  }
   .label-mono {
     color: var(--color-label);
     font-family: var(--font-recursive);
@@ -1107,6 +1116,13 @@
   }
   .font-recursive {
     font-family: var(--font-recursive);
+  }
+  .reaction-count {
+    color: var(--color-label);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1;
   }
   .text-base {
     font-size: var(--text-base);
@@ -1726,23 +1742,19 @@
   color: inherit;
   font: inherit;
 }
-.post-body .code-wrap pre code {
-  min-width: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .post-body .code-line {
   display: flex;
+  border-left: 2px solid transparent;
 }
 .post-body .code-line-number {
   flex: none;
   width: 3.2em;
   padding: 0 12px 0 0;
   border: 0;
-  border-right: 1px solid transparent;
   background: transparent;
   color: var(--color-faint);
   font: inherit;
+  line-height: inherit;
   text-align: right;
   user-select: none;
   cursor: pointer;
@@ -1752,17 +1764,31 @@
 }
 .post-body .code-line-text {
   flex: 1;
+  min-width: 0;
   padding: 0 18px 0 14px;
+  white-space: pre;
+}
+.post-body .code-wrap pre code, .post-body .code-wrap .code-line {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.post-body .code-wrap .code-line-text {
+  width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .post-body .code-line.is-highlighted {
-  background: rgb(194 249 187 / .06);
-  box-shadow: inset 2px 0 var(--color-border-strong);
+  border-left-color: var(--color-border-strong);
+  background: rgb(255 255 255 / .025);
 }
 .post-body .code-line.is-selected {
-  background: rgb(194 249 187 / .12);
-  box-shadow: inset 2px 0 var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: rgb(194 249 187 / .08);
 }
 .post-body .code-line.is-selected .code-line-number {
+  background: rgb(194 249 187 / .04);
   color: var(--color-accent);
 }
 @media (width >= 1440px) {

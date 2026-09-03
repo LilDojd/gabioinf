@@ -7,8 +7,6 @@
 //! logs the session in.
 
 mod callback;
-#[cfg(debug_assertions)]
-mod dev_login;
 mod login;
 
 pub use callback::build_oauth_client;
@@ -29,14 +27,10 @@ use oauth2::{
 };
 use reqwest::Url;
 
-/// The fixture sign-in route is compiled and registered only in debug builds.
 pub fn router() -> Router<()> {
-    let router = Router::new()
+    Router::new()
         .merge(login::router())
-        .merge(callback::router());
-    #[cfg(debug_assertions)]
-    let router = router.merge(dev_login::router());
-    router
+        .merge(callback::router())
 }
 
 impl AuthUser for Guest {

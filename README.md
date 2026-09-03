@@ -42,8 +42,6 @@ Run `just prepare-sqlx` after changing a SQL query or migration. `just seed` fil
 local database with fake guests, signatures and comments (regenerate the SQL with
 `python3 fixtures/generate.py > fixtures/synthetic.sql`).
 
-Fake sign-in while developing: visit `/v1/dev-login?username=alice_j` after `just seed`.
-
 ### Writing blog posts
 
 Create a draft with `just new-post my-post`, then edit the generated Markdown in

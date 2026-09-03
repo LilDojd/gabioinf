@@ -38,16 +38,6 @@ impl GuestRepo {
         .fetch_optional(&self.pool)
         .await?)
     }
-
-    pub async fn find_by_username(&self, username: &str) -> BResult<Option<Guest>> {
-        Ok(sqlx::query_as!(
-            Guest,
-            r#"SELECT id AS "id: GuestId", github_id AS "github_id: GithubId", name, username, created_at, updated_at FROM guests WHERE username = $1"#,
-            username,
-        )
-        .fetch_optional(&self.pool)
-        .await?)
-    }
 }
 
 #[cfg(test)]
@@ -71,14 +61,6 @@ mod tests {
 
         assert_eq!(updated.id, created.id);
         assert_eq!(updated.name, "Updated User");
-        assert_eq!(
-            repo.find_by_id(created.id).await.unwrap(),
-            Some(updated.clone())
-        );
-        assert_eq!(
-            repo.find_by_username("testuser").await.unwrap(),
-            Some(updated)
-        );
-        assert_eq!(repo.find_by_username("missing").await.unwrap(), None);
+        assert_eq!(repo.find_by_id(created.id).await.unwrap(), Some(updated));
     }
 }
