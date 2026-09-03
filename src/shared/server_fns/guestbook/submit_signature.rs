@@ -3,9 +3,7 @@
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
 #[cfg(feature = "server")]
-use crate::backend::{
-    AppState, domain::logic::SessionWrapper, errors::ApiError, repos::Repository,
-};
+use crate::backend::{AppState, domain::logic::SessionWrapper, errors::ApiError};
 use crate::shared::{models::GuestbookEntry, server_fns::ServerError};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -68,9 +66,7 @@ pub async fn submit_signature(
 
     match state.guestbook_repo.create(&new_entry).await {
         Ok(entry) => Ok(entry),
-        Err(ApiError::DatabaseError(sqlx::Error::Database(error)))
-            if error.is_unique_violation() =>
-        {
+        Err(ApiError::Database(sqlx::Error::Database(error))) if error.is_unique_violation() => {
             Err(ServerError::Conflict)
         }
         Err(error) => Err(ServerError::internal("create guestbook entry", error)),

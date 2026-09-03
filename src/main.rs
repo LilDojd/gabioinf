@@ -8,6 +8,7 @@ mod auth;
 mod backend;
 mod blog;
 mod components;
+#[cfg(feature = "server")]
 mod hide;
 mod markdown;
 mod pages;

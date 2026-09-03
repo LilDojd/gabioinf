@@ -1,35 +1,31 @@
 use crate::{
     backend::{
-        domain::models::{Credentials, PermissionTargets},
+        domain::models::Credentials,
         errors::{ApiError, BResult},
-        repos::{GroupsAndPermissionsRepo, GuestCriteria, PgRepository, Repository},
+        repos::GuestRepo,
     },
     shared::models::{Guest, NewGuest},
 };
-use axum_login::{AuthnBackend, AuthzBackend, UserId};
+use axum_login::{AuthnBackend, UserId};
 use oauth2::{
     AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope, TokenResponse,
     http::header::{AUTHORIZATION, USER_AGENT},
 };
 use reqwest::Url;
-use std::collections::HashSet;
 #[derive(Clone, Debug)]
 pub struct AuthBackend {
-    guest_repo: PgRepository<Guest>,
-    gp_repo: GroupsAndPermissionsRepo,
+    guest_repo: GuestRepo,
     client: SetOauthClient,
     reqwest_client: reqwest::Client,
 }
 impl AuthBackend {
     pub fn new(
-        guest_repo: PgRepository<Guest>,
-        gp_repo: GroupsAndPermissionsRepo,
+        guest_repo: GuestRepo,
         client: SetOauthClient,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {
             guest_repo,
-            gp_repo,
             client,
             reqwest_client,
         }
@@ -72,7 +68,7 @@ impl AuthnBackend for AuthBackend {
             .set_pkce_verifier(creds.pkce_verifier)
             .request_async(&oauth2::reqwest::Client::new())
             .await
-            .map_err(|e| Self::Error::AuthenticationError(e.to_string()))?;
+            .map_err(|error| Self::Error::Authentication(error.to_string()))?;
         dioxus_logger::tracing::debug!("Getting user data from GitHub API");
         let response = self
             .reqwest_client
@@ -87,38 +83,11 @@ impl AuthnBackend for AuthBackend {
             .await;
         let github_user = response?.json::<NewGuest>().await?;
         dioxus_logger::tracing::debug!("Received user data from GitHub: {:?}", github_user);
-        let guest = self.guest_repo.create(&github_user.into()).await?;
+        let guest = self.guest_repo.upsert(&github_user.into()).await?;
         Ok(Some(guest))
     }
     async fn get_user(&self, user_id: &UserId<Self>) -> BResult<Option<Self::User>> {
-        self.guest_repo
-            .read(&GuestCriteria::WithGuestId(*user_id))
-            .await
-            .map(Some)
-    }
-}
-impl AuthzBackend for AuthBackend {
-    type Permission = PermissionTargets;
-    async fn get_user_permissions(
-        &self,
-        user: &Self::User,
-    ) -> Result<HashSet<Self::Permission>, Self::Error> {
-        let perms = self.gp_repo.get_user_specific_permissions(user.id).await?;
-        Ok(perms.into_iter().collect())
-    }
-    async fn get_group_permissions(
-        &self,
-        user: &Self::User,
-    ) -> Result<HashSet<Self::Permission>, Self::Error> {
-        let perms = self.gp_repo.get_user_group_permissions(user.id).await?;
-        Ok(perms.into_iter().collect())
-    }
-    async fn get_all_permissions(
-        &self,
-        user: &Self::User,
-    ) -> Result<HashSet<Self::Permission>, Self::Error> {
-        let perms = self.gp_repo.get_all_user_permissions(user.id).await?;
-        Ok(perms.into_iter().collect())
+        self.guest_repo.find_by_id(*user_id).await
     }
 }
 pub type AuthSession = axum_login::AuthSession<AuthBackend>;
@@ -170,8 +139,7 @@ mod tests {
             .connect_lazy("postgres://postgres:postgres@localhost/gabioinf")
             .unwrap();
         AuthBackend::new(
-            PgRepository::new(pool.clone()),
-            GroupsAndPermissionsRepo::new(pool),
+            GuestRepo::new(pool),
             build_oauth_client("client-id", "client-secret", "example.com"),
             reqwest::Client::new(),
         )

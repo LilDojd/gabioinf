@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::hide::Hide;
 use axum_extra::extract::cookie::Key;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
@@ -55,7 +54,7 @@ impl AppConfig {
         };
         let domain = std::env::var("DOMAIN_URL").ok();
         let base = base.as_ref();
-        let mut s = Config::builder()
+        let s = Config::builder()
             .add_source(File::with_name(&format!("{base}/config/default")).required(true))
             .add_source(File::with_name(&format!("{base}/config/{run_mode}")).required(false))
             .add_source(

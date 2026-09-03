@@ -1,9 +1,5 @@
 #[cfg(feature = "server")]
-use crate::backend::{
-    AppState,
-    errors::ApiError,
-    repos::{GuestbookEntryCriteria, Repository},
-};
+use crate::backend::AppState;
 use crate::shared::{
     models::{Guest, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage},
     server_fns::ServerError,
@@ -28,20 +24,9 @@ pub async fn load_signatures(
 
 #[server(state:axum::Extension<AppState>)]
 pub async fn load_user_signature(user: Guest) -> Result<Option<GuestbookEntry>, ServerError> {
-    let signature = state
+    state
         .guestbook_repo
-        .read(&GuestbookEntryCriteria::WithAuthorId(user.id))
-        .await;
-
-    match signature {
-        Ok(signature) => {
-            dioxus_logger::tracing::info!("Found users signature");
-            Ok(Some(signature))
-        }
-        Err(ApiError::DatabaseError(sqlx::Error::RowNotFound)) => {
-            dioxus_logger::tracing::info!("User has not left a signature yet");
-            Ok(None)
-        }
-        Err(error) => Err(ServerError::internal("load user guestbook entry", error)),
-    }
+        .find_by_author(user.id)
+        .await
+        .map_err(|error| ServerError::internal("load user guestbook entry", error))
 }

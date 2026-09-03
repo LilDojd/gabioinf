@@ -88,7 +88,6 @@ mod tests {
         let user = sentry_user(&Guest {
             id: GuestId::from(42),
             username: "public-name".to_string(),
-            access_token: "secret".to_string(),
             ..Default::default()
         });
 

@@ -37,7 +37,7 @@ impl GuestId {
     }
 }
 /// Represents a guest in the system.
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct Guest {
     /// The unique identifier for the guest.
@@ -52,8 +52,6 @@ pub struct Guest {
     pub created_at: OffsetDateTime,
     /// The timestamp when the guest record was last updated.
     pub updated_at: OffsetDateTime,
-    /// Access token for the guest.
-    pub access_token: String,
 }
 impl Default for Guest {
     fn default() -> Self {
@@ -64,21 +62,7 @@ impl Default for Guest {
             username: "".to_string(),
             created_at: OffsetDateTime::now_utc(),
             updated_at: OffsetDateTime::now_utc(),
-            access_token: "".to_string(),
         }
-    }
-}
-impl std::fmt::Debug for Guest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Guest")
-            .field("id", &self.id)
-            .field("github_id", &self.github_id)
-            .field("name", &self.name)
-            .field("username", &self.username)
-            .field("created_at", &self.created_at)
-            .field("updated_at", &self.updated_at)
-            .field("access_token", &"********")
-            .finish()
     }
 }
 /// Represents a GitHub user as returned by the GitHub API.

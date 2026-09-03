@@ -9,7 +9,6 @@ pub struct UserState {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum AuthState {
-    Loading,
     Authenticated(Box<UserState>),
     Unauthenticated,
 }

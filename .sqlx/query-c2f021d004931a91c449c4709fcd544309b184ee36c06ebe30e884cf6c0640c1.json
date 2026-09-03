@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE guests\n            SET name = $2, username = $3, updated_at = NOW()\n            WHERE id = $1\n            RETURNING *",
+  "query": "\n            INSERT INTO guests (github_id, name, username)\n            VALUES ($1, $2, $3)\n            ON CONFLICT (github_id) DO UPDATE\n            SET name = excluded.name, username = excluded.username, updated_at = NOW()\n            RETURNING *\n            ",
   "describe": {
     "columns": [
       {
@@ -32,11 +32,6 @@
         "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 6,
-        "name": "access_token",
-        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -52,9 +47,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "d3d9eb807056d7844516379cd4d954fca18e2ad821e56ff8999a410b59416c82"
+  "hash": "c2f021d004931a91c449c4709fcd544309b184ee36c06ebe30e884cf6c0640c1"
 }

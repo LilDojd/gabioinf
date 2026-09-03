@@ -6,6 +6,6 @@ impl AuthUser for Guest {
         self.id
     }
     fn session_auth_hash(&self) -> &[u8] {
-        self.access_token.as_bytes()
+        self.username.as_bytes()
     }
 }

@@ -32,11 +32,6 @@
         "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 6,
-        "name": "access_token",
-        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -45,7 +40,6 @@
       ]
     },
     "nullable": [
-      false,
       false,
       false,
       false,
