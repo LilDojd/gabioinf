@@ -12,7 +12,8 @@ A personal website built with Dioxus and WebAssembly, showcasing projects, writi
 - **Backend**: [Axum](https://github.com/tokio-rs/axum) - A modular web framework
 - **Database**: PostgreSQL with [SQLx](https://github.com/launchbadge/sqlx)
 - **Authentication**: OAuth2 with GitHub
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS v4 (design tokens and utilities live in `input.css`); fonts are self-hosted
+- **No JavaScript**: interactions (keyboard shortcuts, drawing pad, easter eggs) are Rust + `web-sys`
 
 ## 🚀 Deployment
 
