@@ -8,3 +8,5 @@ mod logout;
 pub use logout::*;
 mod guestbook;
 pub use guestbook::*;
+pub mod reactions;
+pub use reactions::*;

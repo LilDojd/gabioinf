@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Type;
 use time::OffsetDateTime;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct CommentId(pub(crate) i64);
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate fixtures/synthetic.sql: fake guests, guestbook entries and blog comments.
+"""Regenerate fixtures/synthetic.sql: fake guests, guestbook entries, comments and reactions.
 
 Only the standard library is used. Signatures are small transparent PNGs with a
 white squiggle so the guestbook cards look like real doodles.
@@ -56,6 +56,17 @@ COMMENTS = [
     ("fiona_g", None, "Tables render nicely on mobile, nice work.\n\n- semantic HTML\n- no JS"),
     ("alice_j", "Curious how you handle", "Cell lists for now, Verlet lists once I stop rewriting the integrator every weekend."),
     ("evan_w", "The build-time highlighting", "Only Rust for now according to the README."),
+]
+
+# (username, comment opening words or None for the post, stored emoji name)
+REACTIONS = [
+    ("alice_j", None, "alien"),
+    ("bob_s", None, "alien"),
+    ("diana_p", None, "heart"),
+    ("fiona_g", None, "fire"),
+    ("alice_j", "Curious how you handle", "crab"),
+    ("bob_s", "Curious how you handle", "party"),
+    ("evan_w", "The build-time highlighting", "eyes"),
 ]
 
 
@@ -125,6 +136,21 @@ def main() -> None:
             "INSERT INTO comments (post_slug, author_id, parent_id, body, created_at) VALUES ("
             f"'blog-rendering-showcase', (SELECT id FROM guests WHERE username = {sql_string(username)}), "
             f"{parent_sql}, {sql_string(body)}, now() - interval '{len(COMMENTS) - index} hours');"
+        )
+
+    print("\n-- Reactions use stable names; the UI supplies the glyphs.")
+    for username, comment, emoji in REACTIONS:
+        target_kind = "post" if comment is None else "comment"
+        comment_id = (
+            "NULL"
+            if comment is None
+            else f"(SELECT id FROM comments WHERE body LIKE {sql_string(comment + '%')} ORDER BY id LIMIT 1)"
+        )
+        print(
+            "INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ("
+            f"{sql_string(target_kind)}, 'blog-rendering-showcase', {comment_id}, "
+            f"(SELECT id FROM guests WHERE username = {sql_string(username)}), {sql_string(emoji)}) "
+            "ON CONFLICT DO NOTHING;"
         )
 
 

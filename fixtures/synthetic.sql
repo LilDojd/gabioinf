@@ -44,3 +44,12 @@ INSERT INTO comments (post_slug, author_id, parent_id, body, created_at) VALUES 
 - no JS', now() - interval '3 hours');
 INSERT INTO comments (post_slug, author_id, parent_id, body, created_at) VALUES ('blog-rendering-showcase', (SELECT id FROM guests WHERE username = 'alice_j'), (SELECT id FROM comments WHERE body LIKE 'Curious how you handle%'), 'Cell lists for now, Verlet lists once I stop rewriting the integrator every weekend.', now() - interval '2 hours');
 INSERT INTO comments (post_slug, author_id, parent_id, body, created_at) VALUES ('blog-rendering-showcase', (SELECT id FROM guests WHERE username = 'evan_w'), (SELECT id FROM comments WHERE body LIKE 'The build-time highlighting%'), 'Only Rust for now according to the README.', now() - interval '1 hours');
+
+-- Reactions use stable names; the UI supplies the glyphs.
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('post', 'blog-rendering-showcase', NULL, (SELECT id FROM guests WHERE username = 'alice_j'), 'alien') ON CONFLICT DO NOTHING;
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('post', 'blog-rendering-showcase', NULL, (SELECT id FROM guests WHERE username = 'bob_s'), 'alien') ON CONFLICT DO NOTHING;
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('post', 'blog-rendering-showcase', NULL, (SELECT id FROM guests WHERE username = 'diana_p'), 'heart') ON CONFLICT DO NOTHING;
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('post', 'blog-rendering-showcase', NULL, (SELECT id FROM guests WHERE username = 'fiona_g'), 'fire') ON CONFLICT DO NOTHING;
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('comment', 'blog-rendering-showcase', (SELECT id FROM comments WHERE body LIKE 'Curious how you handle%' ORDER BY id LIMIT 1), (SELECT id FROM guests WHERE username = 'alice_j'), 'crab') ON CONFLICT DO NOTHING;
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('comment', 'blog-rendering-showcase', (SELECT id FROM comments WHERE body LIKE 'Curious how you handle%' ORDER BY id LIMIT 1), (SELECT id FROM guests WHERE username = 'bob_s'), 'party') ON CONFLICT DO NOTHING;
+INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji) VALUES ('comment', 'blog-rendering-showcase', (SELECT id FROM comments WHERE body LIKE 'The build-time highlighting%' ORDER BY id LIMIT 1), (SELECT id FROM guests WHERE username = 'evan_w'), 'eyes') ON CONFLICT DO NOTHING;

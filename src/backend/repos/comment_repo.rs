@@ -87,6 +87,14 @@ impl CommentRepo {
         .await?)
     }
 
+    pub(crate) async fn post_slug(&self, id: CommentId) -> BResult<Option<String>> {
+        Ok(
+            sqlx::query_scalar!("SELECT post_slug FROM comments WHERE id = $1", id.0)
+                .fetch_optional(&self.pool)
+                .await?,
+        )
+    }
+
     pub async fn delete_owned(&self, id: CommentId, author_id: GuestId) -> BResult<bool> {
         let result = sqlx::query!(
             "DELETE FROM comments WHERE id = $1 AND author_id = $2",

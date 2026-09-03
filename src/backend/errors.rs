@@ -14,6 +14,8 @@ pub enum ApiError {
     Authentication(String),
     #[error("external service error: {0}")]
     ExternalService(#[from] reqwest::Error),
+    #[error("invalid database data: {0}")]
+    InvalidData(&'static str),
 }
 
 impl IntoResponse for ApiError {
@@ -21,7 +23,7 @@ impl IntoResponse for ApiError {
         let status = match self {
             Self::Authentication(_) => StatusCode::UNAUTHORIZED,
             Self::ExternalService(_) => StatusCode::BAD_GATEWAY,
-            Self::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Database(_) | Self::InvalidData(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (status, self.to_string()).into_response()
     }
