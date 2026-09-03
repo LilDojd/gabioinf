@@ -54,7 +54,10 @@ Post bodies use GitHub-flavoured Markdown and should start at heading level 2 be
 the page supplies the title. Reading time is estimated automatically at 200 words per
 minute. Rust code fences are highlighted with Tree-sitter during the build; unsupported
 fence languages remain readable plain text without shipping a highlighting runtime or
-JavaScript library to the browser.
+JavaScript library to the browser. Code blocks render as a small viewer: numbered lines,
+click (or shift-click) a number to select a range that is mirrored into the URL as
+`#L3-L7`, a wrap toggle and a copy button. The fence may name the file and emphasise
+lines: ```` ```rust title="src/main.rs" {2,5-7} ````.
 
 Two allowlisted Dioxus elements may appear on their own line:
 

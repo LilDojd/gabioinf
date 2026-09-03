@@ -129,13 +129,14 @@ def main() -> None:
         )
     print(",\n".join(rows) + "\nON CONFLICT (author_id) DO NOTHING;\n")
 
-    print("-- Comments attach to the showcase post; replies look their parent up by its opening words.")
+    print("-- Comments attach to the showcase post; replies look their parent up by its opening words. Re-running is a no-op.")
     for index, (username, parent, body) in enumerate(COMMENTS):
-        parent_sql = "NULL" if parent is None else f"(SELECT id FROM comments WHERE body LIKE {sql_string(parent + '%')})"
+        parent_sql = "NULL" if parent is None else f"(SELECT id FROM comments WHERE body LIKE {sql_string(parent + '%')} ORDER BY id LIMIT 1)"
         print(
-            "INSERT INTO comments (post_slug, author_id, parent_id, body, created_at) VALUES ("
+            "INSERT INTO comments (post_slug, author_id, parent_id, body, created_at) SELECT "
             f"'blog-rendering-showcase', (SELECT id FROM guests WHERE username = {sql_string(username)}), "
-            f"{parent_sql}, {sql_string(body)}, now() - interval '{len(COMMENTS) - index} hours');"
+            f"{parent_sql}, {sql_string(body)}, now() - interval '{len(COMMENTS) - index} hours' "
+            f"WHERE NOT EXISTS (SELECT 1 FROM comments WHERE body = {sql_string(body)});"
         )
 
     print("\n-- Reactions use stable names; the UI supplies the glyphs.")
