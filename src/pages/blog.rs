@@ -80,7 +80,7 @@ pub fn BlogPost(slug: String) -> Element {
                     }
                 }
             }
-            Comments { comment_id: post.slug }
+            Comments { slug: post.slug }
         }
     }
 }

@@ -58,6 +58,14 @@
   font-variation-settings: "MONO" 0, "CASL" .8, "wght" 700;
 }
 
+@utility casual {
+  font-variation-settings: "CASL" .8, "wght" 650;
+}
+
+@utility casual-strong {
+  font-variation-settings: "CASL" 1, "wght" 600;
+}
+
 @utility prose-font {
   font-family: var(--font-source);
   font-variation-settings: normal;
@@ -145,6 +153,36 @@
   border-radius: 6px;
   background: var(--color-surface);
 }
+
+@utility comment-action {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--color-faint);
+  font-family: var(--font-recursive);
+  font-size: 12px;
+  font-variation-settings: "MONO" 1, "CASL" 0;
+  &:hover { color: var(--color-accent); }
+}
+
+.comment-body {
+  color: var(--color-prose);
+  font-family: var(--font-source);
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.comment-body p { margin: 0 0 10px; }
+.comment-body p:last-child { margin-bottom: 0; }
+.comment-body a { color: var(--color-accent); text-decoration: none; border-bottom: 1px dashed rgb(194 249 187 / .45); }
+.comment-body code { border-radius: 3px; background: var(--color-code); padding: 1px 4px; font-family: var(--font-recursive); font-size: .85em; font-variation-settings: "MONO" 1; }
+.comment-body pre { overflow-x: auto; border: 1px solid var(--color-card); border-radius: 6px; background: var(--color-code); padding: 12px 14px; }
+.comment-body pre code { padding: 0; background: transparent; }
+.comment-body ul, .comment-body ol { margin: 0 0 10px; padding-left: 22px; }
+.comment-body ul { list-style: disc; }
+.comment-body ol { list-style: decimal; }
 
 .post-body {
   color: var(--color-prose);

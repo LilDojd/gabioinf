@@ -64,9 +64,8 @@ Unknown elements, unknown attributes, unsafe URLs, and arbitrary raw HTML fail t
 Add a new variant to `PostBlock` and its build-time parser when another component is
 actually needed.
 
-Published posts load Giscus comments lazily from the repository's GitHub Discussions.
-The post slug is the stable discussion key; changing it starts a new comment thread.
-Giscus is the blog's only handwritten-JavaScript exception.
+Published posts have first-party comments backed by PostgreSQL. GitHub sign-in keeps
+bots out; comments support Markdown and one level of replies, and posting is rate limited.
 
 Run `just check-posts` before publishing.
 
