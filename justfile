@@ -13,6 +13,11 @@ seed:
     devenv processes up postgres --detach
     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f fixtures/synthetic.sql
 
+# Print a debug-only fixture sign-in URL
+[positional-arguments]
+dev-login username:
+    @printf '%s\n' 'http://localhost:8080/v1/dev-login?username={{username}}&next=/guestbook'
+
 # Regenerate SQLx's checked-in query cache against local PostgreSQL
 prepare-sqlx:
     devenv processes up postgres --detach
