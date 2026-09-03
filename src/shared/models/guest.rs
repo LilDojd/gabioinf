@@ -2,15 +2,11 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use sqlx::{FromRow, Type};
 use time::OffsetDateTime;
-extern crate derive_more;
-use derive_more::{From, Into};
 /// Represents a GitHub user ID.
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with GitHub user IDs.
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
-)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GithubId(pub(crate) i64);
 pub const OWNER_GITHUB_ID: GithubId = GithubId(37330594);
@@ -23,9 +19,7 @@ impl GithubId {
 ///
 /// This type is a wrapper around `i64` to provide type safety and clarity
 /// when dealing with guest IDs.
-#[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
-)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestId(pub(crate) i64);
 impl std::fmt::Display for GuestId {

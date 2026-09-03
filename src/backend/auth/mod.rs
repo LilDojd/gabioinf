@@ -1,17 +1,61 @@
+//! GitHub sign-in: the axum-login backend plus the `/v1/login` and
+//! `/v1/oauth/callback` handlers.
+//!
+//! Flow: `/v1/login` stores a PKCE verifier + CSRF state in the session and sends
+//! the visitor to GitHub; GitHub redirects back to the callback, which exchanges
+//! the code for a token, fetches the GitHub profile, upserts the guest row and
+//! logs the session in.
+
+mod callback;
+mod login;
+
+pub use callback::build_oauth_client;
+use callback::{PendingAuthorization, SetOauthClient};
+
 use crate::{
     backend::{
-        domain::models::Credentials,
         errors::{ApiError, BResult},
         repos::GuestRepo,
     },
-    shared::models::{Guest, NewGuest},
+    shared::models::{Guest, GuestId, NewGuest},
 };
-use axum_login::{AuthnBackend, UserId};
+use axum::{Router, extract::FromRequestParts, http::request::Parts};
+use axum_login::{AuthUser, AuthnBackend, UserId};
 use oauth2::{
-    AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope, TokenResponse,
+    AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope, TokenResponse,
     http::header::{AUTHORIZATION, USER_AGENT},
 };
 use reqwest::Url;
+
+pub fn router() -> Router<()> {
+    Router::new()
+        .merge(login::router())
+        .merge(callback::router())
+}
+
+impl AuthUser for Guest {
+    type Id = GuestId;
+    fn id(&self) -> Self::Id {
+        self.id
+    }
+    /// Changing this invalidates existing sessions; there is no secret per user,
+    /// so the username is as good as it gets.
+    fn session_auth_hash(&self) -> &[u8] {
+        self.username.as_bytes()
+    }
+}
+
+/// What the OAuth callback hands to [`AuthBackend::authenticate`].
+#[derive(Debug)]
+pub struct Credentials {
+    pub code: String,
+    /// CSRF state stored when the flow started.
+    pub old_state: CsrfToken,
+    /// CSRF state GitHub sent back; must equal `old_state`.
+    pub new_state: CsrfToken,
+    pub pkce_verifier: PkceCodeVerifier,
+}
+
 #[derive(Clone, Debug)]
 pub struct AuthBackend {
     guest_repo: GuestRepo,
@@ -61,7 +105,7 @@ impl AuthnBackend for AuthBackend {
         if creds.old_state.secret() != creds.new_state.secret() {
             return Ok(None);
         }
-        dioxus_logger::tracing::debug!("Received OAuth callback");
+        tracing::debug!("Received OAuth callback");
         // oauth2 is pinned to reqwest 0.12, so it cannot share `self.reqwest_client` (0.13).
         // Redirects are disabled as the oauth2 docs recommend, to rule out SSRF via the token endpoint.
         let token_client = oauth2::reqwest::ClientBuilder::new()
@@ -75,7 +119,7 @@ impl AuthnBackend for AuthBackend {
             .request_async(&token_client)
             .await
             .map_err(|error| Self::Error::Authentication(describe_token_error(&error)))?;
-        dioxus_logger::tracing::debug!("Getting user data from GitHub API");
+        tracing::debug!("Getting user data from GitHub API");
         let response = self
             .reqwest_client
             .get("https://api.github.com/user")
@@ -89,7 +133,7 @@ impl AuthnBackend for AuthBackend {
             .await?
             .error_for_status()?;
         let github_user = response.json::<NewGuest>().await?;
-        dioxus_logger::tracing::debug!("Received user data from GitHub: {:?}", github_user);
+        tracing::debug!("Received user data from GitHub: {:?}", github_user);
         let guest = self.guest_repo.upsert(&github_user.into()).await?;
         Ok(Some(guest))
     }
@@ -116,8 +160,6 @@ pub type AuthSession = axum_login::AuthSession<AuthBackend>;
 pub struct SessionWrapper {
     pub session: AuthSession,
 }
-use super::oauth::{PendingAuthorization, SetOauthClient};
-use axum::{extract::FromRequestParts, http::request::Parts};
 #[derive(Debug)]
 pub struct StateError;
 impl std::error::Error for StateError {}
@@ -152,7 +194,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend::domain::logic::oauth::build_oauth_client;
     use sqlx::postgres::PgPoolOptions;
 
     fn test_backend() -> AuthBackend {
@@ -161,7 +202,7 @@ mod tests {
             .unwrap();
         AuthBackend::new(
             GuestRepo::new(pool),
-            build_oauth_client("client-id", "client-secret", "example.com"),
+            build_oauth_client("client-id", "client-secret", "https://example.com"),
             reqwest::Client::new(),
         )
     }

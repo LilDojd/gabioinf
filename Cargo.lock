@@ -1966,7 +1966,6 @@ dependencies = [
  "axum-login",
  "base64 0.22.1",
  "config",
- "derive_more",
  "dioxus",
  "dioxus-logger",
  "forwarded-header-value",

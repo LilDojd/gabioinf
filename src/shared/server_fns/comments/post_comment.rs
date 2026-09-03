@@ -1,5 +1,5 @@
 #[cfg(feature = "server")]
-use crate::backend::{AppState, domain::logic::SessionWrapper};
+use crate::backend::{AppState, auth::SessionWrapper};
 use crate::shared::{
     models::{Comment, CommentId},
     server_fns::ServerError,
@@ -14,7 +14,7 @@ fn validate_body(body: String) -> Result<(String, String), ServerError> {
             "Comment must be between 1 and 2000 characters".to_string(),
         ));
     }
-    crate::backend::utils::validate_not_offensive(&body)
+    crate::backend::profanity::validate_not_offensive(&body)
         .map_err(|_| ServerError::Validation("Comment contains offensive content".to_string()))?;
     let body_html = crate::backend::markdown::render(&body)
         .map_err(|error| ServerError::Validation(format!("Invalid Markdown: {error}")))?;

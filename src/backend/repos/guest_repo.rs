@@ -19,7 +19,7 @@ impl GuestRepo {
             VALUES ($1, $2, $3)
             ON CONFLICT (github_id) DO UPDATE
             SET name = excluded.name, username = excluded.username, updated_at = NOW()
-            RETURNING *
+            RETURNING id AS "id: GuestId", github_id AS "github_id: GithubId", name, username, created_at, updated_at
             "#,
             guest.github_id.as_value(),
             guest.name,
@@ -30,18 +30,10 @@ impl GuestRepo {
     }
 
     pub async fn find_by_id(&self, id: GuestId) -> BResult<Option<Guest>> {
-        Ok(
-            sqlx::query_as!(Guest, "SELECT * FROM guests WHERE id = $1", id.as_value())
-                .fetch_optional(&self.pool)
-                .await?,
-        )
-    }
-
-    pub async fn find_by_github_id(&self, github_id: GithubId) -> BResult<Option<Guest>> {
         Ok(sqlx::query_as!(
             Guest,
-            "SELECT * FROM guests WHERE github_id = $1",
-            github_id.as_value(),
+            r#"SELECT id AS "id: GuestId", github_id AS "github_id: GithubId", name, username, created_at, updated_at FROM guests WHERE id = $1"#,
+            id.as_value(),
         )
         .fetch_optional(&self.pool)
         .await?)
@@ -69,13 +61,6 @@ mod tests {
 
         assert_eq!(updated.id, created.id);
         assert_eq!(updated.name, "Updated User");
-        assert_eq!(
-            repo.find_by_id(created.id).await.unwrap(),
-            Some(updated.clone())
-        );
-        assert_eq!(
-            repo.find_by_github_id(guest.github_id).await.unwrap(),
-            Some(updated)
-        );
+        assert_eq!(repo.find_by_id(created.id).await.unwrap(), Some(updated));
     }
 }

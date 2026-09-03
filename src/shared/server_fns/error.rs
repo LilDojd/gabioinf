@@ -20,7 +20,7 @@ pub enum ServerError {
 impl ServerError {
     #[cfg(feature = "server")]
     pub(crate) fn internal(context: &'static str, error: impl fmt::Debug) -> Self {
-        dioxus_logger::tracing::error!(context, error = ?error, "Server function failed");
+        tracing::error!(context, error = ?error, "Server function failed");
         Self::Internal
     }
 }

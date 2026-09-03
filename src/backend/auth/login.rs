@@ -1,8 +1,8 @@
 //! `GET /v1/login?next=/path`: starts the GitHub OAuth flow.
 //!
 //! The PKCE verifier, CSRF state and the `next` path are parked in the session
-//! until GitHub redirects back to `/v1/oauth/callback` (see [`super::oauth`]).
-use crate::backend::domain::logic::{AuthSession, oauth::PENDING_AUTHORIZATION_KEY};
+//! until GitHub redirects back to `/v1/oauth/callback` (see [`super::callback`]).
+use super::{AuthSession, callback::PENDING_AUTHORIZATION_KEY};
 use axum::{
     Router,
     extract::Query,
@@ -20,7 +20,7 @@ pub struct NextUrl {
     next: Option<String>,
 }
 
-pub fn router() -> Router<()> {
+pub(super) fn router() -> Router<()> {
     Router::new().route("/login", get(login))
 }
 
@@ -38,7 +38,7 @@ async fn login(
     match stored {
         Ok(()) => Redirect::to(auth_url.as_str()).into_response(),
         Err(error) => {
-            dioxus_logger::tracing::error!(%error, "could not store the pending sign-in");
+            tracing::error!(%error, "could not store the pending sign-in");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }

@@ -1,4 +1,4 @@
-#![allow(non_snake_case, unreachable_code)]
+#![allow(non_snake_case)]
 use dioxus::fullstack::FullstackContext;
 use dioxus::prelude::*;
 use std::{borrow::Cow, str::FromStr};
@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
         .launch(App);
     #[cfg(feature = "server")]
     {
-        dioxus_logger::tracing::info!("Starting server");
+        tracing::info!("Starting server");
         // Dioxus 0.7.10 incremental cache hits currently lose custom route statuses.
         let config = ServeConfig::new().enable_out_of_order_streaming();
         tokio::runtime::Runtime::new()?.block_on(backend::server::serve(config, App))?;

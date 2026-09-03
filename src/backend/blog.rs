@@ -10,13 +10,13 @@ struct BlogState {
     origin: String,
 }
 
-pub fn router(domain: &str) -> Router {
+pub fn router(origin: &str) -> Router {
     Router::new()
         .route("/feed.xml", get(feed))
         .route("/sitemap.xml", get(sitemap))
         .route("/robots.txt", get(robots))
         .with_state(BlogState {
-            origin: site_origin(domain),
+            origin: origin.to_string(),
         })
 }
 
@@ -43,15 +43,6 @@ async fn robots(State(state): State<BlogState>) -> impl IntoResponse {
 
 fn robots_txt(origin: &str) -> String {
     format!("User-agent: *\nAllow: /\nDisallow: /v1/\n\nSitemap: {origin}/sitemap.xml\n")
-}
-
-fn site_origin(domain: &str) -> String {
-    let domain = domain.trim_end_matches('/');
-    if domain.starts_with("http://") || domain.starts_with("https://") {
-        domain.to_string()
-    } else {
-        format!("https://{domain}")
-    }
 }
 
 fn atom_feed(origin: &str) -> String {
@@ -122,15 +113,6 @@ fn escape_xml(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn normalizes_site_origin() {
-        assert_eq!(site_origin("gabioinf.dev"), "https://gabioinf.dev");
-        assert_eq!(
-            site_origin("http://localhost:8080/"),
-            "http://localhost:8080"
-        );
-    }
 
     #[test]
     fn feed_is_valid_at_its_boundaries_and_has_an_author() {

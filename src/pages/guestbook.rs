@@ -79,7 +79,7 @@ fn GuestbookContent() -> Element {
                                 show_popup.set(false);
                             }
                             Err(error) => {
-                                dioxus_logger::tracing::error!("Error submitting signature: {error:?}");
+                                tracing::error!("Error submitting signature: {error:?}");
                                 submit_error.set(Some(server_error_message(&error, "Could not sign the guestbook")));
                             }
                         }
@@ -106,7 +106,7 @@ fn SignOutButton(
                     match server_fns::logout().await {
                         Ok(()) => auth_state.set(AuthState::Unauthenticated),
                         Err(error) => {
-                            dioxus_logger::tracing::error!("Could not sign out: {error:?}");
+                            tracing::error!("Could not sign out: {error:?}");
                             action_error.set(Some("Could not sign out. Please retry.".to_string()));
                         }
                     }

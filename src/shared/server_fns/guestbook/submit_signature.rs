@@ -3,7 +3,7 @@
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
 #[cfg(feature = "server")]
-use crate::backend::{AppState, domain::logic::SessionWrapper, errors::ApiError};
+use crate::backend::{AppState, auth::SessionWrapper, errors::ApiError};
 use crate::shared::{models::GuestbookEntry, server_fns::ServerError};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,7 @@ pub struct CreateEntryRequest {
                 message = "Message must be between 1 and 255 characters"
             ),
             custom(
-                function = "crate::backend::utils::validate_not_offensive",
+                function = "crate::backend::profanity::validate_not_offensive",
                 message = "watch you mouth"
             )
         )

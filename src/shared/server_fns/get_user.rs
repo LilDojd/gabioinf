@@ -1,5 +1,5 @@
 #[cfg(feature = "server")]
-use crate::backend::domain::logic::SessionWrapper;
+use crate::backend::auth::SessionWrapper;
 use crate::shared::{models::Guest, server_fns::ServerError};
 use dioxus::prelude::*;
 #[server(session:SessionWrapper)]

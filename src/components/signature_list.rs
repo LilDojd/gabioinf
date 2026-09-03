@@ -52,7 +52,7 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
                     loaded_once.set(true);
                 }
                 Err(error) => {
-                    dioxus_logger::tracing::error!("Could not load signatures: {error:?}");
+                    tracing::error!("Could not load signatures: {error:?}");
                     load_error.set(Some(
                         "Could not load signatures. Check your connection and retry.".to_string(),
                     ));
@@ -98,7 +98,7 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
                                                     }
                                                 }
                                                 Err(error) => {
-                                                    dioxus_logger::tracing::error!("Error deleting signature: {error:?}");
+                                                    tracing::error!("Error deleting signature: {error:?}");
                                                     delete_error.set(Some("Could not delete your signature. Retry with the × button.".to_string()));
                                                 }
                                             }

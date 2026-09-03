@@ -1,6 +1,5 @@
-//! Handles OAuth flow, user auth and session management
-use crate::backend::domain::logic::AuthSession;
-use crate::backend::domain::logic::auth::NEXT_URL_KEY;
+//! `GET /v1/oauth/callback`: the second half of the GitHub OAuth flow.
+use super::{AuthSession, Credentials, login::NEXT_URL_KEY};
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{
@@ -25,46 +24,20 @@ pub(crate) struct PendingAuthorization {
     pub(crate) csrf_state: CsrfToken,
     pub(crate) pkce_verifier: PkceCodeVerifier,
 }
-pub fn router() -> Router<()> {
+pub(super) fn router() -> Router<()> {
     Router::new().route("/oauth/callback", get(self::get::callback))
 }
-/// Builds an OAuth2 client for the GitHub OAuth provider
-/// # Arguments
-///
-/// * `client_id` - The client ID for the OAuth application
-/// * `client_secret` - The client secret for the OAuth application
-/// * `domain` - The domain name which will be used for redirect URI for the OAuth application
-///
-/// # Returns
-///
-/// A `BasicClient` object for the GitHub OAuth provider
-///
-pub fn build_oauth_client<S: AsRef<str>>(
-    client_id: S,
-    client_secret: S,
-    domain: S,
-) -> SetOauthClient {
+/// The GitHub OAuth client; `origin` is where GitHub sends visitors back to.
+pub fn build_oauth_client(client_id: &str, client_secret: &str, origin: &str) -> SetOauthClient {
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
-        .expect("Invalid authorization endpoint URL");
+        .expect("the GitHub authorization URL is valid");
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
-        .expect("Invalid token endpoint URL");
-    let oauth_redirect_uri = if domain.as_ref().contains("localhost:") {
-        let port = domain
-            .as_ref()
-            .split(':')
-            .next_back()
-            .unwrap()
-            .split('/')
-            .next()
-            .unwrap();
-        RedirectUrl::new(format!("http://localhost:{port}/v1/oauth/callback"))
-    } else {
-        RedirectUrl::new(format!("https://{}/v1/oauth/callback", domain.as_ref()))
-    }
-    .expect("Invalid redirect URL");
-    dioxus_logger::tracing::debug!("OAuth redirect URI: {}", oauth_redirect_uri);
-    BasicClient::new(ClientId::new(client_id.as_ref().to_owned()))
-        .set_client_secret(ClientSecret::new(client_secret.as_ref().to_owned()))
+        .expect("the GitHub token URL is valid");
+    let oauth_redirect_uri = RedirectUrl::new(format!("{origin}/v1/oauth/callback"))
+        .expect("the configured origin forms a valid callback URL");
+    tracing::debug!("OAuth redirect URI: {}", oauth_redirect_uri);
+    BasicClient::new(ClientId::new(client_id.to_owned()))
+        .set_client_secret(ClientSecret::new(client_secret.to_owned()))
         .set_auth_uri(auth_url)
         .set_token_uri(token_url)
         .set_redirect_uri(oauth_redirect_uri)
@@ -76,7 +49,7 @@ async fn take_pending_authorization(
 }
 mod get {
     use super::*;
-    use crate::backend::domain::{logic::auth::local_path, models::Credentials};
+    use crate::backend::auth::login::local_path;
 
     /// `GET /v1/oauth/callback?code=…&state=…`: GitHub sends the visitor back here.
     ///
@@ -99,7 +72,7 @@ mod get {
                 );
             }
             Err(error) => {
-                dioxus_logger::tracing::error!(%error, "could not read the pending sign-in");
+                tracing::error!(%error, "could not read the pending sign-in");
                 return failure(StatusCode::INTERNAL_SERVER_ERROR, "sign-in failed");
             }
         };
@@ -112,14 +85,14 @@ mod get {
         let user = match auth_session.authenticate(creds).await {
             Ok(Some(user)) => user,
             Ok(None) => {
-                dioxus_logger::tracing::warn!("OAuth state mismatch during sign-in");
+                tracing::warn!("OAuth state mismatch during sign-in");
                 return failure(
                     StatusCode::UNAUTHORIZED,
                     "sign-in state mismatch; try again",
                 );
             }
             Err(error) => {
-                dioxus_logger::tracing::error!(%error, "GitHub sign-in failed");
+                tracing::error!(%error, "GitHub sign-in failed");
                 return failure(
                     StatusCode::BAD_GATEWAY,
                     "GitHub sign-in failed; try again later",
@@ -127,7 +100,7 @@ mod get {
             }
         };
         if let Err(error) = auth_session.login(&user).await {
-            dioxus_logger::tracing::error!(%error, "could not create the session");
+            tracing::error!(%error, "could not create the session");
             return failure(StatusCode::INTERNAL_SERVER_ERROR, "sign-in failed");
         }
         let next = session

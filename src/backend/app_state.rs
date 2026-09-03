@@ -11,7 +11,8 @@ pub struct AppState {
     pub guest_repo: GuestRepo,
     pub guestbook_repo: GuestbookRepo,
     pub comment_repo: CommentRepo,
-    pub domain: String,
+    /// `https://gabioinf.dev` in production, `http://localhost:8080` locally.
+    pub origin: String,
     pub key: Key,
 }
 
@@ -22,13 +23,13 @@ impl FromRef<AppState> for Key {
 }
 
 impl AppState {
-    pub fn new(db: DbConnPool, domain: String, key: Key) -> Self {
+    pub fn new(db: DbConnPool, origin: String, key: Key) -> Self {
         Self {
             db: db.clone(),
             guest_repo: GuestRepo::new(db.clone()),
             guestbook_repo: GuestbookRepo::new(db.clone()),
             comment_repo: CommentRepo::new(db),
-            domain,
+            origin,
             key,
         }
     }

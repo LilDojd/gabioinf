@@ -1,5 +1,5 @@
 #[cfg(feature = "server")]
-use crate::backend::{AppState, domain::logic::SessionWrapper};
+use crate::backend::{AppState, auth::SessionWrapper};
 use crate::shared::{models::CommentId, server_fns::ServerError};
 use dioxus::prelude::*;
 

@@ -31,7 +31,6 @@ config = { version = "0.15.25", default-features = false, features = [
   "convert-case",
   "toml",
 ], optional = true }
-derive_more = { version = "2.1.1", features = ["from", "into"] }
 thiserror = { version = "2.0.20", optional = true }
 base64 = { version = "0.22.1", optional = true }
 

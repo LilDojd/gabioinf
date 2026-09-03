@@ -1,11 +1,8 @@
-//! API router configuration.
-//!
-//! This module defines the routing structure for the entire API for the authenticated routes.
-//! The rest is delegated to dioxus server functions
+//! `/v1/*`: the non-Dioxus HTTP surface (sign-in, OAuth callback, DB ping) with
+//! CORS, security headers, a timeout and per-visitor rate limiting.
 use crate::backend::AppState;
 use crate::backend::db::ping_db;
-use crate::backend::domain::logic;
-use crate::backend::extractors::CookieExtractor;
+use crate::backend::{auth, rate_limit::CookieExtractor};
 use axum::body::Body;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Response, StatusCode};
@@ -49,17 +46,19 @@ pub fn api_router(
         .allow_credentials(true)
         .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers(vec![ORIGIN, AUTHORIZATION, ACCEPT])
-        .allow_origin(state.domain.parse::<HeaderValue>().unwrap());
+        .allow_origin(
+            state
+                .origin
+                .parse::<HeaderValue>()
+                .expect("the configured origin is a valid header value"),
+        );
     let helmet_layer: HelmetLayer = generate_general_helmet_headers()
         .into_layer()
         .expect("static security headers must be valid");
-    let auth_router = logic::auth::router();
-    let oauth_router = logic::oauth::router();
     let api_router = Router::new()
         .route("/ping", axum::routing::get(ping_db))
         .with_state(state)
-        .merge(auth_router)
-        .merge(oauth_router)
+        .merge(auth::router())
         .layer(cors);
     Router::new().merge(api_router).layer(
         ServiceBuilder::new()
@@ -79,7 +78,10 @@ pub fn api_router(
                 if res.headers().get("content-security-policy").is_none() {
                     res.headers_mut().insert(
                         "content-security-policy",
-                        generate_default_csp().to_string().parse().unwrap(),
+                        generate_default_csp()
+                            .to_string()
+                            .parse()
+                            .expect("the static CSP is a valid header value"),
                     );
                 }
                 res

@@ -4,6 +4,13 @@ use std::{fmt, ops::Deref};
 
 pub struct Hide<T>(T);
 
+impl<T> Hide<T> {
+    #[cfg(test)]
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+}
+
 impl<T> Deref for Hide<T> {
     type Target = T;
 
