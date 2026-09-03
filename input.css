@@ -203,6 +203,10 @@
   background: var(--color-surface);
 }
 
+@utility signature-area {
+  height: 72px;
+}
+
 @utility comment-action {
   align-self: flex-start;
   border: 0;

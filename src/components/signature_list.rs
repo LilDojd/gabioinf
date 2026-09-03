@@ -7,7 +7,8 @@ use crate::shared::{
 use dioxus::prelude::*;
 use time::macros::format_description;
 
-const SIGNATURES_PER_PAGE: usize = 10;
+const INITIAL_SKELETONS: usize = 6;
+const MORE_SKELETONS: usize = 3;
 const ENTRY_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short] [year]");
 
@@ -116,15 +117,20 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
                 SignatureCard { key: "{entry.id.as_value()}", entry: entry.clone() }
             }
             if loading() && !loaded_once() {
-                for index in 0..SIGNATURES_PER_PAGE - usize::from(user_entry_id.is_some()) {
-                    div { key: "{index}", class: "card h-48 animate-pulse p-4",
-                        div { class: "h-4 w-3/4 rounded bg-card" }
-                    }
+                for index in 0..INITIAL_SKELETONS {
+                    SignatureSkeleton { key: "{index}" }
                 }
             }
         }
         if loading() && loaded_once() {
-            span { class: "label-mono block py-5 text-center", "loading…" }
+            div {
+                role: "status",
+                aria_label: "Loading more signatures",
+                class: "grid grid-cols-1 gap-2.5 py-3 sm:grid-cols-3",
+                for index in 0..MORE_SKELETONS {
+                    SignatureSkeleton { key: "{index}", compact: true }
+                }
+            }
         } else if let Some(error) = load_error.read().as_ref() {
             div { role: "alert", class: "flex flex-col items-center gap-3 py-5 text-mars",
                 span { class: "label-mono text-mars", {error.to_string()} }
@@ -165,17 +171,29 @@ fn SignatureCard(props: SignatureCardProps) -> Element {
             if let Some(action) = props.action { {action} }
             p { class: "prose-font m-0 pr-4 text-pretty text-[17px] leading-[1.4] text-text", "{props.entry.message}" }
             if let Some(signature) = props.entry.signature.as_deref().filter(|signature| !signature.is_empty()) {
-                div { class: "flex h-[72px] items-center justify-center overflow-hidden rounded-sm",
+                div { class: "signature-area flex items-center justify-center overflow-hidden rounded-sm",
                     img { class: "max-h-full max-w-full", src: "data:image/png;base64,{signature}", alt: "Signature by {props.entry.author_username}" }
                 }
-            } else {
-                div { class: "h-[72px] rounded-sm border border-dashed border-[#2c3037] bg-[repeating-linear-gradient(135deg,#1c1f24_0_6px,#191c20_6px_12px)]" }
             }
             span { class: "label-mono mt-auto",
                 "by "
                 a { href: "https://github.com/{props.entry.author_username}", target: "_blank", rel: "noopener noreferrer", class: "text-muted no-underline hover:text-accent", "{props.entry.author_username}" }
                 " · {date}"
             }
+        }
+    }
+}
+
+#[component]
+fn SignatureSkeleton(#[props(default)] compact: bool) -> Element {
+    rsx! {
+        article { class: "card flex animate-pulse flex-col gap-3.5 p-4",
+            div { class: "flex flex-col gap-2",
+                div { class: "h-3.5 w-5/6 rounded bg-hover-row" }
+                div { class: "h-3.5 w-2/3 rounded bg-hover-row" }
+            }
+            div { class: if compact { "h-10 rounded-sm bg-hover-row" } else { "signature-area rounded-sm bg-hover-row" } }
+            div { class: "h-3 w-2/5 rounded bg-hover-row" }
         }
     }
 }
