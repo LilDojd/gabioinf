@@ -1,119 +1,127 @@
-use canvas::Canvas;
-use dioxus::prelude::*;
-#[cfg(feature = "web")]
-use dioxus::web::WebEventExt;
-#[cfg(feature = "web")]
-use web_sys::{HtmlCanvasElement, wasm_bindgen::JsCast};
+//! A small freehand pad for guestbook doodles.
+
 mod canvas;
 mod point;
 mod popup;
-pub use popup::SignaturePopup;
 mod stroke;
 mod utils;
-#[derive(Props, PartialEq, Debug, Clone)]
+
+use canvas::{Canvas, Ink};
+use dioxus::prelude::*;
+pub use popup::SignaturePopup;
+
+#[derive(Props, PartialEq, Clone)]
 pub struct SignaturePadProps {
     #[props(default)]
     class: String,
     #[props(default)]
-    container_class: String,
-    #[props(default)]
     disabled: bool,
-    #[props(default)]
-    on_change: Option<EventHandler<Option<String>>>,
-    #[props(default)]
-    on_canvas_ready: Option<EventHandler<Canvas>>,
+    /// Fires after every completed stroke, undo or clear with the trimmed PNG
+    /// (base64) of the whole drawing, or `None` when the pad is empty.
+    on_change: EventHandler<Option<String>>,
 }
+
 #[component]
 pub fn SignaturePad(props: SignaturePadProps) -> Element {
     let mut canvas = use_signal(|| None::<Canvas>);
-    let set_canvas = use_callback(move |event: MountedEvent| {
-        #[cfg(feature = "web")]
-        {
-            let html_canvas = event
-                .as_web_event()
-                .clone()
-                .dyn_into::<HtmlCanvasElement>()
-                .unwrap();
-            let canvas_ref = Canvas::new(html_canvas);
-            canvas_ref.beautify();
-            canvas.set(Some(canvas_ref.clone()));
-            if let Some(on_canvas_ready) = &props.on_canvas_ready {
-                on_canvas_ready.call(canvas_ref.clone());
-            }
-        }
-        #[cfg(not(feature = "web"))]
-        let _ = event;
-    });
-    let on_signature_change = move || {
-        if let Some(c) = canvas.read().as_ref()
-            && let Some(on_change) = &props.on_change
-        {
-            on_change.call((!c.is_empty()).then(|| c.get_signature_data()));
+    let mut ink = use_signal(Ink::default);
+
+    let emit_change = move || {
+        let png = canvas.read().as_ref().and_then(Canvas::trimmed_png);
+        props.on_change.call(png);
+    };
+    // Every pointer/undo/clear handler needs the same "borrow the canvas mutably" dance.
+    let mut with_canvas = move |edit: fn(&mut Canvas, &PointerEvent), event: PointerEvent| {
+        if let Some(canvas) = canvas.write().as_mut() {
+            edit(canvas, &event);
         }
     };
-    let on_pointer_down = move |event: PointerEvent| {
-        if let Some(c) = canvas.read().as_ref() {
-            c.on_mouse_down(&event);
-        }
-    };
-    let on_pointer_move = move |event: PointerEvent| {
-        if let Some(c) = canvas.read().as_ref() {
-            c.on_mouse_move(&event);
-        }
-    };
-    let on_pointer_up = move |event: PointerEvent| {
-        if let Some(c) = canvas.read().as_ref() {
-            c.on_mouse_up(&event);
-            on_signature_change();
-        }
-    };
-    let on_resize = move |_| {
-        if let Some(c) = canvas.write().as_mut() {
-            c.on_resize()
-        }
-    };
+
     rsx! {
         div {
-            class: format!(
-                "relative block {} {}",
-                props.container_class,
-                if props.disabled { "pointer-events-none opacity-50" } else { "" },
-            ),
+            class: "relative",
+            class: if props.disabled { "pointer-events-none opacity-50" },
             canvas {
-                onmounted: move |evt| set_canvas.call(evt),
-                class: format!("relative block {}", props.class),
-                style: "touch-action: none",
-                onpointerdown: on_pointer_down,
-                onpointermove: on_pointer_move,
-                onpointerup: on_pointer_up,
-                onresize: on_resize,
-            }
-            div { class: "absolute bottom-3 left-3 flex gap-2",
-                button {
-                    class: "btn-secondary bg-surface px-2 py-1 text-xs",
-                    r#type: "button",
-                    onclick: move |_| {
-                        if let Some(c) = canvas.read().as_ref() {
-                            c.undo();
-                            on_signature_change();
+                class: "block touch-none {props.class}",
+                onmounted: move |event| {
+                    #[cfg(feature = "web")]
+                    {
+                        use dioxus::web::WebEventExt;
+                        use web_sys::wasm_bindgen::JsCast;
+                        if let Ok(element) = event.as_web_event().clone().dyn_into() {
+                            canvas.set(Some(Canvas::new(element)));
                         }
-                    },
-                    "undo"
+                    }
+                    #[cfg(not(feature = "web"))]
+                    let _ = event;
+                },
+                onpointerdown: move |event| with_canvas(Canvas::pointer_down, event),
+                onpointermove: move |event| with_canvas(Canvas::pointer_move, event),
+                onpointerup: move |event| {
+                    with_canvas(Canvas::pointer_up, event);
+                    emit_change();
+                },
+                onresize: move |_| {
+                    if let Some(canvas) = canvas.write().as_mut() {
+                        canvas.fit_to_element();
+                    }
+                },
+            }
+            div {
+                class: "absolute bottom-3 left-3 flex items-center gap-2",
+                role: "radiogroup",
+                aria_label: "Ink colour",
+                for choice in Ink::ALL {
+                    button {
+                        key: "{choice.name()}",
+                        r#type: "button",
+                        role: "radio",
+                        aria_checked: ink() == choice,
+                        title: choice.name(),
+                        class: "size-4 rounded-full border-2 transition-transform hover:scale-110",
+                        class: if ink() == choice { "border-text scale-110" } else { "border-transparent" },
+                        style: "background: {choice.css()}",
+                        onclick: move |_| {
+                            ink.set(choice);
+                            if let Some(canvas) = canvas.write().as_mut() {
+                                canvas.set_ink(choice);
+                            }
+                        },
+                    }
                 }
             }
-            div { class: "absolute bottom-3 right-3 flex gap-2",
-                button {
-                    class: "btn-secondary bg-surface px-2 py-1 text-xs",
-                    r#type: "button",
+            div { class: "absolute right-3 bottom-3 flex gap-1.5",
+                PadButton {
+                    label: "undo",
                     onclick: move |_| {
-                        if let Some(c) = canvas.read().as_ref() {
-                            c.clear();
-                            on_signature_change();
+                        if let Some(canvas) = canvas.write().as_mut() {
+                            canvas.undo();
                         }
+                        emit_change();
                     },
-                    "clear"
+                }
+                PadButton {
+                    label: "clear",
+                    onclick: move |_| {
+                        if let Some(canvas) = canvas.write().as_mut() {
+                            canvas.clear();
+                        }
+                        emit_change();
+                    },
                 }
             }
+        }
+    }
+}
+
+#[component]
+fn PadButton(label: &'static str, onclick: EventHandler<MouseEvent>) -> Element {
+    rsx! {
+        button {
+            r#type: "button",
+            class: "label-mono rounded-sm border border-border-strong bg-surface px-2 py-0.5 hover:border-accent hover:text-accent",
+            onclick: move |event| onclick.call(event),
+            {label}
         }
     }
 }

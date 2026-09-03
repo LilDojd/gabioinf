@@ -1,4 +1,7 @@
-use crate::components::{Button, ButtonVariant, SignaturePad, signature_pad::Canvas};
+use crate::{
+    components::{Button, ButtonVariant, SignaturePad},
+    shared::server_fns::CreateEntryRequest,
+};
 use dioxus::prelude::*;
 
 const MAX_MESSAGE_LENGTH: usize = 255;
@@ -6,7 +9,7 @@ const MAX_MESSAGE_LENGTH: usize = 255;
 #[derive(Props, Clone, PartialEq)]
 pub struct SignaturePopupProps {
     pub on_close: EventHandler<()>,
-    pub on_submit: EventHandler<(String, String)>,
+    pub on_submit: EventHandler<CreateEntryRequest>,
     pub submitting: bool,
     #[props(default)]
     pub submit_error: Option<String>,
@@ -16,8 +19,7 @@ pub struct SignaturePopupProps {
 pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     let mut message = use_signal(String::new);
     let mut validation = use_signal(|| None::<String>);
-    let mut has_signature = use_signal(|| false);
-    let mut canvas = use_signal(|| None::<Canvas>);
+    let mut signature = use_signal(|| None::<String>);
     let character_count = message().chars().count();
 
     let submit = move |_| {
@@ -29,15 +31,10 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
             validation.set(Some("Message is required".to_string()));
             return;
         }
-        let signature = if has_signature() {
-            canvas
-                .read()
-                .as_ref()
-                .map_or_else(String::new, Canvas::trim_to_image)
-        } else {
-            String::new()
-        };
-        props.on_submit.call((trimmed, signature));
+        props.on_submit.call(CreateEntryRequest {
+            message: trimmed,
+            signature: signature(),
+        });
     };
 
     rsx! {
@@ -78,10 +75,8 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                         "sign here (optional)"
                         SignaturePad {
                             class: "h-48 w-full rounded-md border border-card bg-code",
-                            container_class: "w-full",
                             disabled: props.submitting,
-                            on_change: move |value: Option<String>| has_signature.set(value.is_some_and(|value| !value.is_empty())),
-                            on_canvas_ready: move |ready: Canvas| canvas.set(Some(ready)),
+                            on_change: move |png| signature.set(png),
                         }
                     }
                     div { class: "flex justify-end gap-2",

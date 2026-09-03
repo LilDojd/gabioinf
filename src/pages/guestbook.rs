@@ -65,16 +65,12 @@ fn GuestbookContent() -> Element {
                     on_close: move |_| {
                         if !submitting() { show_popup.set(false); }
                     },
-                    on_submit: move |(message, signature): (String, String)| async move {
+                    on_submit: move |request: server_fns::CreateEntryRequest| async move {
                         if submitting() || !matches!(&*auth_state.read(), AuthState::Authenticated(_)) {
                             return;
                         }
                         submitting.set(true);
                         submit_error.set(None);
-                        let request = server_fns::CreateEntryRequest {
-                            message,
-                            signature: (!signature.is_empty()).then_some(signature),
-                        };
                         match server_fns::submit_signature(request).await {
                             Ok(entry) => {
                                 if let AuthState::Authenticated(user) = &mut *auth_state.write() {

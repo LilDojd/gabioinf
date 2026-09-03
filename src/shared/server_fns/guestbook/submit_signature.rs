@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 /// Request payload for creating a new guestbook entry.
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "server", derive(Validate))]
 pub struct CreateEntryRequest {
     /// The message content of the new guestbook entry.
