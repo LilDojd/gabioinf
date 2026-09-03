@@ -1,33 +1,19 @@
 use crate::Route;
 use dioxus::prelude::*;
 use dioxus_router::{Navigator, components::Outlet};
-#[cfg(feature = "web")]
-use serde::Deserialize;
 use std::time::Duration;
 use time::UtcOffset;
-#[cfg(feature = "web")]
-use wasmtimer::std::Instant;
 use wasmtimer::tokio::sleep;
 
+#[cfg(any(feature = "web", test))]
+mod chords;
 mod footer;
+#[cfg(feature = "web")]
+mod keys;
 mod navbar;
 use navbar::{MobileFooter, Sidebar};
 
 static CV: Asset = asset!("/assets/CV_GeorgyAndreev_042025.pdf");
-
-#[cfg(feature = "web")]
-const KEYBOARD_SCRIPT: &str = r#"
-const handler = (event) => {
-    const target = event.target;
-    const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
-    const meta = event.metaKey || event.ctrlKey;
-    if ((meta && event.key.toLowerCase() === 'k') || event.key === '/') event.preventDefault();
-    dioxus.send({ key: event.key, meta, typing });
-};
-window.addEventListener('keydown', handler);
-console.log('%c  .-"""-.\n /  o o  \\   hi, curious one.\n |   ^    |  the source is at github.com/LilDojd/gabioinf\n  \\  ---  /   try pressing / or ? on the page.\n   `-----´', 'color:#c2f9bb;font-family:monospace');
-await new Promise(() => {});
-"#;
 
 #[derive(Clone, Copy)]
 pub(crate) struct UiState {
@@ -35,14 +21,6 @@ pub(crate) struct UiState {
     pub help_open: Signal<bool>,
     pub sesh_visible: Signal<bool>,
     pub retype: Signal<u32>,
-}
-
-#[cfg(feature = "web")]
-#[derive(Deserialize)]
-struct KeyStroke {
-    key: String,
-    meta: bool,
-    typing: bool,
 }
 
 #[component]
@@ -70,76 +48,10 @@ pub fn Layout() -> Element {
     }
 
     #[cfg(feature = "web")]
-    let navigator = navigator();
-    #[cfg(feature = "web")]
-    use_effect(move || {
-        let mut ui = ui;
-        spawn(async move {
-            let mut eval = document::eval(KEYBOARD_SCRIPT);
-            let mut pending_g = None::<Instant>;
-            let mut buffer = String::new();
-            while let Ok(event) = eval.recv::<KeyStroke>().await {
-                if event.key == "Escape" {
-                    close_overlays(ui);
-                    continue;
-                }
-                if event.meta && event.key.eq_ignore_ascii_case("k") {
-                    let open = !(ui.palette_open)();
-                    ui.palette_open.set(open);
-                    ui.help_open.set(false);
-                    continue;
-                }
-                if event.typing {
-                    continue;
-                }
-                match event.key.as_str() {
-                    "/" => {
-                        ui.palette_open.set(true);
-                        ui.help_open.set(false);
-                        continue;
-                    }
-                    "?" => {
-                        let open = !(ui.help_open)();
-                        ui.help_open.set(open);
-                        ui.palette_open.set(false);
-                        continue;
-                    }
-                    "j" => {
-                        _ = document::eval("window.scrollBy({ top: 80, behavior: 'smooth' })");
-                    }
-                    "k" => {
-                        _ = document::eval("window.scrollBy({ top: -80, behavior: 'smooth' })");
-                    }
-                    _ => {}
-                }
-
-                if pending_g.is_some_and(|started| started.elapsed() <= Duration::from_millis(900))
-                {
-                    pending_g = None;
-                    if let Some(page) = Page::from_key(&event.key) {
-                        navigate(page, navigator);
-                        close_overlays(ui);
-                        continue;
-                    }
-                } else {
-                    pending_g = None;
-                }
-                if event.key == "g" {
-                    pending_g = Some(Instant::now());
-                }
-                if event.key.chars().count() == 1 {
-                    buffer.push_str(&event.key.to_lowercase());
-                    if buffer.len() > 4 {
-                        buffer.remove(0);
-                    }
-                    if buffer == "sesh" {
-                        buffer.clear();
-                        summon_sesh(ui);
-                    }
-                }
-            }
-        });
-    });
+    {
+        let navigator = navigator();
+        use_effect(move || keys::install(ui, navigator));
+    }
 
     let route: Route = use_route();
     rsx! {
@@ -195,21 +107,6 @@ enum Page {
     About,
     Guestbook,
     Void,
-}
-
-impl Page {
-    #[cfg(any(feature = "web", test))]
-    fn from_key(key: &str) -> Option<Self> {
-        match key {
-            "h" => Some(Self::Home),
-            "b" => Some(Self::Blog),
-            "p" => Some(Self::Projects),
-            "a" => Some(Self::About),
-            "g" => Some(Self::Guestbook),
-            "v" => Some(Self::Void),
-            _ => None,
-        }
-    }
 }
 
 fn navigate(page: Page, navigator: Navigator) {
@@ -413,17 +310,5 @@ fn HelpSheet() -> Element {
                 span { class: "label-mono col-span-2 mt-2 text-faint", "there are a few more. the cat knows." }
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn maps_navigation_chords() {
-        assert_eq!(Page::from_key("h"), Some(Page::Home));
-        assert_eq!(Page::from_key("v"), Some(Page::Void));
-        assert_eq!(Page::from_key("x"), None);
     }
 }
