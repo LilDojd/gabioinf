@@ -1,114 +1,94 @@
-use crate::{
-    MessageValid,
-    components::{ButtonVariant, SignaturePad, StyledButton, signature_pad::Canvas},
-};
+use crate::components::{Button, ButtonVariant, SignaturePad, signature_pad::Canvas};
 use dioxus::prelude::*;
+
 const MAX_MESSAGE_LENGTH: usize = 255;
-#[derive(Props, Debug, Clone, PartialEq)]
+
+#[derive(Props, Clone, PartialEq)]
 pub struct SignaturePopupProps {
-    on_close: EventHandler<()>,
-    on_submit: EventHandler<(String, String)>,
-    submitting: bool,
+    pub on_close: EventHandler<()>,
+    pub on_submit: EventHandler<(String, String)>,
+    pub submitting: bool,
+    #[props(default)]
+    pub submit_error: Option<String>,
 }
+
 #[component]
 pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
-    let message = use_signal(String::new);
-    let mut message_valid = use_context::<Signal<MessageValid>>();
-    let mut local_signature = use_signal(String::new);
-    let mut canvas_ref = use_signal(|| None::<Canvas>);
-    let trim_on_submit = use_callback(move |_| {
+    let mut message = use_signal(String::new);
+    let mut validation = use_signal(|| None::<String>);
+    let mut has_signature = use_signal(|| false);
+    let mut canvas = use_signal(|| None::<Canvas>);
+    let character_count = message().chars().count();
+
+    let submit = move |_| {
         if props.submitting {
             return;
         }
-        let trimmed_message = message().trim().to_string();
-        if trimmed_message.is_empty() {
-            *message_valid.write() = MessageValid(false, "Message is required".to_string());
+        let trimmed = message().trim().to_string();
+        if trimmed.is_empty() {
+            validation.set(Some("Message is required".to_string()));
             return;
         }
-        if let Some(canvas) = canvas_ref.read().as_ref() {
-            let trimmed_signature = canvas.trim_to_image();
-            props.on_submit.call((trimmed_message, trimmed_signature));
-        }
-    });
+        let signature = if has_signature() {
+            canvas
+                .read()
+                .as_ref()
+                .map_or_else(String::new, Canvas::trim_to_image)
+        } else {
+            String::new()
+        };
+        props.on_submit.call((trimmed, signature));
+    };
+
     rsx! {
-        div { class: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50",
-            div { class: "bg-nasty-black rounded-lg p-6 sm:max-w-lg w-full min-w-0 border border-onyx shadow-lg",
-                h2 { class: "text-xl font-bold mb-4 text-stone-100", "Sign guestbook" }
-                form {
-                    class: "space-y-4",
-                    onsubmit: move |evt| evt.prevent_default(),
-                    div {
-                        TextArea { message, disabled: props.submitting }
+        div {
+            class: "fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,11,13,.7)] p-5 backdrop-blur-sm",
+            onclick: move |_| {
+                if !props.submitting { props.on_close.call(()); }
+            },
+            div {
+                class: "w-full max-w-lg rounded-md border border-border-strong bg-surface p-5 shadow-[0_20px_60px_rgba(0,0,0,.5)]",
+                onclick: move |event| event.stop_propagation(),
+                h2 { class: "heading-casual m-0 mb-4 text-xl", "sign guestbook" }
+                form { class: "flex flex-col gap-4", onsubmit: move |event| event.prevent_default(),
+                    label { class: "label-mono flex flex-col gap-2",
+                        "leave a message"
+                        div { class: "relative",
+                            textarea {
+                                class: if validation.read().is_some() { "prose-font min-h-24 w-full resize-y rounded-md border border-mars bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint focus:border-mars" } else { "prose-font min-h-24 w-full resize-y rounded-md border border-card bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint focus:border-accent" },
+                                placeholder: "wow, you are the coolest dude i have ever seen...",
+                                maxlength: MAX_MESSAGE_LENGTH,
+                                disabled: props.submitting,
+                                value: message,
+                                oninput: move |event| {
+                                    let value = event.value();
+                                    if value.chars().count() <= MAX_MESSAGE_LENGTH {
+                                        message.set(value);
+                                        validation.set(None);
+                                    }
+                                },
+                            }
+                            span { class: "absolute right-2 bottom-1 text-[11px] text-label", "{character_count} / {MAX_MESSAGE_LENGTH}" }
+                        }
                     }
-                    div {
-                        label { class: "block text-stone-400 mb-2", "sign here" }
+                    if let Some(error) = validation.read().as_ref().or(props.submit_error.as_ref()) {
+                        span { role: "alert", class: "label-mono text-mars", {error.to_string()} }
+                    }
+                    label { class: "label-mono flex flex-col gap-2",
+                        "sign here (optional)"
                         SignaturePad {
-                            class: "border bg-jet border-onyx w-full h-48 rounded-md",
+                            class: "h-48 w-full rounded-md border border-card bg-code",
                             container_class: "w-full",
                             disabled: props.submitting,
-                            on_change: move |value: Option<String>| {
-                                local_signature.set(value.unwrap_or_default());
-                            },
-                            on_canvas_ready: move |canvas: Canvas| {
-                                canvas_ref.set(Some(canvas));
-                            },
+                            on_change: move |value: Option<String>| has_signature.set(value.is_some_and(|value| !value.is_empty())),
+                            on_canvas_ready: move |ready: Canvas| canvas.set(Some(ready)),
                         }
                     }
-                    div { class: "flex justify-end space-x-4",
-                        StyledButton {
-                            text: "Cancel",
-                            variant: ButtonVariant::Secondary,
-                            disabled: props.submitting,
-                            onclick: move |_| props.on_close.call(()),
-                        }
-                        StyledButton {
-                            text: if props.submitting { "Signing…" } else { "Sign" },
-                            variant: ButtonVariant::Primary,
-                            disabled: props.submitting,
-                            onclick: trim_on_submit,
-                        }
+                    div { class: "flex justify-end gap-2",
+                        Button { variant: ButtonVariant::Secondary, disabled: props.submitting, onclick: move |_| props.on_close.call(()), "cancel" }
+                        Button { disabled: props.submitting, onclick: submit, if props.submitting { "signing…" } else { "sign" } }
                     }
                 }
-            }
-        }
-    }
-}
-#[component]
-fn TextArea(mut message: Signal<String>, disabled: bool) -> Element {
-    let mut char_count = use_signal(|| 0);
-    let mut message_valid = use_context::<Signal<MessageValid>>();
-    let update_message = move |evt: Event<FormData>| {
-        let new_message = evt.value();
-        match new_message.chars().count() {
-            n if n <= MAX_MESSAGE_LENGTH => {
-                message.set(new_message);
-                char_count.set(n);
-                *message_valid.write() = MessageValid(true, String::new());
-            }
-            _ => {
-                *message_valid.write() = MessageValid(false, "Too long".to_string());
-            }
-        }
-    };
-    rsx! {
-        label { class: "block text-stone-400 mb-2", "leave a message" }
-        div { class: "relative",
-            textarea {
-                class: if message_valid().0 { "border-onyx focus:border-alien-green" } else { "border-coral focus:border-coral" },
-                class: "w-full p-2 pb-6 placeholder:italic placeholder:text-[#434343] rounded-md bg-jet text-stone-100 border focus:outline-none",
-                placeholder: "wow, you are the coolest dude i have ever seen...",
-                rows: "3",
-                maxlength: MAX_MESSAGE_LENGTH.to_string(),
-                disabled,
-                oninput: update_message,
-            }
-            span {
-                class: "absolute bottom-2 right-2 text-xs",
-                class: if char_count() == MAX_MESSAGE_LENGTH { "text-coral" } else { "text-stone-400" },
-                "{char_count} / {MAX_MESSAGE_LENGTH}"
-            }
-            if !message_valid().0 {
-                span { class: "absolute bottom-2 left-2 text-coral text-xs", "{message_valid.read().1}" }
             }
         }
     }

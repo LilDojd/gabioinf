@@ -44,13 +44,13 @@ pub fn Comments(comment_id: &'static str) -> Element {
 
     rsx! {
         section {
-            class: "mt-12 border-t border-onyx pt-8",
+            class: "mt-8 border-t border-line pt-7",
             aria_labelledby: "comments-heading",
-            h2 { id: "comments-heading", class: "text-2xl font-bold text-stone-100", "Comments" }
-            p { class: "mb-6 mt-3 text-sm text-stone-400",
+            h2 { id: "comments-heading", class: "label-mono m-0", "// comments" }
+            p { class: "prose-font mb-6 mt-3 text-base text-muted",
                 "Comments are public and hosted in "
                 a {
-                    class: "alien-link",
+                    class: "link-dashed",
                     href: DISCUSSIONS_URL,
                     target: "_blank",
                     rel: "noopener noreferrer",
@@ -61,7 +61,7 @@ pub fn Comments(comment_id: &'static str) -> Element {
             div {
                 key: "{comment_id}",
                 id: "giscus-comments",
-                class: "giscus min-h-24",
+                class: "giscus min-h-24 rounded-md",
                 aria_label: "Public article comments",
                 "data-comment-id": comment_id,
                 "data-repo": "LilDojd/gabioinf",

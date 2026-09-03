@@ -1,7 +1,6 @@
 use crate::{
-    MessageValid,
     auth::AuthState,
-    components::{ButtonVariant, IconVariant, SignatureList, SignaturePopup, StyledButton},
+    components::{Button, ButtonVariant, SignatureList, SignaturePopup},
     shared::server_fns,
 };
 use dioxus::prelude::*;
@@ -25,166 +24,108 @@ pub fn Guestbook() -> Element {
 
 #[component]
 fn GuestbookContent() -> Element {
-    let mut message_valid = use_context::<Signal<MessageValid>>();
-
     let mut auth_state = use_context::<dioxus::fullstack::Loader<AuthState>>();
-    let mut show_signature_pad = use_signal(|| false);
+    let mut show_popup = use_signal(|| false);
     let mut submitting = use_signal(|| false);
-    let close_popup = move |_| {
-        if !submitting() {
-            show_signature_pad.set(false);
-        }
-    };
+    let mut submit_error = use_signal(|| None::<String>);
+    let action_error = use_signal(|| None::<String>);
+    let count = use_signal(|| 0usize);
 
     rsx! {
-        div { class: "container mx-auto px-4 py-8",
-            article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
-                h1 { class: "text-3xl font-bold mb-6", "sign my guestbook" }
-            }
-            div { class: "mb-6 flex w-full justify-between items-center",
-                {
+        section { class: "flex flex-col gap-8",
+            header { class: "flex flex-col gap-3.5",
+                span { class: "label-mono", "// guestbook · {count} signatures" }
+                h1 { class: "heading-casual m-0 text-[30px] leading-[1.2]", "sign my guestbook" }
+                p { class: "prose-font m-0 text-pretty text-lg text-muted",
+                    "Leave a note and a doodle. Signing in with GitHub keeps the bots out; nothing else is stored."
+                }
+                div { class: "flex flex-wrap gap-2",
                     match &*auth_state.read() {
-                        AuthState::Authenticated(user_state) => {
-                            match &user_state.entry {
-                                None => rsx! {
-                                    StyledButton {
-                                        text: "Sign Guestbook",
-                                        variant: ButtonVariant::Primary,
-                                        onclick: move |_| {
-                                            *message_valid.write() = MessageValid(true, String::new());
-                                            show_signature_pad.set(true);
-                                        },
-                                    }
-                                    StyledButton {
-                                        text: "Sign out",
-                                        variant: ButtonVariant::Secondary,
-                                        onclick: move |_| {
-                                            spawn(async move {
-                                                server_fns::logout().await.unwrap();
-                                                auth_state.set(AuthState::Unauthenticated);
-                                            });
-                                        },
-                                        icon: IconVariant::Rsx(rsx! {
-                                            svg {
-                                                fill: "none",
-                                                height: "20",
-                                                view_box: "0 0 24 24",
-                                                width: "20",
-                                                xmlns: "http://www.w3.org/2000/svg",
-                                                path {
-                                                    stroke: "#f5f5f4",
-                                                    stroke_width: "2",
-                                                    d: "M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8",
-                                                    stroke_linecap: "round",
-                                                    stroke_linejoin: "round",
-                                                }
-                                            }
-                                        }),
-                                    }
-                                },
-                                Some(_signature) => rsx! {
-                                    StyledButton {
-                                        text: "Sign out",
-                                        variant: ButtonVariant::Secondary,
-                                        onclick: move |_| {
-                                            spawn(async move {
-                                                server_fns::logout().await.unwrap();
-                                                auth_state.set(AuthState::Unauthenticated);
-                                            });
-                                        },
-                                        icon: IconVariant::Rsx(rsx! {
-                                            svg {
-                                                fill: "none",
-                                                height: "20",
-                                                view_box: "0 0 24 24",
-                                                width: "20",
-                                                xmlns: "http://www.w3.org/2000/svg",
-                                                path {
-                                                    stroke: "#f5f5f4",
-                                                    stroke_width: "2",
-                                                    d: "M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8",
-                                                    stroke_linecap: "round",
-                                                    stroke_linejoin: "round",
-                                                }
-                                            }
-                                        }),
-                                    }
-                                },
-                            }
-                        }
-                        _ => rsx! {
-                            a { href: "/v1/login?next=/guestbook",
-                                StyledButton {
-                                    text: "Sign in with GitHub",
-                                    variant: ButtonVariant::Primary,
-                                    onclick: |_| (),
-                                    icon: IconVariant::Rsx(rsx! {
-                                        svg {
-                                            xmlns: "http://www.w3.org/2000/svg",
-                                            width: "20",
-                                            height: "20",
-                                            view_box: "0 0 98 98",
-                                            path {
-                                                d: "M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z",
-                                                clip_rule: "evenodd",
-                                                fill_rule: "evenodd",
-                                                fill: "#fff",
-                                            }
-                                        }
-                                    }),
-                                }
+                        AuthState::Authenticated(user) if user.entry.is_none() => rsx! {
+                            Button { onclick: move |_| { submit_error.set(None); show_popup.set(true); }, "sign guestbook" }
+                            SignOutButton { auth_state, action_error }
+                        },
+                        AuthState::Authenticated(_) => rsx! { SignOutButton { auth_state, action_error } },
+                        AuthState::Unauthenticated => rsx! {
+                            a { href: "/v1/login?next=/guestbook", class: "btn-primary",
+                                GithubMark {}
+                                "sign in with github"
                             }
                         },
                     }
                 }
-            }
-            {
-                if *show_signature_pad.read() {
-                    rsx! {
-                        SignaturePopup {
-                            on_close: close_popup,
-                            submitting: submitting(),
-                            on_submit: move |(message, signature): (String, String)| async move {
-                                if submitting() {
-                                    return;
-                                }
-                                if !matches!(&*auth_state.read(), AuthState::Authenticated(_)) {
-                                    show_signature_pad.set(false);
-                                    return;
-                                }
-                                submitting.set(true);
-                                *message_valid.write() = MessageValid(true, String::new());
-                                let entry_request = server_fns::CreateEntryRequest {
-                                    message,
-                                    signature: if signature.is_empty() { None } else { Some(signature) },
-                                };
-                                dioxus_logger::tracing::debug!("Submitting signature");
-                                match server_fns::submit_signature(entry_request).await {
-                                    Ok(entry) => {
-                                        if let AuthState::Authenticated(user_state) = &mut *auth_state.write() {
-                                            user_state.entry = Some(entry);
-                                        }
-                                        show_signature_pad.set(false);
-                                    }
-                                    Err(error) => {
-                                        *message_valid.write() = MessageValid(
-                                            false,
-                                            server_error_message(&error, "Could not sign the guestbook"),
-                                        );
-                                        dioxus_logger::tracing::error!(
-                                            "Error submitting signature: {error:?}"
-                                        );
-                                    }
-                                }
-                                submitting.set(false);
-                            },
-                        }
-                    }
-                } else {
-                    rsx! {}
+                if let Some(error) = action_error.read().as_ref() {
+                    span { role: "alert", class: "label-mono text-mars", {error.to_string()} }
                 }
             }
-            SignatureList {}
+            if show_popup() {
+                SignaturePopup {
+                    submitting: submitting(),
+                    submit_error: submit_error(),
+                    on_close: move |_| {
+                        if !submitting() { show_popup.set(false); }
+                    },
+                    on_submit: move |(message, signature): (String, String)| async move {
+                        if submitting() || !matches!(&*auth_state.read(), AuthState::Authenticated(_)) {
+                            return;
+                        }
+                        submitting.set(true);
+                        submit_error.set(None);
+                        let request = server_fns::CreateEntryRequest {
+                            message,
+                            signature: (!signature.is_empty()).then_some(signature),
+                        };
+                        match server_fns::submit_signature(request).await {
+                            Ok(entry) => {
+                                if let AuthState::Authenticated(user) = &mut *auth_state.write() {
+                                    user.entry = Some(entry);
+                                }
+                                show_popup.set(false);
+                            }
+                            Err(error) => {
+                                dioxus_logger::tracing::error!("Error submitting signature: {error:?}");
+                                submit_error.set(Some(server_error_message(&error, "Could not sign the guestbook")));
+                            }
+                        }
+                        submitting.set(false);
+                    },
+                }
+            }
+            SignatureList { count }
+        }
+    }
+}
+
+#[component]
+fn SignOutButton(
+    mut auth_state: dioxus::fullstack::Loader<AuthState>,
+    mut action_error: Signal<Option<String>>,
+) -> Element {
+    rsx! {
+        Button {
+            variant: ButtonVariant::Secondary,
+            onclick: move |_| {
+                action_error.set(None);
+                spawn(async move {
+                    match server_fns::logout().await {
+                        Ok(()) => auth_state.set(AuthState::Unauthenticated),
+                        Err(error) => {
+                            dioxus_logger::tracing::error!("Could not sign out: {error:?}");
+                            action_error.set(Some("Could not sign out. Please retry.".to_string()));
+                        }
+                    }
+                });
+            },
+            "sign out"
+        }
+    }
+}
+
+#[component]
+fn GithubMark() -> Element {
+    rsx! {
+        svg { width: "16", height: "16", view_box: "0 0 98 98", "aria-hidden": "true",
+            path { fill: "currentColor", fill_rule: "evenodd", clip_rule: "evenodd", d: "M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z" }
         }
     }
 }
@@ -203,17 +144,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn shows_safe_server_validation_errors() {
-        let error = server_fns::ServerError::Validation("Message is required".to_string());
+    fn exposes_validation_but_hides_internal_errors() {
         assert_eq!(
-            server_error_message(&error, "fallback"),
+            server_error_message(
+                &server_fns::ServerError::Validation("Message is required".to_string()),
+                "fallback"
+            ),
             "Message is required"
         );
-    }
-
-    #[test]
-    fn hides_internal_server_errors() {
-        let error = server_fns::ServerError::Internal;
-        assert_eq!(server_error_message(&error, "Try again"), "Try again");
+        assert_eq!(
+            server_error_message(&server_fns::ServerError::Internal, "Try again"),
+            "Try again"
+        );
     }
 }

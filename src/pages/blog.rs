@@ -1,71 +1,52 @@
 use crate::{
     Route,
-    blog::{Post, PostBlock, find_post, published_posts},
+    blog::{PostBlock, find_post, published_posts},
     components::{BlogVideo, Comments, GcCalculator},
 };
 use dioxus::prelude::*;
 use time::{Date, macros::format_description};
 
-const DISPLAY_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
-    format_description!("[day padding:none] [month repr:long] [year]");
+const POST_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
+    format_description!("[day padding:none] [month repr:short] [year]");
+const ROW_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
+    format_description!("[day padding:none] [month repr:short]");
 
 #[component]
 pub fn Blog() -> Element {
     let posts = published_posts().collect::<Vec<_>>();
+    let mut years = posts
+        .iter()
+        .map(|post| post.published.year())
+        .collect::<Vec<_>>();
+    years.dedup();
 
     rsx! {
-        main { class: "w-full",
-            header { class: "mb-12 max-w-2xl",
-                div { class: "flex flex-wrap items-baseline justify-between gap-4",
-                    h1 { class: "text-4xl font-bold tracking-tight text-stone-100", "Blog" }
-                    a {
-                        class: "alien-link-muted text-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-alien-green",
-                        href: "/feed.xml",
-                        "Atom feed"
-                    }
-                }
-                p { class: "mt-4 text-lg leading-8 text-stone-300",
-                    "Notes about bioinformatics, Rust, and useful experiments."
-                }
+        section { class: "flex flex-col gap-9",
+            header { class: "flex flex-col gap-2",
+                span { class: "label-mono", "// blog" }
+                h1 { class: "heading-casual m-0 text-[30px] leading-[1.2]", "random rambles" }
             }
-
             if posts.is_empty() {
-                p { class: "rounded-lg border border-onyx bg-jet p-6 text-stone-300",
-                    "No posts published yet. Check back soon."
-                }
-            } else {
-                ol { class: "space-y-6",
-                    for post in posts {
-                        BlogPostSummary { key: "{post.slug}", post }
-                    }
-                }
+                p { class: "prose-font m-0 text-lg text-muted", "No rambles yet. Check back soon." }
             }
-        }
-    }
-}
-
-#[component]
-fn BlogPostSummary(post: &'static Post) -> Element {
-    rsx! {
-        li {
-            article {
-                class: "group rounded-lg border border-onyx bg-jet p-6 transition-colors hover:border-alien-green focus-within:border-alien-green",
-                h2 { class: "text-2xl font-semibold text-stone-100",
-                    Link {
-                        class: "rounded-sm transition-colors group-hover:text-alien-green focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-alien-green",
-                        to: Route::BlogPost { slug: post.slug.to_string() },
-                        {post.title}
+            for year in years {
+                div { class: "grid grid-cols-[60px_1fr] items-start gap-4 min-[760px]:grid-cols-[72px_1fr]",
+                    span { class: "label-mono pt-3", "{year}" }
+                    div { class: "flex flex-col",
+                        for post in posts.iter().copied().filter(|post| post.published.year() == year) {
+                            Link {
+                                key: "{post.slug}",
+                                to: Route::BlogPost { slug: post.slug.to_string() },
+                                class: "grid grid-cols-[1fr_auto] items-baseline gap-4 border-b border-line py-2.5 text-text no-underline hover:text-accent",
+                                span { class: "flex flex-wrap items-baseline gap-2.5",
+                                    span { class: "text-base", "{post.title}" }
+                                    PostTags { tags: post.tags }
+                                }
+                                time { class: "label-mono whitespace-nowrap", datetime: post.published.to_string(), "{row_date(post.published)}" }
+                            }
+                        }
                     }
                 }
-                p { class: "mt-2 text-sm text-stone-400",
-                    time {
-                        datetime: post.published.to_string(),
-                        {display_date(post.published)}
-                    }
-                    " · {post.read_minutes} min read"
-                }
-                p { class: "mt-4 leading-7 text-stone-300", {post.description} }
-                PostTags { tags: post.tags }
             }
         }
     }
@@ -74,83 +55,57 @@ fn BlogPostSummary(post: &'static Post) -> Element {
 #[component]
 pub fn BlogPost(slug: String) -> Element {
     let Some(post) = find_post(&slug) else {
-        return rsx! {
-            crate::pages::NotFound { route: vec!["blog".to_string(), slug] }
-        };
+        return rsx! { crate::pages::NotFound { route: vec!["blog".to_string(), slug] } };
     };
 
     rsx! {
-        main { class: "w-full",
-            article { class: "mx-auto max-w-3xl",
-                header { class: "mb-10 border-b border-onyx pb-8",
-                    Link {
-                        class: "alien-link-muted inline-block rounded-sm text-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-alien-green",
-                        to: Route::Blog {},
-                        "← All posts"
-                    }
-                    h1 { class: "mt-5 text-4xl font-bold leading-tight tracking-tight text-stone-100 md:text-5xl",
-                        {post.title}
-                    }
-                    p { class: "mt-5 text-lg leading-8 text-stone-300", {post.description} }
-                    p { class: "mt-5 text-sm text-stone-400",
-                        "Published "
-                        time {
-                            datetime: post.published.to_string(),
-                            {display_date(post.published)}
-                        }
-                        if let Some(updated) = post.updated.filter(|updated| *updated > post.published) {
-                            " · Updated "
-                            time {
-                                datetime: updated.to_string(),
-                                {display_date(updated)}
-                            }
-                        }
+        article { class: "flex flex-col gap-7",
+            Link { to: Route::Blog {}, class: "label-mono w-fit no-underline hover:text-accent", "← all rambles" }
+            header { class: "flex flex-col gap-2.5",
+                h1 { class: "heading-casual m-0 text-pretty text-[34px] leading-[1.15] tracking-[-.015em]", "{post.title}" }
+                div { class: "flex flex-wrap items-center gap-3",
+                    span { class: "label-mono",
+                        time { datetime: post.published.to_string(), "{post_date(post.published)}" }
                         " · {post.read_minutes} min read"
                     }
                     PostTags { tags: post.tags }
                 }
-                div {
-                    for block in post.body {
-                        match block {
-                            PostBlock::Html(html) => rsx! {
-                                // HTML is generated from validated Markdown at build time.
-                                div {
-                                    class: "blog-markdown prose prose-invert prose-stone max-w-none",
-                                    dangerous_inner_html: *html,
-                                }
-                            },
-                            PostBlock::GcCalculator => rsx! { GcCalculator {} },
-                            PostBlock::Video { src, title } => rsx! {
-                                BlogVideo { src: *src, title: *title }
-                            },
-                        }
+            }
+            div { class: "post-body",
+                for block in post.body {
+                    match block {
+                        PostBlock::Html(html) => rsx! { div { dangerous_inner_html: *html } },
+                        PostBlock::GcCalculator => rsx! { GcCalculator {} },
+                        PostBlock::Video { src, title } => rsx! { BlogVideo { src: *src, title: *title } },
                     }
                 }
-                Comments { comment_id: post.slug }
             }
+            Comments { comment_id: post.slug }
         }
     }
 }
 
 #[component]
 fn PostTags(tags: &'static [&'static str]) -> Element {
-    if tags.is_empty() {
-        return rsx! {};
-    }
-
     rsx! {
-        ul { class: "mt-5 flex flex-wrap gap-2", aria_label: "Tags",
-            for tag in tags {
-                li {
-                    class: "rounded-full border border-onyx bg-nasty-black px-3 py-1 text-xs text-stone-300",
-                    {*tag}
+        if !tags.is_empty() {
+            ul { class: "flex list-none flex-wrap gap-1.5 p-0", aria_label: "Tags",
+                for tag in tags {
+                    li { class: "tag", {tag.to_string()} }
                 }
             }
         }
     }
 }
 
-fn display_date(date: Date) -> String {
-    date.format(DISPLAY_DATE)
+fn post_date(date: Date) -> String {
+    date.format(POST_DATE)
         .expect("the static date format is valid")
+        .to_lowercase()
+}
+
+fn row_date(date: Date) -> String {
+    date.format(ROW_DATE)
+        .expect("the static date format is valid")
+        .to_lowercase()
 }

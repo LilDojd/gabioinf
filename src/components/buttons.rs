@@ -1,19 +1,33 @@
 use dioxus::prelude::*;
-#[derive(Props, Clone, Debug, PartialEq)]
-pub struct CloseButtonProps {
-    pub layout: String,
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum ButtonVariant {
+    #[default]
+    Primary,
+    Secondary,
+}
+
+#[derive(Props, Clone, PartialEq)]
+pub struct ButtonProps {
+    pub children: Element,
     pub onclick: EventHandler<MouseEvent>,
     #[props(default)]
+    pub variant: ButtonVariant,
+    #[props(default)]
     pub disabled: bool,
+    #[props(default = "button".to_string())]
+    pub r#type: String,
 }
+
 #[component]
-pub fn CloseButton(props: CloseButtonProps) -> Element {
+pub fn Button(props: ButtonProps) -> Element {
     rsx! {
         button {
-            class: "{props.layout} text-stone-400 hover:text-coral flex items-center justify-center rounded-lg border border-stone-400 hover:border-coral transition-colors duration-200 leading-none disabled:cursor-not-allowed disabled:opacity-60",
+            class: match props.variant { ButtonVariant::Primary => "btn-primary", ButtonVariant::Secondary => "btn-secondary" },
+            r#type: props.r#type,
             disabled: props.disabled,
-            onclick: move |evt| props.onclick.call(evt),
-            span { class: "relative", style: "top: -1px;", "×" }
+            onclick: move |event| props.onclick.call(event),
+            {props.children}
         }
     }
 }

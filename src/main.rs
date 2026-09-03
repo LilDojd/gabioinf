@@ -10,14 +10,11 @@ mod blog;
 mod components;
 #[cfg(feature = "server")]
 mod hide;
-mod markdown;
 mod pages;
 pub mod shared;
-use components::layout::NavFooter;
+use components::layout::Layout;
 use pages::{AboutMe, Blog, BlogPost, Guestbook, Home, NotFound, Projects};
 static STYLES: Asset = asset!("/assets/styles");
-#[derive(Clone, Debug)]
-pub struct MessageValid(bool, String);
 fn main() -> anyhow::Result<()> {
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     let log_level = Level::from_str(&log_level).unwrap_or(Level::INFO);
@@ -42,7 +39,7 @@ fn main() -> anyhow::Result<()> {
 }
 #[derive(Routable, PartialEq, Clone)]
 enum Route {
-    #[layout(NavFooter)]
+    #[layout(Layout)]
     #[route("/")]
     Home {},
     #[route("/blog")]
@@ -201,16 +198,12 @@ fn DocumentMetadata() -> Element {
 }
 
 fn App() -> Element {
-    use_context_provider(|| Signal::new(MessageValid(true, String::new())));
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Meta { charset: "UTF-8" }
         document::Link { rel: "icon", href: asset!("/assets/favicon.ico") }
+        document::Stylesheet { href: "{STYLES}/fonts.css" }
         document::Stylesheet { href: asset!("assets/tailwind.css") }
-        document::Stylesheet { href: "{STYLES}/alien_links.css" }
-        document::Stylesheet { href: "{STYLES}/main.css" }
-        document::Stylesheet { href: "{STYLES}/navbar.css" }
-        document::Stylesheet { href: "{STYLES}/blog.css" }
         ErrorBoundary {
             handle_error: render_error,
             AppRouter {}
@@ -230,22 +223,21 @@ fn render_error(errors: ErrorContext) -> Element {
     FullstackContext::commit_error_status(error.clone());
 
     rsx! {
-        div { class: "container mx-auto px-4 py-8",
-            article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg mb-8",
-                h1 { class: "text-3xl font-bold mb-6", "Error" }
-                p { class: "text-lg", "An error occurred." }
-                p { class: "text-lg",
-                    code { class: "text-red-500", "{error}" }
+        article { class: "flex flex-col gap-5",
+            span { class: "label-mono", "// error" }
+            h1 { class: "heading-casual m-0 text-[34px] leading-[1.15]", "Something went wrong." }
+            p { class: "prose-font m-0 text-lg text-muted", "An unexpected error occurred." }
+            code { class: "overflow-x-auto rounded-md border border-card bg-code p-4 text-sm text-muted", "{error}" }
+            p { class: "prose-font m-0 text-lg text-muted",
+                "If you think this is a mistake, please "
+                a {
+                    href: "https://github.com/LilDojd/gabioinf/issues/new",
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    class: "link-dashed",
+                    "open an issue on GitHub"
                 }
-                p { class: "text-lg",
-                    "If you think this is a mistake, please "
-                    a {
-                        href: "https://github.com/LilDojd/gabioinf/issues/new",
-                        target: "_blank",
-                        "open an issue on GitHub"
-                    }
-                    "."
-                }
+                "."
             }
         }
     }
@@ -266,16 +258,9 @@ mod ssr_tests {
             .status()
     }
 
-    fn not_found_app() -> Element {
-        rsx! { NotFound { route: vec!["missing".to_string()] } }
-    }
-
     #[tokio::test]
     async fn not_found_route_returns_404() {
-        assert_eq!(
-            render_status(not_found_app, "/missing").await,
-            StatusCode::NOT_FOUND
-        );
+        assert_eq!(render_status(App, "/missing").await, StatusCode::NOT_FOUND);
     }
 
     #[tokio::test]

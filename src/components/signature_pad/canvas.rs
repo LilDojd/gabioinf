@@ -157,6 +157,10 @@ impl Canvas {
         self.current_line.borrow_mut().clear();
         self.draw_lines();
     }
+    pub fn is_empty(&self) -> bool {
+        self.lines.borrow().is_empty() && self.current_line.borrow().is_empty()
+    }
+
     pub fn get_signature_data(&self) -> String {
         let data_url = self.canvas.to_data_url().unwrap();
         data_url.split(',').nth(1).unwrap_or("").to_string()

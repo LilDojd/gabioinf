@@ -45,11 +45,10 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
         let _ = event;
     });
     let on_signature_change = move || {
-        if let Some(c) = canvas.read().as_ref() {
-            let signature_data = c.get_signature_data();
-            if let Some(on_change) = &props.on_change {
-                on_change.call(Some(signature_data));
-            }
+        if let Some(c) = canvas.read().as_ref()
+            && let Some(on_change) = &props.on_change
+        {
+            on_change.call((!c.is_empty()).then(|| c.get_signature_data()));
         }
     };
     let on_pointer_down = move |event: PointerEvent| {
@@ -89,9 +88,9 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                 onpointerup: on_pointer_up,
                 onresize: on_resize,
             }
-            div { class: "absolute bottom-4 left-4 flex gap-2",
+            div { class: "absolute bottom-3 left-3 flex gap-2",
                 button {
-                    class: "font-sans text-sm bg-jet text-stone-300 px-2 py-1 rounded-md",
+                    class: "btn-secondary bg-surface px-2 py-1 text-xs",
                     r#type: "button",
                     onclick: move |_| {
                         if let Some(c) = canvas.read().as_ref() {
@@ -99,12 +98,12 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                             on_signature_change();
                         }
                     },
-                    "Undo"
+                    "undo"
                 }
             }
-            div { class: "absolute bottom-4 right-4 flex gap-2",
+            div { class: "absolute bottom-3 right-3 flex gap-2",
                 button {
-                    class: "font-sans text-sm bg-jet text-stone-300 px-2 py-1 rounded-md",
+                    class: "btn-secondary bg-surface px-2 py-1 text-xs",
                     r#type: "button",
                     onclick: move |_| {
                         if let Some(c) = canvas.read().as_ref() {
@@ -112,7 +111,7 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                             on_signature_change();
                         }
                     },
-                    "Clear"
+                    "clear"
                 }
             }
         }

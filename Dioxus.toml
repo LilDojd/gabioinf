@@ -13,7 +13,7 @@ tailwind_output = "assets/tailwind.css"
 [web.app]
 
 # HTML title tag content
-title = "gabioinf"
+title = "George Andreev"
 
 [web.watcher]
 

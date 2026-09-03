@@ -1,15 +1,18 @@
 use crate::auth::AuthState;
-use crate::components::{ButtonVariant, Card, CardType, CloseButton, Loading, StyledButton};
+use crate::components::{Button, ButtonVariant};
 use crate::shared::{
     models::{GuestbookEntry, GuestbookId},
     server_fns,
 };
 use dioxus::prelude::*;
+use time::macros::format_description;
 
 const SIGNATURES_PER_PAGE: usize = 10;
+const ENTRY_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
+    format_description!("[day padding:none] [month repr:short] [year]");
 
 #[component]
-pub fn SignatureList() -> Element {
+pub fn SignatureList(mut count: Signal<usize>) -> Element {
     let mut auth_state = use_context::<dioxus::fullstack::Loader<AuthState>>();
     let mut entries = use_signal(Vec::<GuestbookEntry>::new);
     let mut next_cursor = use_signal(|| None);
@@ -22,9 +25,17 @@ pub fn SignatureList() -> Element {
 
     let user_entry = match &*auth_state.read() {
         AuthState::Authenticated(user_state) => user_state.entry.clone(),
-        _ => None,
+        AuthState::Unauthenticated => None,
     };
     let user_entry_id = user_entry.as_ref().map(|entry| entry.id);
+
+    use_effect(move || {
+        let has_user_entry = matches!(
+            &*auth_state.read(),
+            AuthState::Authenticated(user) if user.entry.is_some()
+        );
+        count.set(entries.read().len() + usize::from(has_user_entry));
+    });
 
     let load_more = use_callback(move |_| {
         if loading() || (loaded_once() && next_cursor().is_none()) {
@@ -59,94 +70,65 @@ pub fn SignatureList() -> Element {
 
     rsx! {
         if let Some(error) = delete_error.read().as_ref() {
-            div {
-                role: "alert",
-                class: "mb-4 flex items-center gap-3 text-coral",
-                span { {error.clone()} }
-            }
+            div { role: "alert", class: "label-mono text-mars", {error.to_string()} }
         }
-        div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+        div { class: "grid grid-cols-1 gap-2.5 min-[760px]:grid-cols-2",
             if let Some(user_entry) = user_entry {
                 {
                     let id = user_entry.id;
                     rsx! {
-                        Card {
-                            card_type: CardType::Signature {
-                                entry: user_entry,
-                                close_button: rsx! {
-                                    CloseButton {
-                                        layout: "absolute top-2 right-2 w-6 h-6",
-                                        disabled: deleting(),
-                                        onclick: move |_| {
-                                            if deleting() {
-                                                return;
-                                            }
-                                            deleting.set(true);
-                                            delete_error.set(None);
-                                            spawn(async move {
-                                                match server_fns::delete_signature(id).await {
-                                                    Ok(()) => {
-                                                        deleted_entry_id.set(Some(id));
-                                                        entries.write().retain(|entry| entry.id != id);
-                                                        if let AuthState::Authenticated(user_state) =
-                                                            &mut *auth_state.write()
-                                                        {
-                                                            user_state.entry = None;
-                                                        }
-                                                    }
-                                                    Err(error) => {
-                                                        dioxus_logger::tracing::error!(
-                                                            "Error deleting signature: {error:?}"
-                                                        );
-                                                        delete_error.set(Some(
-                                                            "Could not delete your signature. Retry with the × button."
-                                                                .to_string(),
-                                                        ));
+                        SignatureCard {
+                            entry: user_entry,
+                            action: Some(rsx! {
+                                button {
+                                    class: "absolute top-2 right-2 flex size-6 items-center justify-center rounded-full border border-border-strong text-label hover:border-mars hover:text-mars disabled:opacity-50",
+                                    aria_label: "Delete your guestbook entry",
+                                    disabled: deleting(),
+                                    onclick: move |_| {
+                                        if deleting() { return; }
+                                        deleting.set(true);
+                                        delete_error.set(None);
+                                        spawn(async move {
+                                            match server_fns::delete_signature(id).await {
+                                                Ok(()) => {
+                                                    deleted_entry_id.set(Some(id));
+                                                    entries.write().retain(|entry| entry.id != id);
+                                                    if let AuthState::Authenticated(user_state) = &mut *auth_state.write() {
+                                                        user_state.entry = None;
                                                     }
                                                 }
-                                                deleting.set(false);
-                                            });
-                                        },
-                                    }
-                                    if deleting() {
-                                        span {
-                                            class: "absolute top-3 right-10 text-xs text-stone-400",
-                                            "Deleting…"
-                                        }
-                                    }
-                                },
-                            },
+                                                Err(error) => {
+                                                    dioxus_logger::tracing::error!("Error deleting signature: {error:?}");
+                                                    delete_error.set(Some("Could not delete your signature. Retry with the × button.".to_string()));
+                                                }
+                                            }
+                                            deleting.set(false);
+                                        });
+                                    },
+                                    "×"
+                                }
+                            })
                         }
                     }
                 }
             }
             for entry in entries.read().iter().filter(|entry| Some(entry.id) != user_entry_id) {
-                Card {
-                    key: "{entry.id.as_value()}",
-                    card_type: CardType::Signature {
-                        entry: entry.clone(),
-                        close_button: rsx! {},
-                    },
-                }
+                SignatureCard { key: "{entry.id.as_value()}", entry: entry.clone() }
             }
             if loading() && !loaded_once() {
-                for _ in 0..SIGNATURES_PER_PAGE - usize::from(user_entry_id.is_some()) {
-                    Card { card_type: CardType::Skeleton }
+                for index in 0..SIGNATURES_PER_PAGE - usize::from(user_entry_id.is_some()) {
+                    div { key: "{index}", class: "card h-48 animate-pulse p-4",
+                        div { class: "h-4 w-3/4 rounded bg-card" }
+                    }
                 }
             }
         }
         if loading() && loaded_once() {
-            Loading {}
+            span { class: "label-mono block py-5 text-center", "loading…" }
         } else if let Some(error) = load_error.read().as_ref() {
-            div {
-                role: "alert",
-                class: "mt-6 flex flex-col items-center gap-3 text-coral",
-                span { {error.clone()} }
-                StyledButton {
-                    text: "Retry",
-                    variant: ButtonVariant::Secondary,
-                    onclick: move |_| load_more.call(()),
-                }
+            div { role: "alert", class: "flex flex-col items-center gap-3 py-5 text-mars",
+                span { class: "label-mono text-mars", {error.to_string()} }
+                Button { variant: ButtonVariant::Secondary, onclick: move |_| load_more.call(()), "retry" }
             }
         } else if loaded_once() && next_cursor.read().is_some() {
             div {
@@ -157,6 +139,42 @@ pub fn SignatureList() -> Element {
                         load_more.call(());
                     }
                 },
+            }
+        }
+    }
+}
+
+#[derive(Props, Clone, PartialEq)]
+struct SignatureCardProps {
+    entry: GuestbookEntry,
+    #[props(default)]
+    action: Option<Element>,
+}
+
+#[component]
+fn SignatureCard(props: SignatureCardProps) -> Element {
+    let date = props
+        .entry
+        .created_at
+        .date()
+        .format(ENTRY_DATE)
+        .expect("the static date format is valid")
+        .to_lowercase();
+    rsx! {
+        article { class: "card relative flex h-full flex-col gap-3.5 p-4",
+            if let Some(action) = props.action { {action} }
+            p { class: "prose-font m-0 pr-4 text-pretty text-[17px] leading-[1.4] text-text", "{props.entry.message}" }
+            if let Some(signature) = props.entry.signature.as_deref().filter(|signature| !signature.is_empty()) {
+                div { class: "flex h-[72px] items-center justify-center overflow-hidden rounded-sm",
+                    img { class: "max-h-full max-w-full", src: "data:image/png;base64,{signature}", alt: "Signature by {props.entry.author_username}" }
+                }
+            } else {
+                div { class: "h-[72px] rounded-sm border border-dashed border-[#2c3037] bg-[repeating-linear-gradient(135deg,#1c1f24_0_6px,#191c20_6px_12px)]" }
+            }
+            span { class: "label-mono mt-auto",
+                "by "
+                a { href: "https://github.com/{props.entry.author_username}", target: "_blank", rel: "noopener noreferrer", class: "text-muted no-underline hover:text-accent", "{props.entry.author_username}" }
+                " · {date}"
             }
         }
     }

@@ -27,7 +27,6 @@ time = { version = "0.3.55", features = [
   "local-offset",
 ] }
 serde = { version = "1.0.229", features = ["derive"] }
-yaml_serde = "0.10.7"
 config = { version = "0.15.25", default-features = false, features = [
   "convert-case",
   "toml",

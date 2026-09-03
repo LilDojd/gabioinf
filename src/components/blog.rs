@@ -7,27 +7,27 @@ pub fn GcCalculator() -> Element {
 
     rsx! {
         section {
-            class: "my-8 rounded-lg border border-onyx bg-jet p-6",
+            class: "my-8 rounded-md border border-card bg-surface p-5",
             aria_label: "GC calculator",
-            h2 { class: "mt-0 text-xl font-semibold text-stone-100", "GC calculator" }
-            label { class: "mt-4 block text-sm text-stone-300",
+            h2 { class: "heading-casual mt-0 text-xl text-text", "GC calculator" }
+            label { class: "label-mono mt-4 block",
                 "DNA or RNA sequence"
                 textarea {
-                    class: "mt-2 min-h-32 w-full rounded-md border border-onyx bg-nasty-black p-3 font-mono text-sm text-stone-100 focus:border-alien-green focus:outline-none",
+                    class: "mt-2 min-h-32 w-full rounded-md border border-card bg-code p-3 font-recursive text-sm text-text focus:border-accent focus:outline-none",
                     placeholder: "ACGTACGT",
                     spellcheck: "false",
                     value: sequence,
                     oninput: move |event| sequence.set(event.value()),
                 }
             }
-            output { class: "mt-4 block text-stone-200", aria_live: "polite",
+            output { class: "mt-4 block text-secondary", aria_live: "polite",
                 match stats {
                     Ok(Some((bases, gc))) => rsx! {
-                        strong { class: "text-alien-green", "{gc:.1}% GC" }
-                        span { class: "ml-2 text-sm text-stone-400", "across {bases} bases" }
+                        strong { class: "text-accent", "{gc:.1}% GC" }
+                        span { class: "ml-2 text-sm text-label", "across {bases} bases" }
                     },
-                    Ok(None) => rsx! { span { class: "text-stone-400", "Enter a sequence to calculate its GC content." } },
-                    Err(character) => rsx! { span { class: "text-coral", "Unsupported character: {character}" } },
+                    Ok(None) => rsx! { span { class: "text-label", "Enter a sequence to calculate its GC content." } },
+                    Err(character) => rsx! { span { class: "text-mars", "Unsupported character: {character}" } },
                 }
             }
         }
@@ -41,7 +41,7 @@ pub fn BlogVideo(src: &'static str, title: Option<&'static str>) -> Element {
     rsx! {
         figure { class: "my-8",
             video {
-                class: "w-full rounded-lg border border-onyx bg-black",
+                class: "w-full rounded-md border border-card bg-code",
                 controls: true,
                 preload: "metadata",
                 aria_label: label,
@@ -49,7 +49,7 @@ pub fn BlogVideo(src: &'static str, title: Option<&'static str>) -> Element {
                 "Your browser does not support embedded video."
             }
             if let Some(title) = title {
-                figcaption { class: "mt-2 text-center text-sm text-stone-400", {title} }
+                figcaption { class: "label-mono mt-2 text-center", {title} }
             }
         }
     }
