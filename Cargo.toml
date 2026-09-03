@@ -88,7 +88,7 @@ dioxus-logger = { version = "0.7.10" }
 getrandom = { version = "0.4.3" }
 wasmtimer = { version = "0.4.3", default-features = false, features = ["tokio"] }
 rand = { version = "0.10.2" }
-pulldown-cmark = { version = "0.13.4", default-features = false, features = ["html"] }
+pulldown-cmark = { version = "0.13.4", default-features = false, features = ["html"], optional = true }
 web-sys = { version = "0.3.104", features = [
   "HtmlCanvasElement",
   "CanvasRenderingContext2d",
@@ -142,6 +142,7 @@ server = [
   "dep:thiserror",
   "dep:sentry",
   "dep:tracing-subscriber",
+  "dep:pulldown-cmark",
   "dioxus/server",
 ]
 web = ["dioxus/web", "time/wasm-bindgen", "getrandom/wasm_js"]
