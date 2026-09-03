@@ -30,7 +30,7 @@ Body text supports **bold**, *emphasis*, ~~strikethrough~~, and `inline code`.
 
 The Rust grammar runs during the build. The browser receives only HTML and CSS.
 
-```rust
+```rust title="sequence.rs" {9-14}
 #[derive(Debug, Clone, PartialEq)]
 struct Sequence<'a> {
     id: &'a str,

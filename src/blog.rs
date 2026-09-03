@@ -7,10 +7,13 @@ use time::Date;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PostBlock {
     Html(&'static str),
-    /// A fenced code block, highlighted at build time; `source` feeds the copy button.
+    /// A fenced code block highlighted at build time: one HTML fragment per line,
+    /// 1-based lines to emphasise, and the raw source for the copy button.
     Code {
         language: Option<&'static str>,
-        html: &'static str,
+        title: Option<&'static str>,
+        lines: &'static [&'static str],
+        highlighted: &'static [usize],
         source: &'static str,
     },
     GcCalculator,
@@ -70,6 +73,35 @@ mod tests {
             posts[0].published > posts[1].published
                 || (posts[0].published == posts[1].published && posts[0].slug <= posts[1].slug)
         }));
+    }
+
+    #[test]
+    fn code_block_lines_are_self_contained_html() {
+        let blocks = POSTS.iter().flat_map(|post| post.body.iter());
+        let mut seen_code = false;
+        for block in blocks {
+            let PostBlock::Code {
+                lines, highlighted, ..
+            } = block
+            else {
+                continue;
+            };
+            seen_code = true;
+            assert!(!lines.is_empty());
+            for line in *lines {
+                assert!(!line.contains('\n'));
+                assert_eq!(
+                    line.matches("<span").count(),
+                    line.matches("</span>").count()
+                );
+            }
+            assert!(
+                highlighted
+                    .iter()
+                    .all(|line| (1..=lines.len()).contains(line))
+            );
+        }
+        assert!(seen_code, "the showcase post exercises code blocks");
     }
 
     #[test]

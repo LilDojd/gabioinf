@@ -1577,13 +1577,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 0 4px 6px;
   color: var(--color-label);
   font-family: var(--font-recursive);
   font-size: 11px;
   font-variation-settings: "MONO" 1;
 }
-.post-body .code-copy {
+.post-body .code-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.post-body .code-selection {
+  color: var(--color-accent);
+}
+.post-body .code-action {
   padding: 1px 7px;
   border: 1px solid var(--color-border-strong);
   border-radius: 3px;
@@ -1591,7 +1600,7 @@
   color: var(--color-label);
   font: inherit;
 }
-.post-body .code-copy:hover {
+.post-body .code-action:hover, .post-body .code-action[aria-pressed="true"] {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
@@ -1601,7 +1610,7 @@
   border: 1px solid var(--color-card);
   border-radius: 6px;
   background: var(--color-code);
-  padding: 16px 18px;
+  padding: 12px 0;
   color: #d3d6dc;
   font-family: var(--font-recursive);
   font-size: 13.5px;
@@ -1609,10 +1618,51 @@
   font-variation-settings: "MONO" 1, "CASL" 0, "wght" 400;
 }
 .post-body pre code {
+  display: block;
+  min-width: max-content;
   padding: 0;
   background: transparent;
   color: inherit;
   font: inherit;
+}
+.post-body .code-wrap pre code {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.post-body .code-line {
+  display: flex;
+}
+.post-body .code-line-number {
+  flex: none;
+  width: 3.2em;
+  padding: 0 12px 0 0;
+  border: 0;
+  border-right: 1px solid transparent;
+  background: transparent;
+  color: var(--color-faint);
+  font: inherit;
+  text-align: right;
+  user-select: none;
+  cursor: pointer;
+}
+.post-body .code-line-number:hover {
+  color: var(--color-accent);
+}
+.post-body .code-line-text {
+  flex: 1;
+  padding: 0 18px 0 14px;
+}
+.post-body .code-line.is-highlighted {
+  background: rgb(194 249 187 / .06);
+  box-shadow: inset 2px 0 var(--color-border-strong);
+}
+.post-body .code-line.is-selected {
+  background: rgb(194 249 187 / .12);
+  box-shadow: inset 2px 0 var(--color-accent);
+}
+.post-body .code-line.is-selected .code-line-number {
+  color: var(--color-accent);
 }
 @media (width >= 1440px) {
   .post-body {

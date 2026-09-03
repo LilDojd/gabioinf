@@ -254,12 +254,24 @@
 .post-body .footnote-definition { display: grid; grid-template-columns: 16px 1fr; gap: 10px; margin: 4px 0 20px; padding: 12px 14px; border-left: 1px solid var(--color-border-strong); color: #9a9ea6; font-family: var(--font-recursive); font-size: 13px; line-height: 1.55; font-variation-settings: "MONO" 1, "CASL" 0; }
 .post-body .footnote-definition-label { color: var(--color-accent); }
 .post-body .footnote-definition p { margin: 0; }
+/* Code viewer: line numbers are buttons (click / shift-click selects a range); the
+   selection and fence highlights tint whole lines. */
 .post-body .code-block { margin: 24px 0; }
-.post-body .code-block-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 6px; color: var(--color-label); font-family: var(--font-recursive); font-size: 11px; font-variation-settings: "MONO" 1; }
-.post-body .code-copy { padding: 1px 7px; border: 1px solid var(--color-border-strong); border-radius: 3px; background: transparent; color: var(--color-label); font: inherit; }
-.post-body .code-copy:hover { border-color: var(--color-accent); color: var(--color-accent); }
-.post-body pre { margin: 0; overflow-x: auto; border: 1px solid var(--color-card); border-radius: 6px; background: var(--color-code); padding: 16px 18px; color: #d3d6dc; font-family: var(--font-recursive); font-size: 13.5px; line-height: 1.6; font-variation-settings: "MONO" 1, "CASL" 0, "wght" 400; }
-.post-body pre code { padding: 0; background: transparent; color: inherit; font: inherit; }
+.post-body .code-block-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 4px 6px; color: var(--color-label); font-family: var(--font-recursive); font-size: 11px; font-variation-settings: "MONO" 1; }
+.post-body .code-actions { display: flex; align-items: center; gap: 6px; }
+.post-body .code-selection { color: var(--color-accent); }
+.post-body .code-action { padding: 1px 7px; border: 1px solid var(--color-border-strong); border-radius: 3px; background: transparent; color: var(--color-label); font: inherit; }
+.post-body .code-action:hover, .post-body .code-action[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+.post-body pre { margin: 0; overflow-x: auto; border: 1px solid var(--color-card); border-radius: 6px; background: var(--color-code); padding: 12px 0; color: #d3d6dc; font-family: var(--font-recursive); font-size: 13.5px; line-height: 1.6; font-variation-settings: "MONO" 1, "CASL" 0, "wght" 400; }
+.post-body pre code { display: block; min-width: max-content; padding: 0; background: transparent; color: inherit; font: inherit; }
+.post-body .code-wrap pre code { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.post-body .code-line { display: flex; }
+.post-body .code-line-number { flex: none; width: 3.2em; padding: 0 12px 0 0; border: 0; border-right: 1px solid transparent; background: transparent; color: var(--color-faint); font: inherit; text-align: right; user-select: none; cursor: pointer; }
+.post-body .code-line-number:hover { color: var(--color-accent); }
+.post-body .code-line-text { flex: 1; padding: 0 18px 0 14px; }
+.post-body .code-line.is-highlighted { background: rgb(194 249 187 / .06); box-shadow: inset 2px 0 var(--color-border-strong); }
+.post-body .code-line.is-selected { background: rgb(194 249 187 / .12); box-shadow: inset 2px 0 var(--color-accent); }
+.post-body .code-line.is-selected .code-line-number { color: var(--color-accent); }
 @media (width >= 1440px) { .post-body { font-size: 21px; } }
 /* Arborium syntax captures: restrained, token-based highlighting. */
 .post-body [class^="syntax-keyword"] { color: var(--color-accent); }

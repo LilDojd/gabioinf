@@ -38,10 +38,14 @@ struct Post {
 
 enum BodyBlock {
     Html(String),
-    /// A fenced code block: highlighted HTML plus the raw source for the copy button.
+    /// A fenced code block: one highlighted HTML fragment per line, plus the raw
+    /// source for the copy button. Fence info may carry a title and highlighted
+    /// lines: ```` ```rust title="src/main.rs" {2,5-7} ````.
     Code {
         language: Option<String>,
-        html: String,
+        title: Option<String>,
+        lines: Vec<String>,
+        highlighted: Vec<usize>,
         source: String,
     },
     GcCalculator,
@@ -235,7 +239,7 @@ fn render_body(markdown: &str, highlighter: &mut Highlighter) -> Result<Vec<Body
                     }
                 }
                 push_html_block(&mut blocks, &mut events);
-                blocks.push(render_code_block(&kind, source, highlighter));
+                blocks.push(render_code_block(&kind, source, highlighter)?);
             }
             Event::Html(element) => match parse_custom_element(element.trim())? {
                 Some(component) => {
@@ -354,23 +358,128 @@ fn render_code_block(
     kind: &CodeBlockKind<'_>,
     source: String,
     highlighter: &mut Highlighter,
-) -> BodyBlock {
-    let fence = match kind {
+) -> Result<BodyBlock, String> {
+    let info = match kind {
         CodeBlockKind::Indented => "",
-        CodeBlockKind::Fenced(info) => info.split_whitespace().next().unwrap_or_default(),
+        CodeBlockKind::Fenced(info) => info.trim(),
     };
-    let language = match fence {
-        "rs" | "rust" => Some("rust"),
-        _ => None,
+    let (fence, options) = info.split_once(char::is_whitespace).unwrap_or((info, ""));
+    // Only Rust is highlighted; other fences stay plain text but keep their label.
+    let (language, grammar) = match fence {
+        "" => (None, None),
+        "rs" | "rust" => (Some("rust"), Some("rust")),
+        other => (Some(other), None),
     };
-    let html = language
-        .and_then(|language| highlighter.highlight(language, &source).ok())
-        .unwrap_or_else(|| html_escape(&source));
-    BodyBlock::Code {
-        language: language.map(str::to_string),
-        html,
-        source,
+    let FenceOptions { title, highlighted } = parse_fence_options(options)?;
+    let source = source.trim_end_matches('\n').to_string();
+    let line_count = source.lines().count().max(1);
+    if let Some(line) = highlighted.iter().find(|line| **line > line_count) {
+        return Err(format!(
+            "highlighted line {line} is past the end of the block"
+        ));
     }
+    let html = grammar
+        .and_then(|grammar| highlighter.highlight(grammar, &source).ok())
+        .unwrap_or_else(|| html_escape(&source));
+    Ok(BodyBlock::Code {
+        language: language.map(str::to_string),
+        title,
+        lines: split_html_lines(&html),
+        highlighted,
+        source,
+    })
+}
+
+#[derive(Default)]
+struct FenceOptions {
+    title: Option<String>,
+    highlighted: Vec<usize>,
+}
+
+/// Parses `title="..."` and `{1,3-5}` after the fence language, in any order.
+fn parse_fence_options(options: &str) -> Result<FenceOptions, String> {
+    let mut parsed = FenceOptions::default();
+    let mut rest = options.trim();
+    while !rest.is_empty() {
+        if let Some(after) = rest.strip_prefix('{') {
+            let (spec, tail) = after
+                .split_once('}')
+                .ok_or_else(|| "unclosed `{` in code fence".to_string())?;
+            for range in spec
+                .split(',')
+                .map(str::trim)
+                .filter(|range| !range.is_empty())
+            {
+                let (from, to) = match range.split_once('-') {
+                    Some((from, to)) => (parse_line(from)?, parse_line(to)?),
+                    None => {
+                        let line = parse_line(range)?;
+                        (line, line)
+                    }
+                };
+                if from > to {
+                    return Err(format!("empty line range `{range}` in code fence"));
+                }
+                parsed.highlighted.extend(from..=to);
+            }
+            rest = tail.trim_start();
+        } else if let Some(after) = rest.strip_prefix("title=\"") {
+            let (title, tail) = after
+                .split_once('"')
+                .ok_or_else(|| "unclosed code fence title".to_string())?;
+            if title.is_empty() || title.chars().any(char::is_control) {
+                return Err("code fence title must be plain text".to_string());
+            }
+            parsed.title = Some(title.to_string());
+            rest = tail.trim_start();
+        } else {
+            return Err(format!("unknown code fence option `{rest}`"));
+        }
+    }
+    parsed.highlighted.sort_unstable();
+    parsed.highlighted.dedup();
+    Ok(parsed)
+}
+
+fn parse_line(text: &str) -> Result<usize, String> {
+    text.trim()
+        .parse::<usize>()
+        .ok()
+        .filter(|line| *line >= 1)
+        .ok_or_else(|| format!("invalid line number `{text}` in code fence"))
+}
+
+/// Splits highlighter output into one fragment per source line. Tokens such as
+/// block comments span lines, so open `<span>`s are closed at each line end and
+/// reopened on the next line, keeping every fragment well-formed on its own.
+fn split_html_lines(html: &str) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut open_tags: Vec<&str> = Vec::new();
+    let mut current = String::new();
+    let mut rest = html;
+    while !rest.is_empty() {
+        if let Some(after) = rest.strip_prefix('\n') {
+            current.extend(open_tags.iter().map(|_| "</span>"));
+            lines.push(std::mem::take(&mut current));
+            current.extend(open_tags.iter().copied());
+            rest = after;
+        } else if let Some(after) = rest.strip_prefix("</span>") {
+            open_tags.pop();
+            current.push_str("</span>");
+            rest = after;
+        } else if rest.starts_with("<span") {
+            let end = rest.find('>').map_or(rest.len(), |end| end + 1);
+            open_tags.push(&rest[..end]);
+            current.push_str(&rest[..end]);
+            rest = &rest[end..];
+        } else {
+            let end = rest.find(['\n', '<']).unwrap_or(rest.len()).max(1);
+            current.push_str(&rest[..end]);
+            rest = &rest[end..];
+        }
+    }
+    lines.push(current);
+    lines
 }
 
 fn is_safe_url(url: &str) -> bool {
@@ -436,14 +545,19 @@ fn block_literal(block: &BodyBlock) -> String {
         BodyBlock::Html(html) => format!("PostBlock::Html({html:?})"),
         BodyBlock::Code {
             language,
-            html,
+            title,
+            lines,
+            highlighted,
             source,
         } => format!(
-            "PostBlock::Code {{ language: {}, html: {html:?}, source: {source:?} }}",
-            language.as_ref().map_or_else(
-                || "None".to_string(),
-                |language| format!("Some({language:?})")
-            ),
+            "PostBlock::Code {{ language: {}, title: {}, lines: &[{}], highlighted: &{highlighted:?}, source: {source:?} }}",
+            option_literal(language.as_deref()),
+            option_literal(title.as_deref()),
+            lines
+                .iter()
+                .map(|line| format!("{line:?}"))
+                .collect::<Vec<_>>()
+                .join(", "),
         ),
         BodyBlock::GcCalculator => "PostBlock::GcCalculator".to_string(),
         BodyBlock::Video { src, title } => format!(
@@ -453,6 +567,10 @@ fn block_literal(block: &BodyBlock) -> String {
                 .map_or_else(|| "None".to_string(), |title| format!("Some({title:?})")),
         ),
     }
+}
+
+fn option_literal(value: Option<&str>) -> String {
+    value.map_or_else(|| "None".to_string(), |value| format!("Some({value:?})"))
 }
 
 fn date_literal(date: Date) -> String {
