@@ -477,7 +477,10 @@
     text-decoration: none;
     &:hover {
       color: var(--color-accent);
-      font-variation-settings: "CASL" 1, "wght" 400;
+      font-variation-settings: "CASL" 1, "wght" 600;
+      & .nav-dot {
+        background-color: var(--color-accent);
+      }
     }
   }
   .nav-item-active {
@@ -1291,6 +1294,9 @@
   .mono {
     font-variation-settings: "MONO" 1, "CASL" 0;
   }
+  .nav-dot {
+    transition: background-color .15s ease;
+  }
   .palette-input {
     font-variation-settings: "MONO" 0, "CASL" .5, "wght" 400;
   }
@@ -1788,6 +1794,18 @@
 }
 .post-body [class^="syntax-variable"], .post-body [class^="syntax-property"] {
   color: var(--color-prose);
+}
+:where(.link-dashed, .quiet-link, .post-body a, .comment-body a) {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size .2s ease, color .15s ease;
+}
+:where(.link-dashed, .quiet-link, .post-body a, .comment-body a):hover {
+  border-bottom-color: transparent;
+  background-size: 100% 1px;
+  color: var(--color-accent);
 }
 .reading-progress {
   transform-origin: left;

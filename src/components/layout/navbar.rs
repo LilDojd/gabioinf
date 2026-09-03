@@ -56,7 +56,7 @@ fn NavItem(to: Route, label: &'static str, active: bool) -> Element {
         Link {
             to,
             class: if active { "nav-item-active" } else { "nav-item" },
-            span { class: if active { "size-1.5 shrink-0 rounded-full bg-accent" } else { "size-1.5 shrink-0 rounded-full bg-border-strong" } }
+            span { class: if active { "nav-dot size-1.5 shrink-0 rounded-full bg-accent" } else { "nav-dot size-1.5 shrink-0 rounded-full bg-border-strong" } }
             {label}
         }
     }
