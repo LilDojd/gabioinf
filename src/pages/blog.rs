@@ -30,7 +30,7 @@ pub fn Blog() -> Element {
                 p { class: "prose-font m-0 text-lg text-muted", "No rambles yet. Check back soon." }
             }
             for year in years {
-                div { class: "grid grid-cols-[60px_1fr] items-start gap-4 min-[760px]:grid-cols-[72px_1fr]",
+                div { class: "grid grid-cols-[60px_1fr] items-start gap-4 md:grid-cols-[72px_1fr]",
                     span { class: "label-mono pt-3", "{year}" }
                     div { class: "flex flex-col",
                         for post in posts.iter().copied().filter(|post| post.published.year() == year) {

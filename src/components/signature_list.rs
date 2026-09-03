@@ -72,7 +72,7 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
         if let Some(error) = delete_error.read().as_ref() {
             div { role: "alert", class: "label-mono text-mars", {error.to_string()} }
         }
-        div { class: "grid grid-cols-1 gap-2.5 min-[760px]:grid-cols-2",
+        div { class: "grid grid-cols-1 gap-2.5 md:grid-cols-2",
             if let Some(user_entry) = user_entry {
                 {
                     let id = user_entry.id;

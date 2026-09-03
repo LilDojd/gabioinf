@@ -94,7 +94,7 @@ pub fn Projects() -> Element {
                     "A collection of public stuff I have been working on over the years, including milestones, publications and coding projects."
                 }
             }
-            div { class: "grid grid-cols-1 gap-2.5 min-[760px]:grid-cols-2",
+            div { class: "grid grid-cols-1 gap-2.5 md:grid-cols-2",
                 for project in PROJECTS {
                     if let Some(url) = project.url {
                         a {

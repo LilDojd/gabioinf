@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 #[component]
 pub fn AboutMe() -> Element {
     rsx! {
-        section { class: "prose-font flex flex-col gap-11 text-pretty text-lg leading-[1.5] text-prose",
+        section { class: "prose-font flex flex-col gap-11 text-pretty text-lg leading-[1.5] text-prose xl:text-[19px]",
             div { class: "flex flex-col gap-5",
                 header { class: "flex flex-col gap-2 font-recursive",
                     span { class: "label-mono", "// about" }
@@ -120,7 +120,7 @@ fn LabelRow(
     small: Option<bool>,
 ) -> Element {
     rsx! {
-        div { class: if small.unwrap_or(false) { "grid grid-cols-[60px_1fr] gap-4 text-[15px] min-[760px]:grid-cols-[72px_1fr]" } else { "grid grid-cols-[60px_1fr] gap-4 min-[760px]:grid-cols-[72px_1fr]" },
+        div { class: if small.unwrap_or(false) { "grid grid-cols-[60px_1fr] gap-4 text-[15px] md:grid-cols-[72px_1fr]" } else { "grid grid-cols-[60px_1fr] gap-4 md:grid-cols-[72px_1fr]" },
             span { class: if accent.unwrap_or(false) { "label-mono pt-1 text-accent" } else { "label-mono pt-1" }, {label.to_string()} }
             {children}
         }

@@ -1167,9 +1167,6 @@
   .\[font-variation-settings\:\'CASL\'_\.6\,\'wght\'_600\] {
     font-variation-settings: 'CASL' .6,'wght' 600;
   }
-  .\[font-variation-settings\:\'CASL\'_\.8\,\'wght\'_650\] {
-    font-variation-settings: 'CASL' .8,'wght' 650;
-  }
   .\[font-variation-settings\:\'CASL\'_1\,\'wght\'_600\] {
     font-variation-settings: 'CASL' 1,'wght' 600;
   }
@@ -1237,77 +1234,117 @@
     opacity: 50%;
   }
   @media (width >= 760px) {
-    .min-\[760px\]\:sticky {
+    .md\:sticky {
       position: sticky;
     }
-    .min-\[760px\]\:top-0 {
+    .md\:top-0 {
       top: 0px;
     }
-    .min-\[760px\]\:order-none {
+    .md\:order-none {
       order: 0;
     }
-    .min-\[760px\]\:mt-auto {
+    .md\:mt-auto {
       margin-top: auto;
     }
-    .min-\[760px\]\:flex {
+    .md\:flex {
       display: flex;
     }
-    .min-\[760px\]\:hidden {
+    .md\:hidden {
       display: none;
     }
-    .min-\[760px\]\:h-screen {
+    .md\:h-screen {
       height: 100vh;
     }
-    .min-\[760px\]\:w-\[190px\] {
-      width: 190px;
+    .md\:w-\[150px\] {
+      width: 150px;
     }
-    .min-\[760px\]\:grid-cols-2 {
+    .md\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .min-\[760px\]\:grid-cols-\[1fr_190px\] {
-      grid-template-columns: 1fr 190px;
+    .md\:grid-cols-\[1fr_150px\] {
+      grid-template-columns: 1fr 150px;
     }
-    .min-\[760px\]\:grid-cols-\[72px_1fr\] {
+    .md\:grid-cols-\[72px_1fr\] {
       grid-template-columns: 72px 1fr;
     }
-    .min-\[760px\]\:grid-cols-\[220px_minmax\(0\,600px\)\] {
+    .md\:grid-cols-\[220px_minmax\(0\,600px\)\] {
       grid-template-columns: 220px minmax(0,600px);
     }
-    .min-\[760px\]\:flex-col {
+    .md\:flex-col {
       flex-direction: column;
     }
-    .min-\[760px\]\:items-stretch {
+    .md\:items-stretch {
       align-items: stretch;
     }
-    .min-\[760px\]\:gap-1\.5 {
+    .md\:gap-1\.5 {
       gap: calc(var(--spacing) * 1.5);
     }
-    .min-\[760px\]\:gap-7 {
+    .md\:gap-7 {
       gap: calc(var(--spacing) * 7);
     }
-    .min-\[760px\]\:gap-\[72px\] {
+    .md\:gap-\[72px\] {
       gap: 72px;
     }
-    .min-\[760px\]\:overflow-y-auto {
+    .md\:overflow-y-auto {
       overflow-y: auto;
     }
-    .min-\[760px\]\:px-8 {
+    .md\:px-8 {
       padding-inline: calc(var(--spacing) * 8);
     }
-    .min-\[760px\]\:py-10 {
+    .md\:py-10 {
       padding-block: calc(var(--spacing) * 10);
     }
-    .min-\[760px\]\:py-12 {
+    .md\:py-12 {
       padding-block: calc(var(--spacing) * 12);
     }
-    .min-\[760px\]\:pb-6 {
+    .md\:pb-6 {
       padding-bottom: calc(var(--spacing) * 6);
     }
-    .min-\[760px\]\:pb-24 {
+    .md\:pb-24 {
       padding-bottom: calc(var(--spacing) * 24);
     }
-    .min-\[760px\]\:text-\[44px\] {
+    .md\:text-\[36px\] {
+      font-size: 36px;
+    }
+  }
+  @media (width >= 1040px) {
+    .lg\:w-\[190px\] {
+      width: 190px;
+    }
+    .lg\:grid-cols-\[1fr_190px\] {
+      grid-template-columns: 1fr 190px;
+    }
+    .lg\:text-\[44px\] {
       font-size: 44px;
+    }
+  }
+  @media (width >= 1440px) {
+    .xl\:w-\[240px\] {
+      width: 240px;
+    }
+    .xl\:grid-cols-\[1fr_240px\] {
+      grid-template-columns: 1fr 240px;
+    }
+    .xl\:grid-cols-\[260px_minmax\(0\,760px\)\] {
+      grid-template-columns: 260px minmax(0,760px);
+    }
+    .xl\:gap-28 {
+      gap: calc(var(--spacing) * 28);
+    }
+    .xl\:py-16 {
+      padding-block: calc(var(--spacing) * 16);
+    }
+    .xl\:pb-\[120px\] {
+      padding-bottom: 120px;
+    }
+    .xl\:text-\[19px\] {
+      font-size: 19px;
+    }
+    .xl\:text-\[22px\] {
+      font-size: 22px;
+    }
+    .xl\:text-\[52px\] {
+      font-size: 52px;
     }
   }
   @media (width >= 40rem) {
@@ -1325,10 +1362,13 @@
     min-height: 100%;
     background: var(--color-bg);
   }
+  html {
+    font-size: 16px;
+  }
   body {
     color: var(--color-text);
     font-family: var(--font-recursive);
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.65;
     font-variation-settings: "MONO" 0, "CASL" 0, "wght" 400, "slnt" 0;
     -webkit-font-smoothing: antialiased;
@@ -1351,6 +1391,11 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+  @media (width >= 1440px) {
+    html {
+      font-size: 17px;
+    }
   }
 }
 .comment-body {
@@ -1528,6 +1573,11 @@
   background: transparent;
   color: inherit;
   font: inherit;
+}
+@media (width >= 1440px) {
+  .post-body {
+    font-size: 21px;
+  }
 }
 .post-body [class^="syntax-comment"] {
   color: var(--color-label);

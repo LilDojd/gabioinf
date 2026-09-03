@@ -5,10 +5,10 @@ use dioxus::prelude::*;
 #[component]
 pub fn Sidebar(clock: String) -> Element {
     rsx! {
-        aside { class: "flex flex-wrap items-baseline justify-between gap-x-5 gap-y-3 py-6 pb-2 min-[760px]:sticky min-[760px]:top-0 min-[760px]:h-screen min-[760px]:flex-col min-[760px]:items-stretch min-[760px]:gap-7 min-[760px]:overflow-y-auto min-[760px]:py-10 min-[760px]:pb-6 [scrollbar-width:none]",
+        aside { class: "flex flex-wrap items-baseline justify-between gap-x-5 gap-y-3 py-6 pb-2 md:sticky md:top-0 md:h-screen md:flex-col md:items-stretch md:gap-7 md:overflow-y-auto md:py-10 md:pb-6 [scrollbar-width:none]",
             Wordmark {}
             Navigation {}
-            div { class: "hidden min-[760px]:mt-auto min-[760px]:flex min-[760px]:flex-col min-[760px]:gap-7",
+            div { class: "hidden md:mt-auto md:flex md:flex-col md:gap-7",
                 Status { clock: clock.clone(), show_hint: true }
                 AreciboFooter {}
             }
@@ -19,7 +19,7 @@ pub fn Sidebar(clock: String) -> Element {
 #[component]
 pub fn MobileFooter(clock: String) -> Element {
     rsx! {
-        footer { class: "flex flex-wrap items-end justify-between gap-6 border-t border-line py-5 pb-8 min-[760px]:hidden",
+        footer { class: "flex flex-wrap items-end justify-between gap-6 border-t border-line py-5 pb-8 md:hidden",
             Status { clock, show_hint: false }
             div { class: "min-w-[220px] grow sm:grow-0", AreciboFooter {} }
         }
@@ -30,7 +30,7 @@ pub fn MobileFooter(clock: String) -> Element {
 fn Wordmark() -> Element {
     rsx! {
         Link { to: Route::Home {}, class: "flex flex-col gap-0.5 text-text no-underline",
-            span { class: "text-base [font-variation-settings:'CASL'_.8,'wght'_650]", "george andreev" }
+            span { class: "casual text-base", "george andreev" }
             span { class: "label-mono", "gabioinf.dev" }
         }
     }
@@ -40,7 +40,7 @@ fn Wordmark() -> Element {
 fn Navigation() -> Element {
     let route: Route = use_route();
     rsx! {
-        nav { aria_label: "Main navigation", class: "flex flex-row flex-wrap gap-x-[14px] gap-y-1 text-[15px] min-[760px]:flex-col min-[760px]:gap-1.5",
+        nav { aria_label: "Main navigation", class: "flex flex-row flex-wrap gap-x-[14px] gap-y-1 text-[15px] md:flex-col md:gap-1.5",
             NavItem { to: Route::Home {}, label: "home", active: matches!(route, Route::Home {}) }
             NavItem { to: Route::Blog {}, label: "blog", active: matches!(route, Route::Blog {} | Route::BlogPost { .. }) }
             NavItem { to: Route::Projects {}, label: "projects", active: matches!(route, Route::Projects {}) }

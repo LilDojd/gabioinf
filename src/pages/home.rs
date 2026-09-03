@@ -54,10 +54,10 @@ pub fn Home() -> Element {
 
     rsx! {
         section { class: "flex flex-col gap-10",
-            div { class: "grid grid-cols-1 items-center gap-6 min-[760px]:grid-cols-[1fr_190px]",
+            div { class: "grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_150px] lg:grid-cols-[1fr_190px] xl:grid-cols-[1fr_240px]",
                 div { class: "flex flex-col gap-6",
                     h1 {
-                        class: "heading-casual m-0 min-h-[1.1em] cursor-text text-[34px] leading-[1.1] tracking-[-.015em] min-[760px]:text-[44px]",
+                        class: "heading-casual m-0 min-h-[1.1em] cursor-text whitespace-nowrap text-[34px] leading-[1.1] tracking-[-.015em] md:text-[36px] lg:text-[44px] xl:text-[52px]",
                         title: "click to retype",
                         onclick: move |_| {
                             let next = (ui.retype)().wrapping_add(1);
@@ -68,7 +68,7 @@ pub fn Home() -> Element {
                             class: if cursor_visible() { "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent" } else { "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent opacity-0" },
                         }
                     }
-                    div { class: "prose-font flex flex-col gap-3.5 text-[20px] leading-[1.45] text-prose text-pretty",
+                    div { class: "prose-font flex flex-col gap-3.5 text-[20px] leading-[1.45] text-prose text-pretty xl:text-[22px]",
                         p { class: "m-0", "I'm a bioinformatician and a developer." }
                         p { class: "m-0",
                             "You can use this website to read my "
@@ -82,7 +82,7 @@ pub fn Home() -> Element {
                     }
                 }
                 img {
-                    class: "order-first w-[140px] justify-self-end opacity-90 min-[760px]:order-none min-[760px]:w-[190px]",
+                    class: "order-first w-[140px] justify-self-end opacity-90 md:order-none md:w-[150px] lg:w-[190px] xl:w-[240px]",
                     src: asset!("/assets/alien_white.png"),
                     alt: "Alien behind a pc",
                     title: "drawn by my wife",

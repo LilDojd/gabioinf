@@ -144,9 +144,9 @@ pub fn Layout() -> Element {
     let route: Route = use_route();
     rsx! {
         crate::DocumentMetadata {}
-        div { class: "grid min-h-screen grid-cols-1 justify-center px-5 min-[760px]:grid-cols-[220px_minmax(0,600px)] min-[760px]:gap-[72px] min-[760px]:px-8",
+        div { class: "grid min-h-screen grid-cols-1 justify-center px-5 md:grid-cols-[220px_minmax(0,600px)] md:gap-[72px] md:px-8 xl:grid-cols-[260px_minmax(0,760px)] xl:gap-28",
             Sidebar { clock: clock() }
-            main { class: "min-w-0 py-8 pb-14 min-[760px]:py-12 min-[760px]:pb-24",
+            main { class: "min-w-0 py-8 pb-14 md:py-12 md:pb-24 xl:py-16 xl:pb-[120px]",
                 Outlet::<Route> {}
                 div { class: "mt-16",
                     Link { to: Route::NotFound { route: vec!["void".to_string()] }, class: "label-mono text-faint no-underline hover:text-accent", "/404" }
