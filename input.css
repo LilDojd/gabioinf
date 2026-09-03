@@ -220,8 +220,22 @@
 .post-body pre { margin: 0; overflow-x: auto; border: 1px solid var(--color-card); border-radius: 6px; background: var(--color-code); padding: 16px 18px; color: #d3d6dc; font-family: var(--font-recursive); font-size: 13.5px; line-height: 1.6; font-variation-settings: "MONO" 1, "CASL" 0, "wght" 400; }
 .post-body pre code { padding: 0; background: transparent; color: inherit; font: inherit; }
 @media (width >= 1440px) { .post-body { font-size: 21px; } }
-.post-body [class^="syntax-comment"] { color: var(--color-label); }
+/* Arborium syntax captures: restrained, token-based highlighting. */
 .post-body [class^="syntax-keyword"] { color: var(--color-accent); }
+.post-body [class^="syntax-type"],
+.post-body [class^="syntax-constructor"] { color: var(--color-venus); }
+.post-body [class^="syntax-function"],
+.post-body [class^="syntax-macro"] { color: color-mix(in srgb, var(--color-earth) 75%, white); }
+.post-body [class^="syntax-string"] { color: #dcd3b4; }
+.post-body [class^="syntax-number"],
+.post-body [class^="syntax-constant"] { color: var(--color-mars); }
+.post-body [class^="syntax-comment"] { color: var(--color-label); }
+.post-body [class^="syntax-attribute"],
+.post-body [class^="syntax-label"] { color: var(--color-muted); }
+.post-body [class^="syntax-operator"],
+.post-body [class^="syntax-punctuation"] { color: var(--color-secondary); }
+.post-body [class^="syntax-variable"],
+.post-body [class^="syntax-property"] { color: var(--color-prose); }
 
 .reading-progress {
   transform-origin: left;
