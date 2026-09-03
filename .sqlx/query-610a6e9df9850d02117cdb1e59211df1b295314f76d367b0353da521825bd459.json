@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO guestbook (message, signature, author_id, author_username)\n            VALUES ($1, $2, $3, $4)\n            RETURNING *\n            ",
+  "query": "\n            SELECT\n                g.id AS \"id: GuestbookId\",\n                g.message,\n                g.signature,\n                g.created_at,\n                g.updated_at,\n                g.author_id AS \"author_id: GuestId\",\n                u.username AS author_username\n            FROM guestbook g JOIN guests u ON u.id = g.author_id\n            WHERE g.author_id = $1\n            ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id: GuestbookId",
         "type_info": "Int8"
       },
       {
@@ -30,7 +30,7 @@
       },
       {
         "ordinal": 5,
-        "name": "author_id",
+        "name": "author_id: GuestId",
         "type_info": "Int8"
       },
       {
@@ -41,10 +41,7 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Text",
-        "Int8",
-        "Varchar"
+        "Int8"
       ]
     },
     "nullable": [
@@ -57,5 +54,5 @@
       false
     ]
   },
-  "hash": "947af03d2a945011d0a070de1c52858b55c4ab3a86dc1a08c8311f0df1b12175"
+  "hash": "610a6e9df9850d02117cdb1e59211df1b295314f76d367b0353da521825bd459"
 }

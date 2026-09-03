@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT * FROM guestbook\n                WHERE (created_at, id) < ($1, $2)\n                ORDER BY created_at DESC, id DESC\n                LIMIT $3\n                ",
+  "query": "\n            WITH g AS (\n                INSERT INTO guestbook (message, signature, author_id)\n                VALUES ($1, $2, $3)\n                RETURNING *\n            )\n            SELECT\n                g.id AS \"id: GuestbookId\",\n                g.message,\n                g.signature,\n                g.created_at,\n                g.updated_at,\n                g.author_id AS \"author_id: GuestId\",\n                u.username AS author_username\n            FROM g JOIN guests u ON u.id = g.author_id\n            ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id: GuestbookId",
         "type_info": "Int8"
       },
       {
@@ -30,7 +30,7 @@
       },
       {
         "ordinal": 5,
-        "name": "author_id",
+        "name": "author_id: GuestId",
         "type_info": "Int8"
       },
       {
@@ -41,8 +41,8 @@
     ],
     "parameters": {
       "Left": [
-        "Timestamptz",
-        "Int8",
+        "Varchar",
+        "Text",
         "Int8"
       ]
     },
@@ -56,5 +56,5 @@
       false
     ]
   },
-  "hash": "8ba4b15292bda730afb4f721809663c8f5e63983ec84c8b463ad8de24b9419e0"
+  "hash": "4ccea8e5619a55aed35c9f75c416672a247432f301001d24615df38415365691"
 }

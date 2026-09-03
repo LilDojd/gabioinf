@@ -6,7 +6,7 @@ use axum::routing::get;
 use axum::{
     Router,
     extract::Query,
-    response::{IntoResponse, Redirect},
+    response::{IntoResponse, Redirect, Response},
 };
 use oauth2::{AuthUrl, ClientId, ClientSecret, TokenUrl, basic::BasicClient};
 use oauth2::{CsrfToken, EndpointNotSet, EndpointSet, PkceCodeVerifier, RedirectUrl};
@@ -76,7 +76,12 @@ async fn take_pending_authorization(
 }
 mod get {
     use super::*;
-    use crate::backend::domain::models::Credentials;
+    use crate::backend::domain::{logic::auth::local_path, models::Credentials};
+
+    /// `GET /v1/oauth/callback?code=…&state=…`: GitHub sends the visitor back here.
+    ///
+    /// Failures are logged with their cause; the visitor only sees a short status
+    /// page because nothing here is actionable for them.
     pub async fn callback(
         mut auth_session: AuthSession,
         session: Session,
@@ -84,9 +89,19 @@ mod get {
             code,
             state: new_state,
         }): Query<AuthzResp>,
-    ) -> impl IntoResponse {
-        let Ok(Some(pending)) = take_pending_authorization(&session).await else {
-            return StatusCode::BAD_REQUEST.into_response();
+    ) -> Response {
+        let pending = match take_pending_authorization(&session).await {
+            Ok(Some(pending)) => pending,
+            Ok(None) => {
+                return failure(
+                    StatusCode::BAD_REQUEST,
+                    "sign-in expired or was not started here; try again",
+                );
+            }
+            Err(error) => {
+                dioxus_logger::tracing::error!(%error, "could not read the pending sign-in");
+                return failure(StatusCode::INTERNAL_SERVER_ERROR, "sign-in failed");
+            }
         };
         let creds = Credentials {
             code,
@@ -97,18 +112,36 @@ mod get {
         let user = match auth_session.authenticate(creds).await {
             Ok(Some(user)) => user,
             Ok(None) => {
-                return StatusCode::UNAUTHORIZED.into_response();
+                dioxus_logger::tracing::warn!("OAuth state mismatch during sign-in");
+                return failure(
+                    StatusCode::UNAUTHORIZED,
+                    "sign-in state mismatch; try again",
+                );
             }
-            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(error) => {
+                dioxus_logger::tracing::error!(%error, "GitHub sign-in failed");
+                return failure(
+                    StatusCode::BAD_GATEWAY,
+                    "GitHub sign-in failed; try again later",
+                );
+            }
         };
-        if auth_session.login(&user).await.is_err() {
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        if let Err(error) = auth_session.login(&user).await {
+            dioxus_logger::tracing::error!(%error, "could not create the session");
+            return failure(StatusCode::INTERNAL_SERVER_ERROR, "sign-in failed");
         }
-        if let Ok(Some(next)) = session.remove::<String>(NEXT_URL_KEY).await {
-            Redirect::to(&next).into_response()
-        } else {
-            Redirect::to("/").into_response()
-        }
+        let next = session
+            .remove::<String>(NEXT_URL_KEY)
+            .await
+            .ok()
+            .flatten()
+            .and_then(|next| local_path(&next))
+            .unwrap_or_else(|| "/".to_string());
+        Redirect::to(&next).into_response()
+    }
+
+    fn failure(status: StatusCode, message: &'static str) -> Response {
+        (status, message).into_response()
     }
 }
 

@@ -62,13 +62,19 @@ impl AuthnBackend for AuthBackend {
             return Ok(None);
         }
         dioxus_logger::tracing::debug!("Received OAuth callback");
+        // oauth2 is pinned to reqwest 0.12, so it cannot share `self.reqwest_client` (0.13).
+        // Redirects are disabled as the oauth2 docs recommend, to rule out SSRF via the token endpoint.
+        let token_client = oauth2::reqwest::ClientBuilder::new()
+            .redirect(oauth2::reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|error| Self::Error::Authentication(error.to_string()))?;
         let token = self
             .client
             .exchange_code(AuthorizationCode::new(creds.code))
             .set_pkce_verifier(creds.pkce_verifier)
-            .request_async(&oauth2::reqwest::Client::new())
+            .request_async(&token_client)
             .await
-            .map_err(|error| Self::Error::Authentication(error.to_string()))?;
+            .map_err(|error| Self::Error::Authentication(describe_token_error(&error)))?;
         dioxus_logger::tracing::debug!("Getting user data from GitHub API");
         let response = self
             .reqwest_client
@@ -80,8 +86,9 @@ impl AuthnBackend for AuthBackend {
             )
             .header("X-GitHub-Api-Version", "2022-11-28")
             .send()
-            .await;
-        let github_user = response?.json::<NewGuest>().await?;
+            .await?
+            .error_for_status()?;
+        let github_user = response.json::<NewGuest>().await?;
         dioxus_logger::tracing::debug!("Received user data from GitHub: {:?}", github_user);
         let guest = self.guest_repo.upsert(&github_user.into()).await?;
         Ok(Some(guest))
@@ -90,6 +97,20 @@ impl AuthnBackend for AuthBackend {
         self.guest_repo.find_by_id(*user_id).await
     }
 }
+/// GitHub answers `200 OK` with `{"error": …}` instead of a proper OAuth error
+/// response, which oauth2 reports as an opaque parse failure. Surface the body so
+/// the log says *why* (`bad_verification_code`, `incorrect_client_credentials`, …).
+fn describe_token_error<E: std::error::Error, R: oauth2::ErrorResponse>(
+    error: &oauth2::RequestTokenError<E, R>,
+) -> String {
+    match error {
+        oauth2::RequestTokenError::Parse(_, body) => {
+            format!("token exchange failed: {}", String::from_utf8_lossy(body))
+        }
+        other => format!("token exchange failed: {other}"),
+    }
+}
+
 pub type AuthSession = axum_login::AuthSession<AuthBackend>;
 #[derive(Debug, Clone)]
 pub struct SessionWrapper {

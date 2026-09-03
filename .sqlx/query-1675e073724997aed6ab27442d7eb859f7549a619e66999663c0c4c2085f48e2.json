@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM guestbook ORDER BY created_at DESC, id DESC LIMIT $1",
+  "query": "\n                SELECT\n                    g.id AS \"id: GuestbookId\",\n                    g.message,\n                    g.signature,\n                    g.created_at,\n                    g.updated_at,\n                    g.author_id AS \"author_id: GuestId\",\n                    u.username AS author_username\n                FROM guestbook g JOIN guests u ON u.id = g.author_id\n                ORDER BY g.created_at DESC, g.id DESC\n                LIMIT $1\n                ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id: GuestbookId",
         "type_info": "Int8"
       },
       {
@@ -30,7 +30,7 @@
       },
       {
         "ordinal": 5,
-        "name": "author_id",
+        "name": "author_id: GuestId",
         "type_info": "Int8"
       },
       {
@@ -54,5 +54,5 @@
       false
     ]
   },
-  "hash": "2f15f150c98d451b8dae19e7cfcb0b64101a3c130ee2f1e7c309c815880e42c8"
+  "hash": "1675e073724997aed6ab27442d7eb859f7549a619e66999663c0c4c2085f48e2"
 }

@@ -58,7 +58,6 @@ pub async fn submit_signature(
 
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
-        author_username: guest.username,
         message: payload.message,
         signature: payload.signature,
     }

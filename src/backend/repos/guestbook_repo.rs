@@ -15,14 +15,24 @@ impl GuestbookRepo {
         Ok(sqlx::query_as!(
             GuestbookEntry,
             r#"
-            INSERT INTO guestbook (message, signature, author_id, author_username)
-            VALUES ($1, $2, $3, $4)
-            RETURNING *
+            WITH g AS (
+                INSERT INTO guestbook (message, signature, author_id)
+                VALUES ($1, $2, $3)
+                RETURNING *
+            )
+            SELECT
+                g.id AS "id: GuestbookId",
+                g.message,
+                g.signature,
+                g.created_at,
+                g.updated_at,
+                g.author_id AS "author_id: GuestId",
+                u.username AS author_username
+            FROM g JOIN guests u ON u.id = g.author_id
             "#,
             entry.message,
             entry.signature,
             entry.author_id.as_value(),
-            entry.author_username,
         )
         .fetch_one(&self.pool)
         .await?)
@@ -31,7 +41,18 @@ impl GuestbookRepo {
     pub async fn find_by_author(&self, author_id: GuestId) -> BResult<Option<GuestbookEntry>> {
         Ok(sqlx::query_as!(
             GuestbookEntry,
-            "SELECT * FROM guestbook WHERE author_id = $1",
+            r#"
+            SELECT
+                g.id AS "id: GuestbookId",
+                g.message,
+                g.signature,
+                g.created_at,
+                g.updated_at,
+                g.author_id AS "author_id: GuestId",
+                u.username AS author_username
+            FROM guestbook g JOIN guests u ON u.id = g.author_id
+            WHERE g.author_id = $1
+            "#,
             author_id.as_value(),
         )
         .fetch_optional(&self.pool)
@@ -50,9 +71,17 @@ impl GuestbookRepo {
             sqlx::query_as!(
                 GuestbookEntry,
                 r#"
-                SELECT * FROM guestbook
-                WHERE (created_at, id) < ($1, $2)
-                ORDER BY created_at DESC, id DESC
+                SELECT
+                    g.id AS "id: GuestbookId",
+                    g.message,
+                    g.signature,
+                    g.created_at,
+                    g.updated_at,
+                    g.author_id AS "author_id: GuestId",
+                    u.username AS author_username
+                FROM guestbook g JOIN guests u ON u.id = g.author_id
+                WHERE (g.created_at, g.id) < ($1, $2)
+                ORDER BY g.created_at DESC, g.id DESC
                 LIMIT $3
                 "#,
                 cursor.created_at,
@@ -64,7 +93,19 @@ impl GuestbookRepo {
         } else {
             sqlx::query_as!(
                 GuestbookEntry,
-                "SELECT * FROM guestbook ORDER BY created_at DESC, id DESC LIMIT $1",
+                r#"
+                SELECT
+                    g.id AS "id: GuestbookId",
+                    g.message,
+                    g.signature,
+                    g.created_at,
+                    g.updated_at,
+                    g.author_id AS "author_id: GuestId",
+                    u.username AS author_username
+                FROM guestbook g JOIN guests u ON u.id = g.author_id
+                ORDER BY g.created_at DESC, g.id DESC
+                LIMIT $1
+                "#,
                 limit,
             )
             .fetch_all(&self.pool)
@@ -127,7 +168,6 @@ mod tests {
         repo.create(&GuestbookEntry {
             message: format!("Message from {}", guest.username),
             author_id: guest.id,
-            author_username: guest.username.clone(),
             ..Default::default()
         })
         .await
