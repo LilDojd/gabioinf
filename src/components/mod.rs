@@ -11,5 +11,7 @@ mod signature_pad;
 pub use signature_pad::*;
 mod signature_list;
 pub use signature_list::*;
+mod typewriter;
+pub use typewriter::Typewriter;
 mod buttons;
 pub use buttons::*;

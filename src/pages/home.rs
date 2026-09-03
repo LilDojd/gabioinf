@@ -1,9 +1,10 @@
-use crate::{Route, blog::published_posts, components::layout::UiState};
+use crate::{
+    Route,
+    blog::published_posts,
+    components::{Typewriter, layout::UiState},
+};
 use dioxus::prelude::*;
-use rand::RngExt;
-use std::time::Duration;
 use time::{Date, macros::format_description};
-use wasmtimer::tokio::sleep;
 
 const GREETING: &str = "Hey, I'm George";
 const RECENT_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
@@ -12,45 +13,6 @@ const RECENT_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
 #[component]
 pub fn Home() -> Element {
     let mut ui = use_context::<UiState>();
-    let mut typed = use_signal(String::new);
-    let mut cursor_visible = use_signal(|| true);
-
-    use_effect(move || {
-        let generation = (ui.retype)();
-        typed.set(String::new());
-        cursor_visible.set(true);
-        spawn(async move {
-            sleep(Duration::from_millis(300)).await;
-            let mut rng = rand::rng();
-            let base = 2000 / GREETING.len() as u64;
-            let mut index = 0;
-            while index < GREETING.len() && (ui.retype)() == generation {
-                if rng.random_bool(0.04) && index > 0 {
-                    let wrong = rng.random_range(b'a'..=b'z') as char;
-                    typed.set(format!("{}{wrong}", &GREETING[..index]));
-                    sleep(Duration::from_millis(rng.random_range(120..=300))).await;
-                    if (ui.retype)() != generation {
-                        return;
-                    }
-                    typed.set(GREETING[..index].to_string());
-                    sleep(Duration::from_millis(rng.random_range(60..=120))).await;
-                } else {
-                    index += 1;
-                    typed.set(GREETING[..index].to_string());
-                }
-                let jitter = rng.random_range(-10..=10);
-                sleep(Duration::from_millis((base as i64 + jitter).max(50) as u64)).await;
-            }
-            for _ in 0..7 {
-                sleep(Duration::from_millis(500)).await;
-                if (ui.retype)() != generation {
-                    return;
-                }
-                cursor_visible.toggle();
-            }
-            cursor_visible.set(false);
-        });
-    });
 
     rsx! {
         section { class: "flex flex-col gap-10",
@@ -63,10 +25,7 @@ pub fn Home() -> Element {
                             let next = (ui.retype)().wrapping_add(1);
                             ui.retype.set(next);
                         },
-                        "{typed}"
-                        span {
-                            class: if cursor_visible() { "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent" } else { "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent opacity-0" },
-                        }
+                        Typewriter { text: GREETING, generation: (ui.retype)() }
                     }
                     div { class: "prose-font flex flex-col gap-3.5 text-[20px] leading-[1.45] text-prose text-pretty xl:text-[22px]",
                         p { class: "m-0", "I'm a bioinformatician and a developer." }
