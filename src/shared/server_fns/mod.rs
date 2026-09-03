@@ -1,3 +1,5 @@
+pub mod comments;
+pub use comments::*;
 mod error;
 pub use error::ServerError;
 mod get_user;

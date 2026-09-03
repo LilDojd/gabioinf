@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                c.id AS \"id: CommentId\",\n                c.parent_id AS \"parent_id?: CommentId\",\n                g.username,\n                g.github_id AS \"github_id: GithubId\",\n                c.body,\n                c.created_at\n            FROM comments c\n            JOIN guests g ON g.id = c.author_id\n            WHERE c.post_slug = $1\n            ORDER BY c.created_at, c.id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: CommentId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "parent_id?: CommentId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "github_id: GithubId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "body",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fc67916fbbeb71009452cfc93fda54505757d329005c992f21df385e0b48adb9"
+}

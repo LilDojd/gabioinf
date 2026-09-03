@@ -1,3 +1,5 @@
+mod comment;
+pub use comment::*;
 mod guest;
 pub use guest::*;
 mod guestbook_entry;

@@ -11,7 +11,9 @@ use derive_more::{From, Into};
 #[derive(
     Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into,
 )]
+#[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GithubId(pub(crate) i64);
+pub const OWNER_GITHUB_ID: GithubId = GithubId(37330594);
 impl GithubId {
     pub fn as_value(&self) -> i64 {
         self.0

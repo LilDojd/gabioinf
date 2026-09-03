@@ -7,6 +7,7 @@ pub mod domain;
 pub mod errors;
 pub mod extractors;
 pub mod health;
+pub(crate) mod markdown;
 pub(crate) mod observability;
 pub mod repos;
 pub mod server;

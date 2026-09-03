@@ -12,7 +12,7 @@ mod components;
 mod hide;
 mod markdown;
 mod pages;
-mod shared;
+pub mod shared;
 use components::layout::NavFooter;
 use pages::{AboutMe, Blog, BlogPost, Guestbook, Home, NotFound, Projects};
 static STYLES: Asset = asset!("/assets/styles");
