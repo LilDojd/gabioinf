@@ -7,6 +7,8 @@ pub(crate) use errors::server_error_message;
 mod github_mark;
 pub use github_mark::GithubMark;
 pub mod layout;
+mod reactions;
+pub use reactions::ReactionBar;
 mod signature_pad;
 pub use signature_pad::*;
 mod signature_list;

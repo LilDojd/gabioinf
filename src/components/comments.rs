@@ -1,7 +1,9 @@
 use crate::{
-    components::{GithubMark, server_error_message},
+    components::{GithubMark, ReactionBar, server_error_message},
     shared::{
-        models::{Comment, CommentAuthor, CommentId, Guest},
+        models::{
+            Comment, CommentAuthor, CommentId, Guest, ReactionCount, ReactionTarget, Reactions,
+        },
         server_fns,
     },
 };
@@ -12,9 +14,12 @@ const COMMENT_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short] [year]");
 
 #[component]
-pub fn Comments(slug: &'static str) -> Element {
+pub fn Comments(
+    slug: &'static str,
+    mut reactions: dioxus::fullstack::Loader<Reactions>,
+    mut viewer: dioxus::fullstack::Loader<Option<Guest>>,
+) -> Element {
     let mut comments = use_loader(move || server_fns::load_comments(slug.to_string()))?;
-    let mut viewer = use_loader(server_fns::get_user)?;
     let mut body = use_signal(String::new);
     let mut reply_target = use_signal(|| None::<CommentId>);
     let mut submitting = use_signal(|| false);
@@ -133,9 +138,14 @@ pub fn Comments(slug: &'static str) -> Element {
                         comment: root.clone(),
                         viewer: viewer.read().clone(),
                         can_reply: viewer.read().is_some(),
+                        reaction_counts: reactions.read().comments.get(&root.id).cloned().unwrap_or_default(),
                         error: action_error.read().as_ref().filter(|(id, _)| *id == root.id).map(|(_, error)| error.clone()),
                         on_reply: move |id| reply_target.set(Some(id)),
                         on_delete: move |id| delete_optimistically(comments, action_error, id),
+                        on_reactions_change: {
+                            let id = root.id;
+                            move |counts| { reactions.write().comments.insert(id, counts); }
+                        },
                     }
                     for reply in comments.read().iter().filter(|comment| comment.parent_id == Some(root.id)) {
                         div { key: "{reply.id.0}", class: "ml-[42px]",
@@ -143,9 +153,14 @@ pub fn Comments(slug: &'static str) -> Element {
                                 comment: reply.clone(),
                                 viewer: viewer.read().clone(),
                                 can_reply: false,
+                                reaction_counts: reactions.read().comments.get(&reply.id).cloned().unwrap_or_default(),
                                 error: action_error.read().as_ref().filter(|(id, _)| *id == reply.id).map(|(_, error)| error.clone()),
                                 on_reply: move |_| {},
                                 on_delete: move |id| delete_optimistically(comments, action_error, id),
+                                on_reactions_change: {
+                                    let id = reply.id;
+                                    move |counts| { reactions.write().comments.insert(id, counts); }
+                                },
                             }
                         }
                     }
@@ -160,9 +175,11 @@ fn CommentRow(
     comment: Comment,
     viewer: Option<Guest>,
     can_reply: bool,
+    reaction_counts: Vec<ReactionCount>,
     error: Option<String>,
     on_reply: EventHandler<CommentId>,
     on_delete: EventHandler<CommentId>,
+    on_reactions_change: EventHandler<Vec<ReactionCount>>,
 ) -> Element {
     let author = &comment.author;
     let own_comment = viewer
@@ -180,6 +197,12 @@ fn CommentRow(
             div { class: "flex min-w-0 flex-col gap-1.5",
                 CommentMeta { author: author.clone(), profile, created_at: comment.created_at }
                 div { class: "comment-body", dangerous_inner_html: comment.body_html }
+                ReactionBar {
+                    target: ReactionTarget::Comment(comment.id),
+                    counts: reaction_counts,
+                    signed_in: viewer.is_some(),
+                    on_change: on_reactions_change,
+                }
                 div { class: "flex gap-3",
                     if can_reply {
                         button { r#type: "button", class: "comment-action", onclick: move |_| on_reply.call(comment.id), "reply" }

@@ -210,6 +210,89 @@
   &:hover { color: var(--color-accent); }
 }
 
+@utility reaction-bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  font-family: var(--font-recursive);
+  font-size: 12px;
+  font-variation-settings: "MONO" 1, "CASL" 0;
+}
+
+@utility reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-card);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  line-height: 1;
+  &:hover { border-color: var(--color-accent); }
+  &:disabled { cursor: wait; opacity: .65; }
+}
+
+@utility reaction-chip-active {
+  border-color: var(--color-accent);
+  background: rgb(194 249 187 / .1);
+  color: var(--color-accent);
+}
+
+@utility reaction-add {
+  justify-content: center;
+  min-width: 26px;
+  padding-inline: 6px;
+}
+
+@utility reaction-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+@utility reaction-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--color-card);
+  border-radius: 6px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / .35);
+  & button {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    font-size: 18px;
+    line-height: 1;
+  }
+  & button:hover { background: var(--color-hover-row); }
+}
+
+@utility reaction-hint {
+  color: var(--color-label);
+  & a { color: var(--color-accent); }
+}
+
+@utility reaction-error {
+  width: 100%;
+  color: var(--color-mars);
+}
+
 .comment-body {
   color: var(--color-prose);
   font-family: var(--font-source);

@@ -1,7 +1,8 @@
 use crate::{
     Route,
     blog::{PostBlock, find_post, published_posts},
-    components::{BlogVideo, CodeBlock, Comments, GcCalculator},
+    components::{BlogVideo, CodeBlock, Comments, GcCalculator, ReactionBar},
+    shared::{models::ReactionTarget, server_fns},
 };
 use dioxus::prelude::*;
 use time::{Date, macros::format_description};
@@ -57,6 +58,8 @@ pub fn BlogPost(slug: String) -> Element {
     let Some(post) = find_post(&slug) else {
         return rsx! { crate::pages::NotFound { route: vec!["blog".to_string(), slug] } };
     };
+    let mut reactions = use_loader(move || server_fns::load_reactions(post.slug.to_string()))?;
+    let viewer = use_loader(server_fns::get_user)?;
 
     rsx! {
         article { class: "flex flex-col gap-7",
@@ -71,25 +74,35 @@ pub fn BlogPost(slug: String) -> Element {
                     PostTags { tags: post.tags }
                 }
             }
-            div { class: "post-body",
-                for block in post.body {
-                    match block {
-                        PostBlock::Html(html) => rsx! { div { dangerous_inner_html: *html } },
-                        PostBlock::Code { language, title, lines, highlighted, source } => rsx! {
-                            CodeBlock {
-                                language: *language,
-                                title: *title,
-                                lines: *lines,
-                                highlighted: *highlighted,
-                                source: *source,
-                            }
-                        },
-                        PostBlock::GcCalculator => rsx! { GcCalculator {} },
-                        PostBlock::Video { src, title } => rsx! { BlogVideo { src: *src, title: *title } },
+            div {
+                div { class: "post-body",
+                    for block in post.body {
+                        match block {
+                            PostBlock::Html(html) => rsx! { div { dangerous_inner_html: *html } },
+                            PostBlock::Code { language, title, lines, highlighted, source } => rsx! {
+                                CodeBlock {
+                                    language: *language,
+                                    title: *title,
+                                    lines: *lines,
+                                    highlighted: *highlighted,
+                                    source: *source,
+                                }
+                            },
+                            PostBlock::GcCalculator => rsx! { GcCalculator {} },
+                            PostBlock::Video { src, title } => rsx! { BlogVideo { src: *src, title: *title } },
+                        }
+                    }
+                }
+                div { class: "mt-6",
+                    ReactionBar {
+                        target: ReactionTarget::Post { slug: post.slug.to_string() },
+                        counts: reactions.read().post.clone(),
+                        signed_in: viewer.read().is_some(),
+                        on_change: move |counts| reactions.write().post = counts,
                     }
                 }
             }
-            Comments { slug: post.slug }
+            Comments { slug: post.slug, reactions, viewer }
         }
     }
 }
