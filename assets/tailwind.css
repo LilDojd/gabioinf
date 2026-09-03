@@ -1227,6 +1227,9 @@
   .text-text {
     color: var(--color-text);
   }
+  .lowercase {
+    text-transform: lowercase;
+  }
   .no-underline {
     text-decoration-line: none;
   }
