@@ -120,7 +120,7 @@ pub fn Projects() -> Element {
 fn ProjectContent(project: &'static Project) -> Element {
     rsx! {
         span { class: "label-mono", "{project.kind}" }
-        span { class: "text-base leading-[1.3] [font-variation-settings:'CASL'_.6,'wght'_600]", "{project.name}" }
+        span { class: "project-title text-base leading-[1.3]", "{project.name}" }
         span { class: "text-pretty text-sm leading-[1.5] text-muted", "{project.description}" }
     }
 }

@@ -167,7 +167,7 @@ pub fn AreciboFooter() -> Element {
                     }
                 }
             }
-            span { class: "-mt-1.5 text-[11px] text-faint [font-variation-settings:'MONO'_1,'CASL'_0]", "{label}" }
+            span { class: "mono -mt-1.5 text-[11px] text-faint", "{label}" }
         }
     }
 }

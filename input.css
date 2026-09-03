@@ -71,6 +71,18 @@
   font-variation-settings: "CASL" 1, "wght" 600;
 }
 
+@utility mono {
+  font-variation-settings: "MONO" 1, "CASL" 0;
+}
+
+@utility project-title {
+  font-variation-settings: "CASL" .6, "wght" 600;
+}
+
+@utility palette-input {
+  font-variation-settings: "MONO" 0, "CASL" .5, "wght" 400;
+}
+
 @utility prose-font {
   font-family: var(--font-source);
   font-variation-settings: normal;
@@ -80,14 +92,41 @@
   color: var(--color-accent);
   text-decoration: none;
   border-bottom: 1px dashed rgb(194 249 187 / .45);
-  &:hover { font-variation-settings: "CASL" 1, "wght" 600; }
+  &:hover { font-variation-settings: "CASL" 1, "wght" 400; }
 }
 
 @utility quiet-link {
   color: var(--color-text);
   text-decoration: none;
   border-bottom: 1px dashed #3a3e46;
-  &:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    font-variation-settings: "CASL" 1, "wght" 400;
+  }
+}
+
+@utility nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 3px;
+  color: #8b8f97;
+  text-decoration: none;
+  &:hover {
+    color: var(--color-accent);
+    font-variation-settings: "CASL" 1, "wght" 400;
+  }
+}
+
+@utility nav-item-active {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 3px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-variation-settings: "CASL" 1, "wght" 600;
 }
 
 @utility pill {

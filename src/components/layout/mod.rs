@@ -229,7 +229,7 @@ fn CommandPalette() -> Element {
                 onclick: move |event| event.stop_propagation(),
                 input {
                     autofocus: true,
-                    class: "w-full border-0 border-b border-card bg-transparent px-4 py-3.5 text-base text-text outline-none placeholder:text-label [font-variation-settings:'MONO'_0,'CASL'_.5,'wght'_400]",
+                    class: "palette-input w-full border-0 border-b border-card bg-transparent px-4 py-3.5 text-base text-text outline-none placeholder:text-label",
                     placeholder: "where to?",
                     value: query,
                     oninput: move |event| query.set(event.value()),
@@ -302,11 +302,11 @@ fn HelpSheet() -> Element {
                 class: "grid w-[360px] max-w-[calc(100%-48px)] grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 rounded-lg border border-border-strong bg-surface px-[22px] py-5 text-[13px] text-secondary shadow-[0_20px_60px_rgba(0,0,0,.5)]",
                 onclick: move |event| event.stop_propagation(),
                 span { class: "label-mono col-span-2 mb-1", "// keys" }
-                kbd { class: "text-accent [font-variation-settings:'MONO'_1]", "/" } span { "jump anywhere" }
-                kbd { class: "text-accent [font-variation-settings:'MONO'_1]", "g h · b · p · a · g" } span { "home, blog, projects, about, guestbook" }
-                kbd { class: "text-accent [font-variation-settings:'MONO'_1]", "j / k" } span { "scroll, the neovim way" }
-                kbd { class: "text-accent [font-variation-settings:'MONO'_1]", "?" } span { "this" }
-                kbd { class: "text-accent [font-variation-settings:'MONO'_1]", "esc" } span { "close" }
+                kbd { class: "mono text-accent", "/" } span { "jump anywhere" }
+                kbd { class: "mono text-accent", "g h · b · p · a · g" } span { "home, blog, projects, about, guestbook" }
+                kbd { class: "mono text-accent", "j / k" } span { "scroll, the neovim way" }
+                kbd { class: "mono text-accent", "?" } span { "this" }
+                kbd { class: "mono text-accent", "esc" } span { "close" }
                 span { class: "label-mono col-span-2 mt-2 text-faint", "there are a few more. the cat knows." }
             }
         }

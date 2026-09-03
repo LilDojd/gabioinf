@@ -403,6 +403,27 @@
       color: var(--color-accent);
     }
   }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-block: 3px;
+    color: #8b8f97;
+    text-decoration: none;
+    &:hover {
+      color: var(--color-accent);
+      font-variation-settings: "CASL" 1, "wght" 400;
+    }
+  }
+  .nav-item-active {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-block: 3px;
+    color: var(--color-text);
+    text-decoration: none;
+    font-variation-settings: "CASL" 1, "wght" 600;
+  }
   .block {
     display: block;
   }
@@ -765,6 +786,7 @@
     &:hover {
       border-color: var(--color-accent);
       color: var(--color-accent);
+      font-variation-settings: "CASL" 1, "wght" 400;
     }
   }
   .border-\[\#2c3037\] {
@@ -910,9 +932,6 @@
   }
   .py-8 {
     padding-block: calc(var(--spacing) * 8);
-  }
-  .py-\[3px\] {
-    padding-block: 3px;
   }
   .py-\[5px\] {
     padding-block: 5px;
@@ -1072,14 +1091,11 @@
     text-decoration: none;
     border-bottom: 1px dashed rgb(194 249 187 / .45);
     &:hover {
-      font-variation-settings: "CASL" 1, "wght" 600;
+      font-variation-settings: "CASL" 1, "wght" 400;
     }
   }
   .text-\[\#3a3e46\] {
     color: #3a3e46;
-  }
-  .text-\[\#8b8f97\] {
-    color: #8b8f97;
   }
   .text-accent {
     color: var(--color-accent);
@@ -1164,23 +1180,17 @@
     --tw-outline-style: none;
     outline-style: none;
   }
-  .\[font-variation-settings\:\'CASL\'_\.6\,\'wght\'_600\] {
-    font-variation-settings: 'CASL' .6,'wght' 600;
-  }
-  .\[font-variation-settings\:\'CASL\'_1\,\'wght\'_600\] {
-    font-variation-settings: 'CASL' 1,'wght' 600;
-  }
-  .\[font-variation-settings\:\'MONO\'_0\,\'CASL\'_\.5\,\'wght\'_400\] {
-    font-variation-settings: 'MONO' 0,'CASL' .5,'wght' 400;
-  }
-  .\[font-variation-settings\:\'MONO\'_1\,\'CASL\'_0\] {
-    font-variation-settings: 'MONO' 1,'CASL' 0;
-  }
-  .\[font-variation-settings\:\'MONO\'_1\] {
-    font-variation-settings: 'MONO' 1;
-  }
   .casual {
     font-variation-settings: "CASL" .8, "wght" 650;
+  }
+  .mono {
+    font-variation-settings: "MONO" 1, "CASL" 0;
+  }
+  .palette-input {
+    font-variation-settings: "MONO" 0, "CASL" .5, "wght" 400;
+  }
+  .project-title {
+    font-variation-settings: "CASL" .6, "wght" 600;
   }
   .placeholder\:text-faint::placeholder {
     color: var(--color-faint);
@@ -1215,9 +1225,6 @@
     }
     .hover\:text-mars:hover {
       color: var(--color-mars);
-    }
-    .hover\:\[font-variation-settings\:\'CASL\'_1\,\'wght\'_600\]:hover {
-      font-variation-settings: 'CASL' 1,'wght' 600;
     }
   }
   .focus\:border-accent:focus {

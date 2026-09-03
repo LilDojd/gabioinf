@@ -55,7 +55,7 @@ fn NavItem(to: Route, label: &'static str, active: bool) -> Element {
     rsx! {
         Link {
             to,
-            class: if active { "flex items-center gap-2.5 py-[3px] text-text no-underline [font-variation-settings:'CASL'_1,'wght'_600]" } else { "flex items-center gap-2.5 py-[3px] text-[#8b8f97] no-underline hover:text-accent hover:[font-variation-settings:'CASL'_1,'wght'_600]" },
+            class: if active { "nav-item-active" } else { "nav-item" },
             span { class: if active { "size-1.5 shrink-0 rounded-full bg-accent" } else { "size-1.5 shrink-0 rounded-full bg-border-strong" } }
             {label}
         }
