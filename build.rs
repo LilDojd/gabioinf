@@ -1,7 +1,5 @@
 use arborium::{Config, Highlighter, HtmlFormat, advanced::html_escape};
-use pulldown_cmark::{
-    CodeBlockKind, CowStr, Event, HeadingLevel, Options, Parser, Tag, TagEnd, html,
-};
+use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd, html};
 use serde::Deserialize;
 use std::{
     collections::BTreeSet,
@@ -40,8 +38,17 @@ struct Post {
 
 enum BodyBlock {
     Html(String),
+    /// A fenced code block: highlighted HTML plus the raw source for the copy button.
+    Code {
+        language: Option<String>,
+        html: String,
+        source: String,
+    },
     GcCalculator,
-    Video { src: String, title: Option<String> },
+    Video {
+        src: String,
+        title: Option<String>,
+    },
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -227,9 +234,8 @@ fn render_body(markdown: &str, highlighter: &mut Highlighter) -> Result<Vec<Body
                         None => return Err("unclosed code block".to_string()),
                     }
                 }
-                events.push(Event::Html(CowStr::Boxed(
-                    render_code_block(&kind, &source, highlighter).into_boxed_str(),
-                )));
+                push_html_block(&mut blocks, &mut events);
+                blocks.push(render_code_block(&kind, source, highlighter));
             }
             Event::Html(element) => match parse_custom_element(element.trim())? {
                 Some(component) => {
@@ -346,28 +352,25 @@ fn parse_attributes(mut input: &str) -> Result<Vec<(String, String)>, String> {
 
 fn render_code_block(
     kind: &CodeBlockKind<'_>,
-    source: &str,
+    source: String,
     highlighter: &mut Highlighter,
-) -> String {
+) -> BodyBlock {
     let fence = match kind {
         CodeBlockKind::Indented => "",
         CodeBlockKind::Fenced(info) => info.split_whitespace().next().unwrap_or_default(),
     };
     let language = match fence {
-        "rs" | "rust" => Some(("rust", "Rust")),
+        "rs" | "rust" => Some("rust"),
         _ => None,
     };
-    let highlighted = language
-        .and_then(|(slug, _)| highlighter.highlight(slug, source).ok())
-        .unwrap_or_else(|| html_escape(source));
-    let label = language.map_or("Text", |(_, label)| label);
-    let class = language.map_or(String::new(), |(slug, _)| {
-        format!(" class=\"language-{slug}\"")
-    });
-
-    format!(
-        "<figure class=\"code-block not-prose\"><figcaption>{label}</figcaption><pre tabindex=\"0\"><code{class}>{highlighted}</code></pre></figure>"
-    )
+    let html = language
+        .and_then(|language| highlighter.highlight(language, &source).ok())
+        .unwrap_or_else(|| html_escape(&source));
+    BodyBlock::Code {
+        language: language.map(str::to_string),
+        html,
+        source,
+    }
 }
 
 fn is_safe_url(url: &str) -> bool {
@@ -431,6 +434,17 @@ fn generate_posts(posts: &[Post]) -> String {
 fn block_literal(block: &BodyBlock) -> String {
     match block {
         BodyBlock::Html(html) => format!("PostBlock::Html({html:?})"),
+        BodyBlock::Code {
+            language,
+            html,
+            source,
+        } => format!(
+            "PostBlock::Code {{ language: {}, html: {html:?}, source: {source:?} }}",
+            language.as_ref().map_or_else(
+                || "None".to_string(),
+                |language| format!("Some({language:?})")
+            ),
+        ),
         BodyBlock::GcCalculator => "PostBlock::GcCalculator".to_string(),
         BodyBlock::Video { src, title } => format!(
             "PostBlock::Video {{ src: {src:?}, title: {} }}",

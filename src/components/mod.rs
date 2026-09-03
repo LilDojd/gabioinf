@@ -1,5 +1,5 @@
 mod blog;
-pub use blog::{BlogVideo, GcCalculator};
+pub use blog::{BlogVideo, CodeBlock, GcCalculator};
 mod comments;
 pub use comments::Comments;
 mod errors;

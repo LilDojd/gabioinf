@@ -34,6 +34,53 @@ pub fn GcCalculator() -> Element {
     }
 }
 
+/// A highlighted code block with a "copy" button (clipboard access goes through
+/// web-sys, so there is no JavaScript involved).
+#[component]
+pub fn CodeBlock(
+    language: Option<&'static str>,
+    html: &'static str,
+    source: &'static str,
+) -> Element {
+    let mut copied = use_signal(|| false);
+    let label = language.unwrap_or("text");
+
+    rsx! {
+        figure { class: "code-block",
+            figcaption { class: "code-block-bar",
+                span { {label} }
+                button {
+                    r#type: "button",
+                    class: "code-copy",
+                    onclick: move |_| {
+                        copy_to_clipboard(source);
+                        copied.set(true);
+                        spawn(async move {
+                            wasmtimer::tokio::sleep(std::time::Duration::from_millis(1500)).await;
+                            copied.set(false);
+                        });
+                    },
+                    if copied() { "copied" } else { "copy" }
+                }
+            }
+            // Highlighted at build time from trusted Markdown in `content/blog/`.
+            pre { tabindex: "0",
+                code { class: if let Some(language) = language { "language-{language}" }, dangerous_inner_html: html }
+            }
+        }
+    }
+}
+
+fn copy_to_clipboard(text: &str) {
+    #[cfg(feature = "web")]
+    if let Some(window) = web_sys::window() {
+        // The returned promise resolves in the background; a failed copy just leaves the clipboard alone.
+        let _ = window.navigator().clipboard().write_text(text);
+    }
+    #[cfg(not(feature = "web"))]
+    let _ = text;
+}
+
 #[component]
 pub fn BlogVideo(src: &'static str, title: Option<&'static str>) -> Element {
     let label = title.unwrap_or("Embedded video");

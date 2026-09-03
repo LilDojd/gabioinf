@@ -89,7 +89,9 @@ wasmtimer = { version = "0.4.3", default-features = false, features = ["tokio"] 
 rand = { version = "0.10.2" }
 pulldown-cmark = { version = "0.13.4", default-features = false, features = ["html"], optional = true }
 web-sys = { version = "0.3.104", features = [
+  "Clipboard",
   "HtmlCanvasElement",
+  "Navigator",
   "CanvasRenderingContext2d",
   "ImageData",
   "Path2d",

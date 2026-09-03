@@ -1,7 +1,7 @@
 use crate::{
     Route,
     blog::{PostBlock, find_post, published_posts},
-    components::{BlogVideo, Comments, GcCalculator},
+    components::{BlogVideo, CodeBlock, Comments, GcCalculator},
 };
 use dioxus::prelude::*;
 use time::{Date, macros::format_description};
@@ -75,6 +75,9 @@ pub fn BlogPost(slug: String) -> Element {
                 for block in post.body {
                     match block {
                         PostBlock::Html(html) => rsx! { div { dangerous_inner_html: *html } },
+                        PostBlock::Code { language, html, source } => rsx! {
+                            CodeBlock { language: *language, html: *html, source: *source }
+                        },
                         PostBlock::GcCalculator => rsx! { GcCalculator {} },
                         PostBlock::Video { src, title } => rsx! { BlogVideo { src: *src, title: *title } },
                     }

@@ -7,6 +7,12 @@ use time::Date;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PostBlock {
     Html(&'static str),
+    /// A fenced code block, highlighted at build time; `source` feeds the copy button.
+    Code {
+        language: Option<&'static str>,
+        html: &'static str,
+        source: &'static str,
+    },
     GcCalculator,
     Video {
         src: &'static str,
