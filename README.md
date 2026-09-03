@@ -37,7 +37,9 @@ devenv processes up postgres --detach
 secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve
 ```
 
-Run `just prepare-sqlx` after changing a SQL query or migration.
+Run `just prepare-sqlx` after changing a SQL query or migration. `just seed` fills the
+local database with fake guests, signatures and comments (regenerate the SQL with
+`python3 fixtures/generate.py > fixtures/synthetic.sql`).
 
 ### Writing blog posts
 

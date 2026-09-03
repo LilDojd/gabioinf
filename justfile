@@ -8,6 +8,11 @@ default:
 serve:
     devenv processes up app
 
+# Load fake guests, guestbook entries and comments into the local database
+seed:
+    devenv processes up postgres --detach
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f fixtures/synthetic.sql
+
 # Regenerate SQLx's checked-in query cache against local PostgreSQL
 prepare-sqlx:
     devenv processes up postgres --detach
