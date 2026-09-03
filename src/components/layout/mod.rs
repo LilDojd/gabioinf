@@ -55,7 +55,11 @@ pub fn Layout() -> Element {
 
     let route: Route = use_route();
     rsx! {
-        crate::DocumentMetadata {}
+        // Head elements cannot change props in place, and Dioxus only honours `key`
+        // inside keyed lists, so a one-item list remounts the metadata per route.
+        for route in [route.clone()] {
+            crate::DocumentMetadata { key: "{route}" }
+        }
         div { class: "grid min-h-screen grid-cols-1 justify-center px-5 md:grid-cols-[220px_minmax(0,600px)] md:gap-[72px] md:px-8 xl:grid-cols-[260px_minmax(0,760px)] xl:gap-28",
             Sidebar { clock: clock() }
             main { class: "min-w-0 py-8 pb-14 md:py-12 md:pb-24 xl:py-16 xl:pb-[120px]",
