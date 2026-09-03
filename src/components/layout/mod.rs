@@ -7,6 +7,8 @@ use wasmtimer::tokio::sleep;
 
 #[cfg(any(feature = "web", test))]
 mod chords;
+#[cfg(feature = "web")]
+mod dom;
 mod footer;
 #[cfg(feature = "web")]
 mod keys;
@@ -34,8 +36,10 @@ pub fn Layout() -> Element {
     use_context_provider(move || ui);
 
     let clock = use_signal(abu_dhabi_time);
+    let progress = use_signal(|| 0.0_f32);
     #[cfg(feature = "web")]
     {
+        use_effect(move || dom::install_reading_progress(progress));
         let mut clock_update = clock;
         use_effect(move || {
             spawn(async move {
@@ -70,7 +74,10 @@ pub fn Layout() -> Element {
             }
             MobileFooter { clock: clock() }
             if matches!(route, Route::BlogPost { .. }) {
-                div { class: "reading-progress fixed top-0 left-0 z-20 h-0.5 w-full bg-accent" }
+                div {
+                    class: "reading-progress fixed top-0 left-0 z-20 h-0.5 w-full bg-accent",
+                    style: "transform: scaleX({progress})",
+                }
             }
             img {
                 class: if (ui.sesh_visible)() { "fixed right-6 bottom-0 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none" } else { "fixed right-6 -bottom-40 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none" },
@@ -295,6 +302,16 @@ fn run_command(target: CommandTarget, navigator: Navigator, mut ui: UiState) {
     ui.palette_open.set(false);
 }
 
+#[cfg(any(feature = "web", test))]
+fn scroll_progress(scroll_y: f64, scroll_height: f64, viewport_height: f64) -> f32 {
+    let scrollable = scroll_height - viewport_height;
+    if scrollable <= 0.0 || !scroll_y.is_finite() {
+        0.0
+    } else {
+        (scroll_y / scrollable).clamp(0.0, 1.0) as f32
+    }
+}
+
 #[component]
 fn HelpSheet() -> Element {
     let ui = use_context::<UiState>();
@@ -314,5 +331,18 @@ fn HelpSheet() -> Element {
                 span { class: "label-mono col-span-2 mt-2 text-faint", "there are a few more. the cat knows." }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::scroll_progress;
+
+    #[test]
+    fn reading_progress_is_bounded_and_handles_short_pages() {
+        assert_eq!(scroll_progress(250.0, 1_500.0, 1_000.0), 0.5);
+        assert_eq!(scroll_progress(-20.0, 1_500.0, 1_000.0), 0.0);
+        assert_eq!(scroll_progress(900.0, 1_500.0, 1_000.0), 1.0);
+        assert_eq!(scroll_progress(20.0, 800.0, 1_000.0), 0.0);
     }
 }

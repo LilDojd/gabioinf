@@ -5,12 +5,11 @@
 use super::{
     UiState,
     chords::{Action, Chords, Direction, Key},
-    close_overlays, summon_sesh,
+    close_overlays,
+    dom::DioxusScope,
+    summon_sesh,
 };
-use dioxus::{
-    core::{Runtime, ScopeId},
-    prelude::{WritableExt, dioxus_router::Navigator},
-};
+use dioxus::prelude::{WritableExt, dioxus_router::Navigator};
 use std::{cell::RefCell, rc::Rc};
 use web_sys::{
     HtmlElement, KeyboardEvent, ScrollBehavior, ScrollToOptions, Window,
@@ -27,27 +26,6 @@ struct HeldScroll {
     started: f64,
     last_frame: Option<f64>,
     frame_id: i32,
-}
-
-/// Browser callbacks run outside any Dioxus scope, so touching signals or the
-/// navigator from them would panic; this re-enters the scope that installed
-/// the listeners (the layout) for the duration of the callback.
-#[derive(Clone)]
-struct DioxusScope {
-    runtime: Rc<Runtime>,
-    scope: ScopeId,
-}
-
-impl DioxusScope {
-    fn current() -> Self {
-        let runtime = Runtime::current();
-        let scope = runtime.current_scope_id();
-        Self { runtime, scope }
-    }
-
-    fn enter<T>(&self, f: impl FnOnce() -> T) -> T {
-        self.runtime.in_scope(self.scope, f)
-    }
 }
 
 pub fn install(ui: UiState, navigator: Navigator) {
