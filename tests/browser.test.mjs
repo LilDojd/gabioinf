@@ -3,7 +3,7 @@ import { after, before, test } from "node:test";
 import { readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
-// Run against `just serve` (or another local build), never a production write path.
+// Run against `just serve-test-content`, never a production write path.
 const origin = process.env.APP_URL ?? "http://localhost:8080";
 const article = `${origin}/blog/blog-rendering-showcase?viewer=test`;
 let browser;
@@ -126,7 +126,7 @@ test("guestbook loads public cards before auth and reuses them on return navigat
     await page.getByRole("link", { name: "sign in with github" }).waitFor();
     const initialReads = pageReads;
     await page.locator('a[href="/blog"]').first().click();
-    await page.getByRole("heading", { name: "random rambles" }).waitFor();
+    await page.getByRole("heading", { name: "blog", exact: true }).waitFor();
     await page.locator('a[href="/guestbook"]').first().click();
     await page.getByText("A cached visitor message", { exact: true }).waitFor();
     assert.equal(pageReads, initialReads, "fresh return navigation must not reload the public page");

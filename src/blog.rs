@@ -2,6 +2,9 @@
 
 use time::Date;
 
+#[cfg(all(feature = "test-content", not(debug_assertions), not(test)))]
+compile_error!("test-content is only for debug browser tests, not production builds");
+
 // A catalog need not use every allowlisted component.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

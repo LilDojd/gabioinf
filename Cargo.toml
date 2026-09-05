@@ -130,6 +130,9 @@ yaml_serde = "0.10.7"
 
 [features]
 
+# Explicit, debug-only browser fixtures; never enabled by the normal app build.
+test-content = []
+
 server = [
   "dep:axum",
   "dep:base64",

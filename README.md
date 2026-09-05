@@ -93,7 +93,9 @@ text so entities and link formatting cannot bypass the same policy.
 
 - `just check`: formatting, strict Clippy, and the WASM build.
 - `just test`: start local PostgreSQL and run Rust unit/integration tests.
-- `just test-browser`: run against an already-running `just serve` on port 8080.
+- `just test-browser`: run against an already-running `just serve-test-content` on port 8080.
+  This explicitly enables the debug-only `test-content` fixture catalog; normal builds
+  never publish those posts. Rust tests use the same fixtures independently of live content.
   Run `npx playwright install chromium` once, or use
   `PLAYWRIGHT_CHANNEL=chrome just test-browser` with installed Chrome.
   `APP_URL` overrides the test server URL. The grammar smoke test needs CDN access.

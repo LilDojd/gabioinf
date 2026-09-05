@@ -65,7 +65,12 @@ test:
     devenv processes up postgres --detach
     SQLX_OFFLINE=true cargo test --locked --all-features
 
-# Requires a running local app; APP_URL overrides http://localhost:8080
+# Serve an explicit test catalog without publishing fixtures on the normal site
+serve-test-content:
+    devenv processes up postgres --detach
+    secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve --fullstack true --features test-content
+
+# Requires serve-test-content; APP_URL overrides http://localhost:8080
 test-browser:
     npm run test:browser
 

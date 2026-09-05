@@ -54,11 +54,21 @@ enum BodyBlock {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir =
         PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("Cargo sets CARGO_MANIFEST_DIR"));
-    let content_dir = manifest_dir.join("content/blog");
-    println!("cargo:rerun-if-changed={}", content_dir.display());
+    let posts = load_catalog(&manifest_dir.join("content/blog"))?;
+    let fixtures = load_catalog(&manifest_dir.join("tests/fixtures/blog"))?;
+    let generated = generate_posts(&posts, "not(any(test, feature = \"test-content\"))")
+        + &generate_posts(&fixtures, "any(test, feature = \"test-content\")");
+    let output = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo sets OUT_DIR"));
+    fs::write(output.join("blog_posts.rs"), generated)?;
+    Ok(())
+}
 
-    let mut paths = fs::read_dir(&content_dir)?
-        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+fn load_catalog(content_dir: &Path) -> io::Result<Vec<Post>> {
+    println!("cargo:rerun-if-changed={}", content_dir.display());
+    let mut paths = fs::read_dir(content_dir)?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<io::Result<Vec<_>>>()?
+        .into_iter()
         .filter(|path| path.extension().is_some_and(|extension| extension == "md"))
         .collect::<Vec<_>>();
     paths.sort();
@@ -74,9 +84,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .then_with(|| left.slug.cmp(&right.slug))
     });
 
-    let output = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo sets OUT_DIR"));
-    fs::write(output.join("blog_posts.rs"), generate_posts(&posts))?;
-    Ok(())
+    Ok(posts)
 }
 
 fn load_post(path: &Path) -> io::Result<Post> {
@@ -461,8 +469,8 @@ fn is_safe_url(url: &str) -> bool {
             .is_some_and(|prefix| prefix.contains(':'))
 }
 
-fn generate_posts(posts: &[Post]) -> String {
-    let mut generated = String::from("static POSTS: &[Post] = &[\n");
+fn generate_posts(posts: &[Post], condition: &str) -> String {
+    let mut generated = format!("#[cfg({condition})]\nstatic POSTS: &[Post] = &[\n");
     for post in posts.iter().filter(|post| !post.draft) {
         let updated = post.updated.map_or_else(
             || "None".to_string(),
@@ -489,7 +497,9 @@ fn generate_posts(posts: &[Post]) -> String {
             post.read_minutes,
         ));
     }
-    generated.push_str("];\n#[cfg(test)]\nstatic DRAFT_SLUGS: &[&str] = &[\n");
+    generated.push_str(&format!(
+        "];\n#[cfg(all(test, {condition}))]\nstatic DRAFT_SLUGS: &[&str] = &[\n"
+    ));
     for post in posts.iter().filter(|post| post.draft) {
         generated.push_str(&format!("    {:?},\n", post.slug));
     }
