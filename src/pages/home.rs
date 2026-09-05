@@ -25,7 +25,7 @@ pub fn Home() -> Element {
                             let next = (ui.retype)().wrapping_add(1);
                             ui.retype.set(next);
                         },
-                        Typewriter { text: GREETING, generation: (ui.retype)() }
+                        Typewriter { text: GREETING, generation: (ui.retype)(), completed: ui.greeting_completed }
                     }
                     div { class: "prose-font flex flex-col gap-3.5 text-[20px] leading-[1.45] text-prose text-pretty xl:text-[22px]",
                         p { class: "m-0", "I'm a structural biologist and a developer." }

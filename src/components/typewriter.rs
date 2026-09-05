@@ -19,13 +19,29 @@ const CURSOR_BLINK_MS: u64 = 500;
 const CURSOR_TOGGLES: usize = 7;
 
 #[component]
-pub fn Typewriter(text: &'static str, generation: u32) -> Element {
-    let mut typed = use_signal(String::new);
-    let mut cursor_visible = use_signal(|| true);
+pub fn Typewriter(
+    text: &'static str,
+    generation: u32,
+    mut completed: Signal<Option<u32>>,
+) -> Element {
+    let resolved = *completed.peek() == Some(generation);
+    let mut typed = use_signal(move || {
+        if resolved {
+            text.to_string()
+        } else {
+            String::new()
+        }
+    });
+    let mut cursor_visible = use_signal(move || !resolved);
     let mut active_generation = use_signal(|| generation);
 
     use_effect(use_reactive!(|text, generation| {
         active_generation.set(generation);
+        if *completed.peek() == Some(generation) {
+            typed.set(text.to_string());
+            cursor_visible.set(false);
+            return;
+        }
         typed.set(String::new());
         cursor_visible.set(true);
 
@@ -60,6 +76,11 @@ pub fn Typewriter(text: &'static str, generation: u32) -> Element {
                 ))
                 .await;
             }
+
+            if active_generation() != generation {
+                return;
+            }
+            completed.set(Some(generation));
 
             for _ in 0..CURSOR_TOGGLES {
                 sleep(Duration::from_millis(CURSOR_BLINK_MS)).await;

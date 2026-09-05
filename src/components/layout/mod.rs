@@ -23,6 +23,7 @@ pub(crate) struct UiState {
     pub help_open: Signal<bool>,
     pub sesh_visible: Signal<bool>,
     pub retype: Signal<u32>,
+    pub greeting_completed: Signal<Option<u32>>,
 }
 
 #[component]
@@ -32,6 +33,7 @@ pub fn Layout() -> Element {
         help_open: use_signal(|| false),
         sesh_visible: use_signal(|| false),
         retype: use_signal(|| 0),
+        greeting_completed: use_signal(|| None),
     };
     use_context_provider(move || ui);
 

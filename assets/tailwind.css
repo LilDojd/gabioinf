@@ -1385,6 +1385,9 @@
     .md\:mt-auto {
       margin-top: auto;
     }
+    .md\:block {
+      display: block;
+    }
     .md\:flex {
       display: flex;
     }
@@ -1489,9 +1492,6 @@
   @media (width >= 40rem) {
     .sm\:grow-0 {
       flex-grow: 0;
-    }
-    .sm\:grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 }
