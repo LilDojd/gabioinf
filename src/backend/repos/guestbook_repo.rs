@@ -1,4 +1,4 @@
-use crate::backend::errors::BResult;
+use crate::backend::errors::{ApiError, BResult};
 use crate::shared::models::{GuestId, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage};
 
 #[derive(Debug, Clone)]
@@ -128,7 +128,16 @@ impl GuestbookRepo {
         Ok(GuestbookPage {
             entries,
             next_cursor,
+            total: self.total().await?,
         })
+    }
+
+    /// Every signature in the guestbook, not only the ones on the current page.
+    async fn total(&self) -> BResult<usize> {
+        let total = sqlx::query_scalar!(r#"SELECT COUNT(*) AS "total!" FROM guestbook"#)
+            .fetch_one(&self.pool)
+            .await?;
+        usize::try_from(total).map_err(|_| ApiError::InvalidData("guestbook count exceeds usize"))
     }
 
     pub async fn delete_owned(&self, id: GuestbookId, author_id: GuestId) -> BResult<bool> {
@@ -231,6 +240,8 @@ mod tests {
         let first = repo.read_page(None, 9, Some(pinned_id)).await.unwrap();
         assert_eq!(first.entries.len(), 9);
         assert!(first.entries.iter().all(|entry| entry.id != pinned_id));
+        // The total covers the whole guestbook: rows past this page and the pinned one.
+        assert_eq!(first.total, 12);
 
         let second = repo
             .read_page(first.next_cursor, 10, Some(pinned_id))
@@ -238,6 +249,7 @@ mod tests {
             .unwrap();
         assert_eq!(second.entries.len(), 2);
         assert!(second.entries.iter().all(|entry| entry.id != pinned_id));
+        assert_eq!(second.total, 12);
         assert!(second.next_cursor.is_none());
     }
 

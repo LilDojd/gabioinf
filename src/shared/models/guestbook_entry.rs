@@ -42,11 +42,13 @@ pub struct GuestbookCursor {
     pub id: GuestbookId,
 }
 
-/// One page of guestbook entries and the cursor for the next page.
+/// One page of guestbook entries, the cursor for the next page, and how many
+/// signatures the guestbook holds in total.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct GuestbookPage {
     pub entries: Vec<GuestbookEntry>,
     pub next_cursor: Option<GuestbookCursor>,
+    pub total: usize,
 }
 
 impl Default for GuestbookEntry {

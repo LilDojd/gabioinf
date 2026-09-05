@@ -104,6 +104,7 @@ mod tests {
                 id: GuestbookId(id),
                 created_at: OffsetDateTime::UNIX_EPOCH,
             }),
+            total: 1,
         }
     }
 
