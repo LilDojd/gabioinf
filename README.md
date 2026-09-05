@@ -13,7 +13,7 @@ A personal website built with Dioxus and WebAssembly, showcasing projects, writi
 - **Database**: PostgreSQL with [SQLx](https://github.com/launchbadge/sqlx)
 - **Authentication**: OAuth2 with GitHub
 - **Styling**: Tailwind CSS v4 (design tokens and utilities live in `input.css`); fonts are self-hosted
-- **No JavaScript**: interactions (keyboard shortcuts, drawing pad, easter eggs) are Rust + `web-sys`
+- **Rust UI**: interactions use Dioxus + `web-sys`; a small JavaScript bridge loads Arborium’s WASM grammar plugins
 
 ## 🚀 Deployment
 
@@ -50,14 +50,18 @@ routes and feeds, and posts are sorted newest-first. Set `draft: false` to publi
 
 Post bodies use GitHub-flavoured Markdown and should start at heading level 2 because
 the page supplies the title. Reading time is estimated automatically at 200 words per
-minute. Rust code fences are highlighted with Tree-sitter during the build; unsupported
-fence languages remain readable plain text without shipping a highlighting runtime or
-JavaScript library to the browser. Code blocks render as a small viewer: numbered lines,
-click (or shift-click) a number to select a range that is mirrored into the URL as
-`#L3-L7`, a wrap toggle and a copy button. The fence may name the file and emphasise
-lines: ```` ```rust title="src/main.rs" {2,5-7} ````.
+minute. Code is rendered as escaped, readable text first. Arborium loads Tree-sitter
+WASM grammars on demand from version-pinned jsDelivr assets (`2.18.1`), reusing loaded
+grammars across blocks and client-side navigation. The full published grammar catalog
+is available without Cargo language features. Missing grammars or network failures leave
+plain text usable. Nested Markdown and comment code blocks are highlighted too.
 
-Two allowlisted Dioxus elements may appear on their own line:
+Top-level code fences use a Rust viewer with keyboard-accessible line numbers, wrapping,
+per-block line permalinks (for example `#blog-my-post-code-2-L3-L7`), and clipboard success
+or failure feedback. Shift-click extends a range; Escape clears it. The fence may name
+the file and emphasize lines: ```` ```rust title="src/main.rs" {2,5-7} ````.
+
+Two allowlisted Dioxus elements may appear on their own line at the top level (not inside a list or quotation):
 
 ```md
 <GcCalculator />
@@ -72,6 +76,32 @@ Published posts have first-party comments backed by PostgreSQL. GitHub sign-in k
 bots out; comments support Markdown and one level of replies, and posting is rate limited.
 
 Run `just check-posts` before publishing.
+
+### Guestbook loading and moderation
+
+The guestbook shell renders immediately; public signatures and sign-in status load
+independently. A per-app, in-memory first-page cache makes return navigation immediate
+for up to 30 seconds. Stale cards stay visible during refresh and retry. The cache holds
+at most 10 entries / 1 MiB, never caches authentication, and is invalidated after successful
+writes or identity changes. It does not eliminate the initial cross-region database trip.
+
+Guestbook messages and comments reject **severe-only** content using rustrict. Mild and
+moderate language remains allowed. Comments check both raw Markdown and decoded visible
+text so entities and link formatting cannot bypass the same policy.
+
+### Checks
+
+- `just check`: formatting, strict Clippy, and the WASM build.
+- `just test`: start local PostgreSQL and run Rust unit/integration tests.
+- `just test-browser`: run against an already-running `just serve` on port 8080.
+  Run `npx playwright install chromium` once, or use
+  `PLAYWRIGHT_CHANNEL=chrome just test-browser` with installed Chrome.
+  `APP_URL` overrides the test server URL. The grammar smoke test needs CDN access.
+
+Tests follow [Testing on the Toilet’s behavior-first guidance](https://testing.googleblog.com/2015/01/testing-on-toilet-change-detector-tests.html):
+exercise outcomes and public boundaries, not copies of implementation details or
+whole-page snapshots. Browser checks cover failed grammar loads, clipboard errors,
+per-block selection, and real multi-language highlighting.
 
 ### Publishing secrets to Fly.io
 

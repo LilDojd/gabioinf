@@ -51,7 +51,23 @@ new-post slug:
     echo "Created $post"
 
 check-posts:
-    SQLX_OFFLINE=true cargo test --all-features blog
+    SQLX_OFFLINE=true cargo test --locked --all-features blog
+    SQLX_OFFLINE=true cargo test --locked --features server --test blog_build
+
+# Keep the local checks aligned with CI
+check:
+    cargo fmt --all --check
+    SQLX_OFFLINE=true cargo clippy --locked --all-targets --all-features -- -D warnings
+    SQLX_OFFLINE=true cargo check --locked --features web --target wasm32-unknown-unknown
+
+# PostgreSQL tests create their own isolated databases
+test:
+    devenv processes up postgres --detach
+    SQLX_OFFLINE=true cargo test --locked --all-features
+
+# Requires a running local app; APP_URL overrides http://localhost:8080
+test-browser:
+    npm run test:browser
 
 # Format Rust code
 format:

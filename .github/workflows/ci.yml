@@ -48,12 +48,18 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           target: wasm32-unknown-unknown
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Clippy
+        env:
+          SQLX_OFFLINE: "true"
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
       - name: Migrate database
         run: |
           cargo install sqlx-cli --no-default-features --features rustls,postgres
           sqlx migrate run
       - uses: taiki-e/install-action@nextest
       - name: Run tests
-        run: cargo nextest run --features server
+        run: cargo nextest run --locked --features server
       - name: Check web build
-        run: cargo check --features web --target wasm32-unknown-unknown
+        run: cargo check --locked --features web --target wasm32-unknown-unknown
