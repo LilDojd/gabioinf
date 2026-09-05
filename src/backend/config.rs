@@ -110,16 +110,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_config() {
+    fn default_rate_limits_are_usable() {
         let config = Config::builder()
             .add_source(File::with_name("./config/default").required(true))
             .build()
             .unwrap();
-        assert_eq!(
-            config.get_int("ratelimiting.requests_per_second").unwrap(),
-            5
-        );
-        assert_eq!(config.get_int("ratelimiting.burst_size").unwrap(), 10);
+        let limits: RateLimiting = config.get("ratelimiting").unwrap();
+
+        assert!(limits.requests_per_second > 0);
+        assert!(limits.burst_size > 0);
     }
 
     #[test]

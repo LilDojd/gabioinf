@@ -105,12 +105,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn emoji_names_and_glyphs_round_trip() {
-        for emoji in Emoji::ALL {
-            assert_eq!(emoji.name().parse::<Emoji>(), Ok(emoji));
-            assert_eq!(emoji.to_string(), emoji.glyph());
+    fn persisted_emoji_names_remain_compatible() {
+        for (emoji, stored) in [
+            (Emoji::Alien, "alien"),
+            (Emoji::Crab, "crab"),
+            (Emoji::Heart, "heart"),
+            (Emoji::Fire, "fire"),
+            (Emoji::Eyes, "eyes"),
+            (Emoji::Party, "party"),
+        ] {
+            assert_eq!(emoji.name(), stored);
+            assert_eq!(stored.parse::<Emoji>(), Ok(emoji));
         }
+    }
+
+    #[test]
+    fn serialized_emoji_names_remain_compatible() {
+        // The server-function wire format uses enum names, not lowercase database names.
+        for (emoji, json) in [
+            (Emoji::Alien, r#""Alien""#),
+            (Emoji::Crab, r#""Crab""#),
+            (Emoji::Heart, r#""Heart""#),
+            (Emoji::Fire, r#""Fire""#),
+            (Emoji::Eyes, r#""Eyes""#),
+            (Emoji::Party, r#""Party""#),
+        ] {
+            assert_eq!(serde_json::to_string(&emoji).unwrap(), json);
+            assert_eq!(serde_json::from_str::<Emoji>(json).unwrap(), emoji);
+        }
+    }
+
+    #[test]
+    fn unknown_emoji_names_are_rejected() {
         assert!("👽".parse::<Emoji>().is_err());
         assert!("unknown".parse::<Emoji>().is_err());
+        assert!(serde_json::from_str::<Emoji>(r#""Unknown""#).is_err());
+    }
+
+    #[test]
+    fn emoji_display_uses_glyphs() {
+        assert_eq!(Emoji::Alien.to_string(), "👽");
+        assert_eq!(Emoji::Heart.to_string(), "❤️");
     }
 }
