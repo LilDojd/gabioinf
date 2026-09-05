@@ -107,7 +107,7 @@ test("pinned CDN grammars highlight multiple languages without altering source",
 
 const timestamp = [2026, 1, 0, 0, 0, 0, 0, 0, 0];
 const guest = { id: 1, github_id: 1, name: "Browser Test", username: "browser-test", created_at: timestamp, updated_at: timestamp };
-const signaturePage = { entries: [{ id: 1, message: "A cached visitor message", signature: null, author_id: 1, author_username: "browser-test", created_at: timestamp, updated_at: timestamp }], next_cursor: null };
+const signaturePage = { entries: [{ id: 1, message: "A cached visitor message", signature: null, author_id: 1, author_username: "browser-test", created_at: timestamp, updated_at: timestamp }], next_cursor: null, total: 1 };
 const json = (route, value) => route.fulfill({ contentType: "application/json", body: JSON.stringify(value) });
 
 test("guestbook loads public cards before auth and reuses them on return navigation", async () => {

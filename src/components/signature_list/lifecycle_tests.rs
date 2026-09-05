@@ -35,6 +35,7 @@ struct Controls {
     cache: Signal<SignatureCache>,
     auth: Signal<Option<AuthState>>,
     visible: Signal<bool>,
+    count: Signal<Option<usize>>,
 }
 
 #[derive(Clone, Default)]
@@ -67,6 +68,7 @@ fn app(harness: Harness) -> Element {
             cache,
             auth,
             visible,
+            count,
         })
     });
     rsx! { if visible() { SignatureList { count } } }
@@ -90,6 +92,7 @@ fn page(include_new: bool) -> GuestbookPage {
         entries.insert(0, new_entry());
     }
     GuestbookPage {
+        total: entries.len(),
         entries,
         next_cursor: None,
     }
@@ -121,6 +124,11 @@ async fn idle_submit_then_sign_out_refreshes_public_cards_without_blanking_them(
         "fresh navigation should reuse the page"
     );
     let mut controls = harness.controls.borrow().unwrap();
+    assert_eq!(
+        controls.count.peek().as_ref(),
+        Some(&1),
+        "the header counts every signature the guestbook holds, not the loaded rows"
+    );
     let (commit, pending) = oneshot::channel();
     dom.in_runtime(|| {
         spawn_signature_mutation(
@@ -167,6 +175,7 @@ async fn idle_submit_then_sign_out_refreshes_public_cards_without_blanking_them(
         .unwrap();
     settle(&mut dom).await;
     assert!(dioxus::ssr::render(&dom).contains("Newly committed signature"));
+    assert_eq!(controls.count.peek().as_ref(), Some(&2));
     assert!(
         harness.requests.0.borrow().is_empty(),
         "storing a refreshed page must not start another refresh"

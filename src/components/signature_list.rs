@@ -45,17 +45,20 @@ pub fn SignatureList(mut count: Signal<Option<usize>>) -> Element {
         }
     });
 
+    // A fresh return navigation renders from the cache without a request, so the
+    // header's total comes from the cached page instead of waiting for one.
+    use_effect(move || {
+        if let Some(total) = cache.read().page().map(|page| page.total) {
+            count.set(Some(total));
+        }
+    });
+
     // Shared card props avoid repeatedly cloning base64 strings as more pages load.
     let user_entry = use_memo(move || match auth_state.read().as_ref() {
         Some(AuthState::Authenticated(user)) => user.entry.clone().map(Rc::new),
         _ => None,
     });
     let user_entry_id = user_entry.read().as_ref().map(|entry| entry.id);
-
-    use_effect(move || {
-        let pinned_id = user_entry.read().as_ref().map(|entry| entry.id);
-        count.set(loaded_once().then(|| visible_count(&entries.read(), pinned_id)));
-    });
 
     let load_more = use_callback(move |_| {
         if loading() || (!refresh_first() && loaded_once() && next_cursor().is_none()) {
@@ -82,6 +85,7 @@ pub fn SignatureList(mut count: Signal<Option<usize>>) -> Element {
                     }
                     append_unique(&mut entries.write(), page.entries, deleted_entry_id());
                     next_cursor.set(page.next_cursor);
+                    count.set(Some(page.total));
                     loaded_once.set(true);
                     refresh_first.set(false);
                 }
@@ -246,14 +250,6 @@ fn SignatureSkeleton(#[props(default)] compact: bool) -> Element {
     }
 }
 
-fn visible_count(entries: &[Rc<GuestbookEntry>], pinned_id: Option<GuestbookId>) -> usize {
-    entries
-        .iter()
-        .filter(|entry| Some(entry.id) != pinned_id)
-        .count()
-        + usize::from(pinned_id.is_some())
-}
-
 fn append_unique(
     entries: &mut Vec<Rc<GuestbookEntry>>,
     incoming: Vec<GuestbookEntry>,
@@ -277,14 +273,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn pinned_signature_is_only_counted_once_when_public_loading_finishes_first() {
-        let entries = vec![Rc::new(entry(1)), Rc::new(entry(2))];
-        assert_eq!(visible_count(&entries, None), 2);
-        assert_eq!(visible_count(&entries, Some(GuestbookId(1))), 2);
-        assert_eq!(visible_count(&entries, Some(GuestbookId(3))), 3);
-    }
-
     #[cfg(feature = "server")]
     #[test]
     fn cached_signatures_render_while_authentication_is_pending() {
@@ -299,6 +287,7 @@ mod tests {
                             ..Default::default()
                         }],
                         next_cursor: None,
+                        total: 1,
                     },
                     OffsetDateTime::now_utc(),
                 );

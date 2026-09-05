@@ -42,16 +42,13 @@ pub fn Guestbook() -> Element {
         section { class: "flex flex-col gap-8",
             header { class: "flex flex-col gap-3.5",
                 span { class: "label-mono",
-                    if let Some(count) = count() {
-                        "// guestbook · {count} signatures loaded"
-                    } else {
-                        "// guestbook"
+                    match count() {
+                        Some(1) => rsx! { "// guestbook · 1 signature" },
+                        Some(count) => rsx! { "// guestbook · {count} signatures" },
+                        None => rsx! { "// guestbook" },
                     }
                 }
                 h1 { class: "heading-casual m-0 text-[30px] leading-[1.2]", "sign my guestbook" }
-                p { class: "prose-font m-0 text-pretty text-lg text-muted",
-                    "Leave a note and a doodle. Signing in with GitHub keeps the bots out; nothing else is stored."
-                }
                 div { class: "flex flex-wrap gap-2",
                     match auth_state.read().as_ref() {
                         Some(AuthState::Authenticated(user)) if user.entry.is_none() => rsx! {
