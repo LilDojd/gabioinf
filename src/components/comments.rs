@@ -27,6 +27,18 @@ pub fn Comments(
     let action_error = use_signal(|| None::<(CommentId, String)>);
     let deleting = use_signal(|| false);
 
+    // Deleting the selected thread returns the existing draft to the top-level composer.
+    use_effect(move || {
+        if let Some(id) = reply_target()
+            && !comments
+                .read()
+                .iter()
+                .any(|comment| comment.id == id && comment.parent_id.is_none())
+        {
+            reply_target.set(None);
+        }
+    });
+
     let reply_author = reply_target().and_then(|id| {
         comments
             .read()
@@ -34,6 +46,39 @@ pub fn Comments(
             .find(|comment| comment.id == id)
             .map(|comment| comment.author.username.clone())
     });
+
+    let composer = rsx! {
+        CommentComposer {
+            body,
+            reply_author,
+            submitting: submitting(),
+            error: submit_error(),
+            on_cancel: move |_| reply_target.set(None),
+            on_submit: move |_| {
+                if submitting() {
+                    return;
+                }
+                submitting.set(true);
+                submit_error.set(None);
+                let comment_body = body();
+                let parent_id = reply_target();
+                spawn(async move {
+                    match server_fns::post_comment(slug.to_string(), comment_body, parent_id).await {
+                        Ok(comment) => {
+                            comments.write().push(comment);
+                            body.set(String::new());
+                            reply_target.set(None);
+                        }
+                        Err(error) => {
+                            tracing::error!("Could not post comment: {error:?}");
+                            submit_error.set(Some(server_error_message(&error, "Could not post your comment. Please retry.")));
+                        }
+                    }
+                    submitting.set(false);
+                });
+            },
+        }
+    };
 
     rsx! {
         section {
@@ -74,62 +119,8 @@ pub fn Comments(
                 }
             }
 
-            if viewer.read().is_some() {
-                form {
-                    class: "flex flex-col gap-2",
-                    onsubmit: move |event| {
-                        event.prevent_default();
-                        if submitting() {
-                            return;
-                        }
-                        submitting.set(true);
-                        submit_error.set(None);
-                        let comment_body = body();
-                        let parent_id = reply_target();
-                        spawn(async move {
-                            match server_fns::post_comment(slug.to_string(), comment_body, parent_id).await {
-                                Ok(comment) => {
-                                    comments.write().push(comment);
-                                    body.set(String::new());
-                                    reply_target.set(None);
-                                }
-                                Err(error) => {
-                                    tracing::error!("Could not post comment: {error:?}");
-                                    submit_error.set(Some(server_error_message(&error, "Could not post your comment. Please retry.")));
-                                }
-                            }
-                            submitting.set(false);
-                        });
-                    },
-                    if let Some(username) = reply_author {
-                        span { class: "label-mono",
-                            "replying to @{username} · "
-                            button {
-                                r#type: "button",
-                                class: "bg-transparent p-0 text-label hover:text-accent",
-                                onclick: move |_| reply_target.set(None),
-                                "cancel"
-                            }
-                        }
-                    }
-                    textarea {
-                        class: "prose-font w-full resize-y rounded-md border border-card bg-surface px-3.5 py-3 text-base leading-[1.45] text-text outline-none placeholder:text-label focus:border-accent",
-                        placeholder: "say something. markdown works.",
-                        rows: 3,
-                        value: body,
-                        disabled: submitting(),
-                        oninput: move |event| body.set(event.value()),
-                    }
-                    if let Some(error) = submit_error.read().as_ref() {
-                        span { role: "alert", class: "label-mono text-mars", {error.to_string()} }
-                    }
-                    div { class: "flex items-center justify-between gap-3",
-                        span { class: "label-mono text-faint", "be kind. no trackers, no paywall, just a database row." }
-                        button { r#type: "submit", class: "btn-primary shrink-0 px-3.5 py-[7px] text-[13px]", disabled: submitting(),
-                            if submitting() { "posting…" } else { "post" }
-                        }
-                    }
-                }
+            if viewer.read().is_some() && reply_target().is_none() {
+                {composer.clone()}
             }
 
             div { class: "flex flex-col",
@@ -138,7 +129,7 @@ pub fn Comments(
                         key: "{root.id.0}",
                         comment: root.clone(),
                         viewer: viewer.read().clone(),
-                        can_reply: viewer.read().is_some(),
+                        can_reply: viewer.read().is_some() && !submitting(),
                         reaction_counts: reactions.read().comments.get(&root.id).cloned().unwrap_or_default(),
                         error: action_error.read().as_ref().filter(|(id, _)| *id == root.id).map(|(_, error)| error.clone()),
                         on_reply: move |id| reply_target.set(Some(id)),
@@ -148,6 +139,9 @@ pub fn Comments(
                             let id = root.id;
                             move |counts| { reactions.write().comments.insert(id, counts); }
                         },
+                    }
+                    if viewer.read().is_some() && reply_target() == Some(root.id) {
+                        div { class: "ml-[42px] mb-4", {composer.clone()} }
                     }
                     for reply in comments.read().iter().filter(|comment| comment.parent_id == Some(root.id)) {
                         div { key: "{reply.id.0}", class: "ml-[42px]",
@@ -167,6 +161,60 @@ pub fn Comments(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn CommentComposer(
+    mut body: Signal<String>,
+    reply_author: Option<String>,
+    submitting: bool,
+    error: Option<String>,
+    on_submit: EventHandler<()>,
+    on_cancel: EventHandler<()>,
+) -> Element {
+    let replying = reply_author.is_some();
+    rsx! {
+        form {
+            class: "flex flex-col gap-2",
+            onsubmit: move |event| {
+                event.prevent_default();
+                if !submitting { on_submit.call(()); }
+            },
+            if let Some(username) = reply_author {
+                span { class: "label-mono",
+                    "replying to @{username} · "
+                    button {
+                        r#type: "button",
+                        class: "bg-transparent p-0 text-label hover:text-accent",
+                        disabled: submitting,
+                        onclick: move |_| on_cancel.call(()),
+                        "cancel"
+                    }
+                }
+            }
+            textarea {
+                class: "prose-font w-full resize-y rounded-md border border-card bg-surface px-3.5 py-3 text-base leading-[1.45] text-text outline-none placeholder:text-label focus:border-accent",
+                aria_label: if replying { "Reply" } else { "Comment" },
+                placeholder: "say something. markdown works.",
+                rows: 3,
+                value: body,
+                disabled: submitting,
+                oninput: move |event| body.set(event.value()),
+                onmounted: move |event| async move {
+                    if replying { let _ = event.data().set_focus(true).await; }
+                },
+            }
+            if let Some(error) = error {
+                span { role: "alert", class: "label-mono text-mars", {error} }
+            }
+            div { class: "flex items-center justify-between gap-3",
+                span { class: "label-mono text-faint", "be kind. no trackers, no paywall, just a database row." }
+                button { r#type: "submit", class: "btn-primary shrink-0 px-3.5 py-[7px] text-[13px]", disabled: submitting,
+                    if submitting { "posting…" } else if replying { "reply" } else { "post" }
                 }
             }
         }
@@ -200,7 +248,7 @@ fn CommentRow(
             img { class: "mt-0.5 size-7 rounded-full", src: avatar, loading: "lazy", alt: "" }
             div { class: "flex min-w-0 flex-col gap-1.5",
                 CommentMeta { author: author.clone(), profile, created_at: comment.created_at }
-                div { class: "comment-body", dangerous_inner_html: comment.body_html }
+                super::syntax::HighlightedHtml { class: "comment-body", html: comment.body_html }
                 ReactionBar {
                     target: ReactionTarget::Comment(comment.id),
                     counts: reaction_counts,
@@ -298,6 +346,47 @@ mod tests {
             body_html: "<p>hello</p>".to_string(),
             created_at: datetime!(2026-06-14 0:00 UTC),
         }
+    }
+
+    #[cfg(feature = "server")]
+    #[component]
+    fn ComposerFixture(replying: bool) -> Element {
+        let body = use_signal(|| "saved draft".to_string());
+        rsx! {
+            CommentComposer {
+                body,
+                reply_author: replying.then(|| "visitor".to_string()),
+                submitting: false,
+                error: Some("Please revise your message".to_string()),
+                on_submit: move |_| {},
+                on_cancel: move |_| {},
+            }
+        }
+    }
+
+    #[cfg(feature = "server")]
+    #[test]
+    fn reply_composer_shows_the_target_draft_and_submission_error_together() {
+        let html = dioxus::ssr::render_element(rsx! { ComposerFixture { replying: true } });
+
+        assert_eq!(html.matches("<textarea").count(), 1);
+        assert!(html.contains("replying to @visitor"));
+        assert!(html.contains("saved draft"));
+        assert!(html.contains("role=\"alert\""));
+        assert!(html.contains("Please revise your message"));
+        assert!(html.contains("cancel"));
+    }
+
+    #[cfg(feature = "server")]
+    #[test]
+    fn top_level_composer_shows_the_draft_without_reply_controls() {
+        let html = dioxus::ssr::render_element(rsx! { ComposerFixture { replying: false } });
+
+        assert_eq!(html.matches("<textarea").count(), 1);
+        assert!(html.contains("saved draft"));
+        assert!(html.contains("aria-label=\"Comment\""));
+        assert!(!html.contains("replying to"));
+        assert!(!html.contains("cancel"));
     }
 
     #[test]
