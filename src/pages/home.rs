@@ -6,7 +6,7 @@ use crate::{
 use dioxus::prelude::*;
 use time::{Date, macros::format_description};
 
-const GREETING: &str = "Hey, I'm George";
+const GREETING: &str = "Hey, I'm George.";
 const RECENT_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short] [year]");
 
@@ -28,15 +28,15 @@ pub fn Home() -> Element {
                         Typewriter { text: GREETING, generation: (ui.retype)() }
                     }
                     div { class: "prose-font flex flex-col gap-3.5 text-[20px] leading-[1.45] text-prose text-pretty xl:text-[22px]",
-                        p { class: "m-0", "I'm a bioinformatician and a developer." }
+                        p { class: "m-0", "I'm a structural biologist and a developer." }
                         p { class: "m-0",
-                            "You can use this website to read my "
-                            Link { to: Route::Blog {}, class: "link-dashed", "random rambles" }
+                            "Read my "
+                            Link { to: Route::Blog {}, class: "link-dashed", "technical blog" }
                             ", learn more "
                             Link { to: Route::AboutMe {}, class: "link-dashed", "about me" }
                             " and "
                             Link { to: Route::Guestbook {}, class: "link-dashed", "sign my guestbook" }
-                            " <3"
+                            "."
                         }
                     }
                 }
@@ -51,15 +51,18 @@ pub fn Home() -> Element {
             div { class: "flex flex-col gap-2.5",
                 span { class: "label-mono", "// elsewhere" }
                 div { class: "flex flex-wrap gap-2",
-                    ExternalPill { href: "https://www.linkedin.com/in/georgiy-andreev", "follow me on linkedin ↗" }
-                    ExternalPill { href: "https://github.com/LilDojd", "i have some stuff on github ↗" }
-                    ExternalPill { href: "https://buymeacoffee.com/yawner", "feeling generou$? ↗" }
-                    ExternalPill { href: "https://cal.com/yawner", "fancy a chat? ↗" }
+                    ExternalPill { href: "https://www.linkedin.com/in/georgiy-andreev", "LinkedIn ↗" }
+                    ExternalPill { href: "https://github.com/LilDojd", "GitHub ↗" }
+                    ExternalPill { href: "https://buymeacoffee.com/yawner", "Support my work ↗" }
+                    ExternalPill { href: "https://cal.com/yawner", "Book a call ↗" }
                 }
             }
             div { class: "flex flex-col gap-2.5",
-                span { class: "label-mono", "// recently in the garden" }
+                span { class: "label-mono", "// recent posts" }
                 div { class: "flex flex-col",
+                    if published_posts().next().is_none() {
+                        p { class: "prose-font m-0 text-muted", "Nothing here yet." }
+                    }
                     for post in published_posts().take(3) {
                         Link {
                             key: "{post.slug}",

@@ -25,10 +25,10 @@ pub fn Blog() -> Element {
         section { class: "flex flex-col gap-9",
             header { class: "flex flex-col gap-2",
                 span { class: "label-mono", "// blog" }
-                h1 { class: "heading-casual m-0 text-[30px] leading-[1.2]", "random rambles" }
+                h1 { class: "heading-casual m-0 text-[30px] leading-[1.2]", "blog" }
             }
             if posts.is_empty() {
-                p { class: "prose-font m-0 text-lg text-muted", "No rambles yet. Check back soon." }
+                p { class: "prose-font m-0 text-lg text-muted", "Nothing here yet." }
             }
             for year in years {
                 div { class: "grid grid-cols-[60px_1fr] items-start gap-4 md:grid-cols-[72px_1fr]",
@@ -60,7 +60,7 @@ pub fn BlogPost(slug: String) -> Element {
     };
     rsx! {
         article { class: "flex flex-col gap-7",
-            Link { to: Route::Blog {}, class: "label-mono w-fit no-underline hover:text-accent", "← all rambles" }
+            Link { to: Route::Blog {}, class: "label-mono w-fit no-underline hover:text-accent", "← all posts" }
             header { class: "flex flex-col gap-2.5",
                 h1 { class: "heading-casual m-0 text-pretty text-[34px] leading-[1.15] tracking-[-.015em]", "{post.title}" }
                 div { class: "flex flex-wrap items-center gap-3",

@@ -101,8 +101,8 @@ impl Route {
     fn metadata(&self) -> RouteMetadata {
         match self {
             Self::Home {} => RouteMetadata::page(
-                "George Andreev | Bioinformatician and Developer",
-                "George Andreev's personal website about bioinformatics, software development, projects, and experiments.",
+                "George Andreev | Structural Biologist and Developer",
+                "George Andreev's personal website about structural biology, software development, and personal projects.",
                 "/",
             ),
             Self::Blog {} => RouteMetadata::page(
@@ -128,7 +128,7 @@ impl Route {
             ),
             Self::AboutMe {} => RouteMetadata::page(
                 "About | George Andreev",
-                "Learn about George Andreev, a bioinformatician and software developer working on machine learning for biology.",
+                "Learn about George Andreev, a structural biologist and software developer working on machine learning for biology.",
                 "/about",
             ),
             Self::Guestbook {} => RouteMetadata::page(
