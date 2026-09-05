@@ -33,65 +33,43 @@ pub fn Typewriter(
         }
     });
     let mut cursor_visible = use_signal(move || !resolved);
-    let mut active_generation = use_signal(|| generation);
 
-    use_effect(use_reactive!(|text, generation| {
-        active_generation.set(generation);
-        if *completed.peek() == Some(generation) {
-            typed.set(text.to_string());
-            cursor_visible.set(false);
+    // One future per keyed mount; navigation or replay drops the old task.
+    use_future(move || async move {
+        if resolved {
             return;
         }
-        typed.set(String::new());
-        cursor_visible.set(true);
+        sleep(Duration::from_millis(START_DELAY_MS)).await;
+        let characters = text.chars().collect::<Vec<_>>();
+        let mut rng = rand::rng();
 
-        spawn(async move {
-            sleep(Duration::from_millis(START_DELAY_MS)).await;
-            let characters = text.chars().collect::<Vec<_>>();
-            let mut rng = rand::rng();
+        for (index, character) in characters.iter().copied().enumerate() {
+            if index > 0 && rng.random_bool(TYPO_CHANCE) {
+                typed
+                    .write()
+                    .push(char::from(rng.random_range(b'a'..=b'z')));
+                sleep(Duration::from_millis(rng.random_range(TYPO_VISIBLE_MS))).await;
+                typed.write().pop();
+                sleep(Duration::from_millis(rng.random_range(TYPO_DELETE_MS))).await;
+            }
 
-            for (index, character) in characters.iter().copied().enumerate() {
-                if active_generation() != generation {
-                    return;
-                }
-                if index > 0 && rng.random_bool(TYPO_CHANCE) {
-                    typed
-                        .write()
-                        .push(char::from(rng.random_range(b'a'..=b'z')));
-                    sleep(Duration::from_millis(rng.random_range(TYPO_VISIBLE_MS))).await;
-                    if active_generation() != generation {
-                        return;
-                    }
-                    typed.write().pop();
-                    sleep(Duration::from_millis(rng.random_range(TYPO_DELETE_MS))).await;
-                    if active_generation() != generation {
-                        return;
-                    }
-                }
-
-                typed.write().push(character);
+            typed.write().push(character);
+            if index + 1 < characters.len() {
                 sleep(typing_delay(
                     characters.len(),
                     rng.random_range(-JITTER_MS..=JITTER_MS),
                 ))
                 .await;
             }
+        }
+        completed.set(Some(generation));
 
-            if active_generation() != generation {
-                return;
-            }
-            completed.set(Some(generation));
-
-            for _ in 0..CURSOR_TOGGLES {
-                sleep(Duration::from_millis(CURSOR_BLINK_MS)).await;
-                if active_generation() != generation {
-                    return;
-                }
-                cursor_visible.toggle();
-            }
-            cursor_visible.set(false);
-        });
-    }));
+        for _ in 0..CURSOR_TOGGLES {
+            sleep(Duration::from_millis(CURSOR_BLINK_MS)).await;
+            cursor_visible.toggle();
+        }
+        cursor_visible.set(false);
+    });
 
     rsx! {
         "{typed}"
