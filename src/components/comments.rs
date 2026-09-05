@@ -4,7 +4,7 @@ use crate::{
         models::{
             Comment, CommentAuthor, CommentId, Guest, ReactionCount, ReactionTarget, Reactions,
         },
-        server_fns,
+        server_fns::{self, ServerError},
     },
 };
 use dioxus::prelude::*;
@@ -25,6 +25,7 @@ pub fn Comments(
     let mut submitting = use_signal(|| false);
     let mut submit_error = use_signal(|| None::<String>);
     let action_error = use_signal(|| None::<(CommentId, String)>);
+    let deleting = use_signal(|| false);
 
     let reply_author = reply_target().and_then(|id| {
         comments
@@ -141,7 +142,8 @@ pub fn Comments(
                         reaction_counts: reactions.read().comments.get(&root.id).cloned().unwrap_or_default(),
                         error: action_error.read().as_ref().filter(|(id, _)| *id == root.id).map(|(_, error)| error.clone()),
                         on_reply: move |id| reply_target.set(Some(id)),
-                        on_delete: move |id| delete_optimistically(comments, action_error, id),
+                        deleting: deleting(),
+                        on_delete: move |id| request_delete(comments, action_error, deleting, id),
                         on_reactions_change: {
                             let id = root.id;
                             move |counts| { reactions.write().comments.insert(id, counts); }
@@ -156,7 +158,8 @@ pub fn Comments(
                                 reaction_counts: reactions.read().comments.get(&reply.id).cloned().unwrap_or_default(),
                                 error: action_error.read().as_ref().filter(|(id, _)| *id == reply.id).map(|(_, error)| error.clone()),
                                 on_reply: move |_| {},
-                                on_delete: move |id| delete_optimistically(comments, action_error, id),
+                                deleting: deleting(),
+                                on_delete: move |id| request_delete(comments, action_error, deleting, id),
                                 on_reactions_change: {
                                     let id = reply.id;
                                     move |counts| { reactions.write().comments.insert(id, counts); }
@@ -175,6 +178,7 @@ fn CommentRow(
     comment: Comment,
     viewer: Option<Guest>,
     can_reply: bool,
+    deleting: bool,
     reaction_counts: Vec<ReactionCount>,
     error: Option<String>,
     on_reply: EventHandler<CommentId>,
@@ -208,7 +212,7 @@ fn CommentRow(
                         button { r#type: "button", class: "comment-action", onclick: move |_| on_reply.call(comment.id), "reply" }
                     }
                     if own_comment {
-                        button { r#type: "button", class: "comment-action", onclick: move |_| on_delete.call(comment.id), "delete" }
+                        button { r#type: "button", class: "comment-action", disabled: deleting, onclick: move |_| on_delete.call(comment.id), "delete" }
                     }
                 }
                 if let Some(error) = error {
@@ -242,28 +246,38 @@ fn comment_date(date: time::OffsetDateTime) -> String {
         .to_lowercase()
 }
 
-fn delete_optimistically(
+fn request_delete(
     mut comments: dioxus::fullstack::Loader<Vec<Comment>>,
     mut action_error: Signal<Option<(CommentId, String)>>,
+    mut deleting: Signal<bool>,
     id: CommentId,
 ) {
-    let previous = comments();
-    remove_comment_thread(&mut comments.write(), id);
+    if deleting() {
+        return;
+    }
+    deleting.set(true);
     action_error.set(None);
     spawn(async move {
-        if let Err(error) = server_fns::delete_comment(id).await {
+        let result = server_fns::delete_comment(id).await;
+        if let Err(error) = apply_deletion_result(&mut comments.write(), id, result) {
             tracing::error!("Could not delete comment: {error:?}");
-            comments.set(previous);
             action_error.set(Some((
                 id,
                 server_error_message(&error, "Could not delete your comment. Please retry."),
             )));
         }
+        deleting.set(false);
     });
 }
 
-fn remove_comment_thread(comments: &mut Vec<Comment>, id: CommentId) {
+fn apply_deletion_result(
+    comments: &mut Vec<Comment>,
+    id: CommentId,
+    result: Result<(), ServerError>,
+) -> Result<(), ServerError> {
+    result?;
     comments.retain(|comment| comment.id != id && comment.parent_id != Some(id));
+    Ok(())
 }
 
 #[cfg(test)]
@@ -294,8 +308,31 @@ mod tests {
             comment(3, None),
         ];
 
-        remove_comment_thread(&mut comments, CommentId(1));
+        apply_deletion_result(&mut comments, CommentId(1), Ok(())).unwrap();
 
         assert_eq!(comments, vec![comment(3, None)]);
+    }
+
+    #[test]
+    fn deletion_results_preserve_updates_made_while_the_request_was_pending() {
+        for result in [Ok(()), Err(ServerError::Unavailable)] {
+            let mut comments = vec![comment(1, None), comment(2, None)];
+            let pending_id = CommentId(1);
+
+            // Another update removes a row and adds a comment before deletion completes.
+            comments.retain(|comment| comment.id != CommentId(2));
+            comments.push(comment(3, None));
+
+            assert_eq!(
+                apply_deletion_result(&mut comments, pending_id, result.clone()),
+                result
+            );
+            let expected = if result.is_ok() {
+                vec![comment(3, None)]
+            } else {
+                vec![comment(1, None), comment(3, None)]
+            };
+            assert_eq!(comments, expected);
+        }
     }
 }
