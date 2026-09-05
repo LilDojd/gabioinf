@@ -14,7 +14,6 @@ mod lifecycle_tests;
 pub(crate) use cache::{SignatureCache, spawn_signature_mutation};
 
 const INITIAL_SKELETONS: usize = 6;
-const MORE_SKELETONS: usize = 3;
 const ENTRY_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short] [year]");
 
@@ -164,9 +163,10 @@ pub fn SignatureList(mut count: Signal<Option<usize>>) -> Element {
             div {
                 role: "status",
                 aria_label: if refresh_first() { "Refreshing signatures" } else { "Loading more signatures" },
-                class: "grid grid-cols-1 gap-2.5 py-3 sm:grid-cols-3",
-                for index in 0..MORE_SKELETONS {
-                    SignatureSkeleton { key: "{index}", compact: true }
+                class: "grid grid-cols-1 gap-2.5 py-3 md:grid-cols-2",
+                SignatureSkeleton { compact: true }
+                div { class: "hidden md:block",
+                    SignatureSkeleton { compact: true }
                 }
             }
         } else if let Some(error) = load_error.read().as_ref() {
