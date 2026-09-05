@@ -1,11 +1,17 @@
 use crate::auth::AuthState;
 use crate::components::{Button, ButtonVariant};
 use crate::shared::{
-    models::{GuestbookEntry, GuestbookId},
+    models::{GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage},
     server_fns,
 };
 use dioxus::prelude::*;
-use time::macros::format_description;
+use std::rc::Rc;
+use time::{OffsetDateTime, macros::format_description};
+
+mod cache;
+#[cfg(all(test, feature = "server"))]
+mod lifecycle_tests;
+pub(crate) use cache::{SignatureCache, spawn_signature_mutation};
 
 const INITIAL_SKELETONS: usize = 6;
 const MORE_SKELETONS: usize = 3;
@@ -13,44 +19,72 @@ const ENTRY_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short] [year]");
 
 #[component]
-pub fn SignatureList(mut count: Signal<usize>) -> Element {
-    let mut auth_state = use_context::<dioxus::fullstack::Loader<AuthState>>();
-    let mut entries = use_signal(Vec::<GuestbookEntry>::new);
-    let mut next_cursor = use_signal(|| None);
-    let mut loaded_once = use_signal(|| false);
+pub fn SignatureList(mut count: Signal<Option<usize>>) -> Element {
+    let mut auth_state = use_context::<Signal<Option<AuthState>>>();
+    let mut cache = use_context::<Signal<SignatureCache>>();
+    let mut entries = use_signal(move || {
+        cache.peek().page().map_or_else(Vec::new, |page| {
+            page.entries.iter().cloned().map(Rc::new).collect()
+        })
+    });
+    let mut next_cursor = use_signal(move || cache.peek().page().and_then(|page| page.next_cursor));
+    let mut loaded_once = use_signal(move || cache.peek().page().is_some());
+    let mut refresh_first = use_signal(move || !cache.peek().is_fresh(OffsetDateTime::now_utc()));
+    let mut observed_generation = use_signal(move || cache.peek().generation);
     let mut loading = use_signal(|| false);
     let mut load_error = use_signal(|| None::<String>);
     let mut deleting = use_signal(|| false);
     let mut delete_error = use_signal(|| None::<String>);
     let mut deleted_entry_id = use_signal(|| None::<GuestbookId>);
 
-    let user_entry = match &*auth_state.read() {
-        AuthState::Authenticated(user_state) => user_state.entry.clone(),
-        AuthState::Unauthenticated => None,
-    };
-    let user_entry_id = user_entry.as_ref().map(|entry| entry.id);
+    use_effect(move || {
+        let generation = cache.read().generation;
+        if generation != *observed_generation.peek() {
+            observed_generation.set(generation);
+            refresh_first.set(true);
+            load_error.set(None);
+        }
+    });
+
+    // Shared card props avoid repeatedly cloning base64 strings as more pages load.
+    let user_entry = use_memo(move || match auth_state.read().as_ref() {
+        Some(AuthState::Authenticated(user)) => user.entry.clone().map(Rc::new),
+        _ => None,
+    });
+    let user_entry_id = user_entry.read().as_ref().map(|entry| entry.id);
 
     use_effect(move || {
-        let has_user_entry = matches!(
-            &*auth_state.read(),
-            AuthState::Authenticated(user) if user.entry.is_some()
-        );
-        count.set(entries.read().len() + usize::from(has_user_entry));
+        let pinned_id = user_entry.read().as_ref().map(|entry| entry.id);
+        count.set(loaded_once().then(|| visible_count(&entries.read(), pinned_id)));
     });
 
     let load_more = use_callback(move |_| {
-        if loading() || (loaded_once() && next_cursor().is_none()) {
+        if loading() || (!refresh_first() && loaded_once() && next_cursor().is_none()) {
             return;
         }
-        let cursor = next_cursor();
+        let cursor = if refresh_first() { None } else { next_cursor() };
+        let generation = cache.peek().generation;
         loading.set(true);
         load_error.set(None);
         spawn(async move {
-            match server_fns::load_signatures(cursor, user_entry_id).await {
+            // Always public/unfiltered: authentication must not gate this request or
+            // change its cursor. The viewer's pinned entry is deduplicated at render.
+            let result = load_public_page(cursor).await;
+            if !cache.peek().accepts(generation) {
+                refresh_first.set(true);
+                loading.set(false);
+                return;
+            }
+            match result {
                 Ok(page) => {
+                    if cursor.is_none() {
+                        cache.write().store(&page, OffsetDateTime::now_utc());
+                        entries.write().clear();
+                    }
                     append_unique(&mut entries.write(), page.entries, deleted_entry_id());
                     next_cursor.set(page.next_cursor);
                     loaded_once.set(true);
+                    refresh_first.set(false);
                 }
                 Err(error) => {
                     tracing::error!("Could not load signatures: {error:?}");
@@ -64,7 +98,7 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
     });
 
     use_effect(move || {
-        if !loaded_once() && !loading() && load_error.read().is_none() {
+        if (!loaded_once() || refresh_first()) && !loading() && load_error.read().is_none() {
             load_more.call(());
         }
     });
@@ -74,7 +108,7 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
             div { role: "alert", class: "label-mono text-mars", {error.to_string()} }
         }
         div { class: "grid grid-cols-1 gap-2.5 md:grid-cols-2",
-            if let Some(user_entry) = user_entry {
+            if let Some(user_entry) = user_entry() {
                 {
                     let id = user_entry.id;
                     rsx! {
@@ -89,12 +123,13 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
                                         if deleting() { return; }
                                         deleting.set(true);
                                         delete_error.set(None);
-                                        spawn(async move {
-                                            match server_fns::delete_signature(id).await {
+                                        spawn_signature_mutation(cache, server_fns::delete_signature(id), move |result| {
+                                            if deleting.try_write().is_err() { return; }
+                                            match result {
                                                 Ok(()) => {
                                                     deleted_entry_id.set(Some(id));
                                                     entries.write().retain(|entry| entry.id != id);
-                                                    if let AuthState::Authenticated(user_state) = &mut *auth_state.write() {
+                                                    if let Some(AuthState::Authenticated(user_state)) = &mut *auth_state.write() {
                                                         user_state.entry = None;
                                                     }
                                                 }
@@ -116,16 +151,19 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
             for entry in entries.read().iter().filter(|entry| Some(entry.id) != user_entry_id) {
                 SignatureCard { key: "{entry.id.as_value()}", entry: entry.clone() }
             }
-            if loading() && !loaded_once() {
+            if !loaded_once() && load_error.read().is_none() {
                 for index in 0..INITIAL_SKELETONS {
                     SignatureSkeleton { key: "{index}" }
                 }
             }
         }
+        if !loaded_once() && load_error.read().is_none() {
+            span { role: "status", class: "label-mono", "loading signatures…" }
+        }
         if loading() && loaded_once() {
             div {
                 role: "status",
-                aria_label: "Loading more signatures",
+                aria_label: if refresh_first() { "Refreshing signatures" } else { "Loading more signatures" },
                 class: "grid grid-cols-1 gap-2.5 py-3 sm:grid-cols-3",
                 for index in 0..MORE_SKELETONS {
                     SignatureSkeleton { key: "{index}", compact: true }
@@ -150,9 +188,19 @@ pub fn SignatureList(mut count: Signal<usize>) -> Element {
     }
 }
 
+async fn load_public_page(
+    cursor: Option<GuestbookCursor>,
+) -> Result<GuestbookPage, server_fns::ServerError> {
+    #[cfg(all(test, feature = "server"))]
+    if let Some(requests) = try_consume_context::<lifecycle_tests::PageRequests>() {
+        return requests.load(cursor).await;
+    }
+    server_fns::load_signatures(cursor, None).await
+}
+
 #[derive(Props, Clone, PartialEq)]
 struct SignatureCardProps {
-    entry: GuestbookEntry,
+    entry: Rc<GuestbookEntry>,
     #[props(default)]
     action: Option<Element>,
 }
@@ -198,14 +246,22 @@ fn SignatureSkeleton(#[props(default)] compact: bool) -> Element {
     }
 }
 
+fn visible_count(entries: &[Rc<GuestbookEntry>], pinned_id: Option<GuestbookId>) -> usize {
+    entries
+        .iter()
+        .filter(|entry| Some(entry.id) != pinned_id)
+        .count()
+        + usize::from(pinned_id.is_some())
+}
+
 fn append_unique(
-    entries: &mut Vec<GuestbookEntry>,
+    entries: &mut Vec<Rc<GuestbookEntry>>,
     incoming: Vec<GuestbookEntry>,
     hidden: Option<GuestbookId>,
 ) {
     for entry in incoming {
         if Some(entry.id) != hidden && !entries.iter().any(|current| current.id == entry.id) {
-            entries.push(entry);
+            entries.push(Rc::new(entry));
         }
     }
 }
@@ -222,8 +278,46 @@ mod tests {
     }
 
     #[test]
+    fn pinned_signature_is_only_counted_once_when_public_loading_finishes_first() {
+        let entries = vec![Rc::new(entry(1)), Rc::new(entry(2))];
+        assert_eq!(visible_count(&entries, None), 2);
+        assert_eq!(visible_count(&entries, Some(GuestbookId(1))), 2);
+        assert_eq!(visible_count(&entries, Some(GuestbookId(3))), 3);
+    }
+
+    #[cfg(feature = "server")]
+    #[test]
+    fn cached_signatures_render_while_authentication_is_pending() {
+        fn app() -> Element {
+            use_context_provider(|| Signal::new(None::<AuthState>));
+            use_context_provider(|| {
+                let mut cache = SignatureCache::default();
+                cache.store(
+                    &crate::shared::models::GuestbookPage {
+                        entries: vec![GuestbookEntry {
+                            message: "Already loaded on the previous visit".into(),
+                            ..Default::default()
+                        }],
+                        next_cursor: None,
+                    },
+                    OffsetDateTime::now_utc(),
+                );
+                Signal::new(cache)
+            });
+            let count = use_signal(|| None);
+            rsx! { SignatureList { count } }
+        }
+
+        let mut dom = VirtualDom::new(app);
+        dom.rebuild_in_place();
+        let html = dioxus::ssr::render(&dom);
+        assert!(html.contains("Already loaded on the previous visit"));
+        assert!(!html.contains("loading signatures…"));
+    }
+
+    #[test]
     fn append_page_ignores_duplicates_and_deleted_entries() {
-        let mut entries = vec![entry(1)];
+        let mut entries = vec![Rc::new(entry(1))];
         append_unique(
             &mut entries,
             vec![entry(1), entry(2), entry(3)],

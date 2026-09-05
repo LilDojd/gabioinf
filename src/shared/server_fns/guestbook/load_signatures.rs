@@ -1,8 +1,11 @@
 #[cfg(feature = "server")]
-use crate::backend::AppState;
-use crate::shared::{
-    models::{Guest, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage},
-    server_fns::ServerError,
+use crate::backend::{AppState, auth::SessionWrapper};
+use crate::{
+    auth::AuthState,
+    shared::{
+        models::{GuestbookCursor, GuestbookId, GuestbookPage},
+        server_fns::ServerError,
+    },
 };
 use dioxus::prelude::*;
 
@@ -22,11 +25,18 @@ pub async fn load_signatures(
         .map_err(|error| ServerError::internal("load guestbook entries", error))
 }
 
-#[server(state:axum::Extension<AppState>)]
-pub async fn load_user_signature(user: Guest) -> Result<Option<GuestbookEntry>, ServerError> {
-    state
+#[server(session:SessionWrapper, state:axum::Extension<AppState>)]
+pub async fn load_guestbook_user() -> Result<AuthState, ServerError> {
+    let Some(guest) = session.session.user else {
+        return Ok(AuthState::Unauthenticated);
+    };
+    let entry = state
         .guestbook_repo
-        .find_by_author(user.id)
+        .find_by_author(guest.id)
         .await
-        .map_err(|error| ServerError::internal("load user guestbook entry", error))
+        .map_err(|error| ServerError::internal("load user guestbook entry", error))?;
+    Ok(AuthState::Authenticated(Box::new(crate::auth::UserState {
+        guest,
+        entry,
+    })))
 }

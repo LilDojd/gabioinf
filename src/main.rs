@@ -213,6 +213,8 @@ fn App() -> Element {
 
 #[component]
 fn AppRouter() -> Element {
+    // Lives across route changes, but is isolated to this app/SSR render.
+    use_context_provider(|| Signal::new(components::SignatureCache::default()));
     rsx! { Router::<Route> {} }
 }
 
