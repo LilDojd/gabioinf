@@ -1,4 +1,4 @@
-use crate::backend::domain::logic::AuthSession;
+use crate::backend::auth::AuthSession;
 use crate::shared::models::Guest;
 use axum::{extract::Request, middleware::Next, response::Response};
 use sentry::{ClientInitGuard, ClientOptions, protocol::User};
@@ -86,9 +86,8 @@ mod tests {
     #[test]
     fn sentry_user_contains_only_internal_id() {
         let user = sentry_user(&Guest {
-            id: GuestId::from(42),
+            id: GuestId(42),
             username: "public-name".to_string(),
-            access_token: "secret".to_string(),
             ..Default::default()
         });
 

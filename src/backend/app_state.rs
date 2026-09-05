@@ -1,80 +1,37 @@
-//! Application state and shared resources.
-//!
-//! This module defines the `AppState` struct, which holds shared resources and
-//! configuration for the application. It's designed to be shared across
-//! different parts of the application, particularly in request handlers.
-use super::domain::logic::oauth::SetOauthClient;
-use crate::{
-    backend::{
-        db::DbConnPool,
-        repos::{GroupsAndPermissionsRepo, PgRepository},
-    },
-    shared::models::{Guest, GuestbookEntry},
+use crate::backend::{
+    db::DbConnPool,
+    repos::{CommentRepo, GuestRepo, GuestbookRepo, ReactionRepo},
 };
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
-use reqwest::Client as ReqwestClient;
-/// Represents the shared state of the application.
-///
-/// This struct holds various shared resources and configuration that can be
-/// accessed throughout the application, particularly in request handlers.
+
 #[derive(Debug, Clone)]
 pub struct AppState {
-    /// The database connection pool.
     pub db: DbConnPool,
-    /// An HTTP client for making external requests.
-    pub ctx: ReqwestClient,
-    /// Repository for guest-related data.
-    pub guest_repo: PgRepository<Guest>,
-    /// Repository for guestbook-related data.
-    pub guestbook_repo: PgRepository<GuestbookEntry>,
-    /// Repository for user and group permissions
-    pub gp_repo: GroupsAndPermissionsRepo,
-    /// The domain name of the application.
-    pub domain: String,
-    /// A key used for signing and verifying cookies.
+    pub guest_repo: GuestRepo,
+    pub guestbook_repo: GuestbookRepo,
+    pub comment_repo: CommentRepo,
+    pub reaction_repo: ReactionRepo,
+    /// `https://gabioinf.dev` in production, `http://localhost:8080` locally.
+    pub origin: String,
     pub key: Key,
-    /// The client for OAuth2 requests.
-    pub client: SetOauthClient,
 }
-/// Allows extracting the `Key` from `AppState`.
+
 impl FromRef<AppState> for Key {
     fn from_ref(state: &AppState) -> Self {
         state.key.clone()
     }
 }
+
 impl AppState {
-    /// Creates a new instance of `AppState`.
-    ///
-    /// This method initializes all the shared resources and wraps them
-    /// in the appropriate smart pointers for thread-safe sharing.
-    ///
-    /// # Arguments
-    ///
-    /// * `db` - The database connection pool.
-    /// * `domain` - The domain name of the application.
-    /// * `client` - The client for the OAuth2 requests.
-    /// * `reqwest_client` - The reqwest client.
-    /// * `key` - The key used to sign and verify cookies.
-    ///
-    /// # Returns
-    ///
-    /// A new instance of `AppState`.
-    pub fn new(
-        db: DbConnPool,
-        domain: String,
-        client: SetOauthClient,
-        reqwest_client: ReqwestClient,
-        key: Key,
-    ) -> Self {
+    pub fn new(db: DbConnPool, origin: String, key: Key) -> Self {
         Self {
             db: db.clone(),
-            ctx: reqwest_client,
-            guest_repo: PgRepository::new(db.clone()),
-            guestbook_repo: PgRepository::new(db.clone()),
-            gp_repo: GroupsAndPermissionsRepo::new(db.clone()),
-            domain,
-            client,
+            guest_repo: GuestRepo::new(db.clone()),
+            guestbook_repo: GuestbookRepo::new(db.clone()),
+            comment_repo: CommentRepo::new(db.clone()),
+            reaction_repo: ReactionRepo::new(db),
+            origin,
             key,
         }
     }

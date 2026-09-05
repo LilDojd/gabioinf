@@ -1,48 +1,45 @@
 use crate::backend::AppState;
+use crate::backend::api::api_router;
+use crate::backend::auth::{AuthBackend, build_oauth_client};
+use crate::backend::blog;
 use crate::backend::config::AppConfig;
-use crate::backend::domain::logic::AuthBackend;
-use crate::backend::domain::logic::oauth::build_oauth_client;
-use crate::backend::extractors::CookieExtractor;
 use crate::backend::health;
 use crate::backend::observability;
-use crate::backend::wapi::api_router;
+use crate::backend::rate_limit::CookieExtractor;
 use anyhow::Context;
-use axum::{Extension, Router, extract::Request, middleware};
+use axum::{Extension, Router, extract::Request, middleware, routing::get};
 use axum_login::AuthManagerLayerBuilder;
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
-use dioxus::prelude::{DioxusRouterExt, Element, ServeConfig};
+use dioxus::{
+    prelude::{DioxusRouterExt, Element, ServeConfig},
+    server::FullstackState,
+};
 use sentry::integrations::tower::{NewSentryLayer, SentryHttpLayer};
 use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use tower_governor::governor::GovernorConfigBuilder;
+use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
 use tower_sessions::cookie::SameSite;
 use tower_sessions_sqlx_store::PostgresStore;
 
 pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyhow::Result<()> {
     let config = AppConfig::new_local().context("failed to load local configuration")?;
-    dioxus_logger::tracing::info!("Loaded config: {:?}", config);
+    tracing::info!("Loaded config: {:?}", config);
     let postgres = sqlx::PgPool::connect(config.database.url.as_str())
         .await
         .context("failed to connect to database")?;
-    dioxus_logger::tracing::info!("Running database migration..");
+    tracing::info!("Running database migration..");
     sqlx::migrate!()
         .run(&postgres)
         .await
         .context("failed to run database migrations")?;
-    let (domain, client_id, client_secret) = (
-        config.domain.as_str(),
-        config.gabioinf.id.as_str(),
-        config.gabioinf.secret.as_str(),
-    );
-    let client = build_oauth_client(client_id, client_secret, domain);
+    let origin = config.origin().context("invalid site origin")?;
+    let client = build_oauth_client(&config.gabioinf.id, &config.gabioinf.secret, &origin);
     let reqwest_client = reqwest::Client::new();
     let state = AppState::new(
         postgres.clone(),
-        domain.to_string(),
-        client.clone(),
-        reqwest_client.clone(),
+        origin.clone(),
         config.session.secret.clone(),
     );
     let session_store = PostgresStore::new(postgres.clone());
@@ -55,12 +52,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         .with_signed(state.clone().key)
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
-    let backend = AuthBackend::new(
-        state.guest_repo.clone(),
-        state.gp_repo.clone(),
-        client,
-        reqwest_client,
-    );
+    let backend = AuthBackend::new(state.guest_repo.clone(), client, reqwest_client);
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
@@ -71,8 +63,14 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
             .context("invalid rate limiter configuration")?,
     );
     let governor_limiter = governor_conf.limiter().clone();
-    let application = Router::new()
-        .serve_dioxus_application(cfg.into(), dxapp)
+    let dioxus = Router::new()
+        .register_server_functions()
+        .route_layer(GovernorLayer::new(governor_conf.clone()))
+        .serve_static_assets()
+        .fallback(get(FullstackState::render_handler))
+        .with_state(FullstackState::new(cfg.into(), dxapp));
+    let application = dioxus
+        .merge(blog::router(&origin))
         .nest("/v1/", api_router(state.clone(), governor_conf))
         .layer(middleware::from_fn(observability::sentry_user_context))
         .layer(Extension(state))
@@ -93,12 +91,12 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let governor_task = tokio::task::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            dioxus_logger::tracing::info!("rate limiting storage size: {}", governor_limiter.len());
+            tracing::info!("rate limiting storage size: {}", governor_limiter.len());
             governor_limiter.retain_recent();
         }
     });
 
-    dioxus_logger::tracing::info!("Listening on {}", address);
+    tracing::info!("Listening on {}", address);
     let result = axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
@@ -111,13 +109,13 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let _ = tokio::join!(deletion_task, governor_task);
     postgres.close().await;
     result.context("server failed")?;
-    dioxus_logger::tracing::info!("Server stopped");
+    tracing::info!("Server stopped");
     Ok(())
 }
 
 async fn shutdown_signal() {
     shutdown_on(ctrl_c_signal(), terminate_signal()).await;
-    dioxus_logger::tracing::info!("Shutdown signal received");
+    tracing::info!("Shutdown signal received");
 }
 
 async fn shutdown_on(ctrl_c: impl Future<Output = ()>, terminate: impl Future<Output = ()>) {
@@ -129,7 +127,7 @@ async fn shutdown_on(ctrl_c: impl Future<Output = ()>, terminate: impl Future<Ou
 
 async fn ctrl_c_signal() {
     if let Err(error) = tokio::signal::ctrl_c().await {
-        dioxus_logger::tracing::error!(%error, "failed to listen for Ctrl-C");
+        tracing::error!(%error, "failed to listen for Ctrl-C");
     }
 }
 
@@ -140,7 +138,7 @@ async fn terminate_signal() {
             signal.recv().await;
         }
         Err(error) => {
-            dioxus_logger::tracing::error!(%error, "failed to listen for SIGTERM");
+            tracing::error!(%error, "failed to listen for SIGTERM");
         }
     }
 }

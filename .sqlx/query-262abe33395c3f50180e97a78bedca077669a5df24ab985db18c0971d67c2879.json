@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji)\n            VALUES ($1, $2, $3, $4, $5)\n            ON CONFLICT DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "reaction_target",
+            "kind": {
+              "Enum": [
+                "post",
+                "comment"
+              ]
+            }
+          }
+        },
+        "Varchar",
+        "Int8",
+        "Int8",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "262abe33395c3f50180e97a78bedca077669a5df24ab985db18c0971d67c2879"
+}

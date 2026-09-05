@@ -19,6 +19,7 @@ in
         user = databaseName;
       }
     ];
+    initialScript = "ALTER ROLE ${databaseName} CREATEDB;";
   };
 
   processes.app = {

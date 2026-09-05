@@ -8,6 +8,11 @@ default:
 serve:
     devenv processes up app
 
+# Load fake guests, guestbook entries and comments into the local database
+seed:
+    devenv processes up postgres --detach
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f fixtures/synthetic.sql
+
 # Regenerate SQLx's checked-in query cache against local PostgreSQL
 prepare-sqlx:
     devenv processes up postgres --detach
@@ -23,14 +28,55 @@ publish-fly-secret secret:
 build:
     dx build --fullstack
 
+# Create a validated draft
+[positional-arguments]
+new-post slug:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    slug="$1"
+    [[ "$slug" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || { echo "slug must use lowercase words separated by hyphens" >&2; exit 1; }
+    post="content/blog/$slug.md"
+    [[ ! -e "$post" ]] || { echo "$post already exists" >&2; exit 1; }
+    cat > "$post" <<EOF
+    ---
+    title: "Replace with the article title"
+    description: "Replace with a concise description of at least twenty characters."
+    published: $(date +%F)
+    draft: true
+    tags: []
+    ---
+
+    Start writing here. Use heading level 2 and below inside posts.
+    EOF
+    echo "Created $post"
+
+check-posts:
+    SQLX_OFFLINE=true cargo test --locked --all-features blog
+    SQLX_OFFLINE=true cargo test --locked --features server --test blog_build
+
+# Keep the local checks aligned with CI
+check:
+    cargo fmt --all --check
+    SQLX_OFFLINE=true cargo clippy --locked --all-targets --all-features -- -D warnings
+    SQLX_OFFLINE=true cargo check --locked --features web --target wasm32-unknown-unknown
+
+# PostgreSQL tests create their own isolated databases
+test:
+    devenv processes up postgres --detach
+    SQLX_OFFLINE=true cargo test --locked --all-features
+
+# Serve an explicit test catalog without publishing fixtures on the normal site
+serve-test-content:
+    devenv processes up postgres --detach
+    secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve --fullstack true --features test-content
+
+# Requires serve-test-content; APP_URL overrides http://localhost:8080
+test-browser:
+    npm run test:browser
+
 # Format Rust code
 format:
-    dx fmt --all-code
-    cargo clippy --fix --all-features
-
-# Format Dioxus code
-dioxus-format:
-    dx fmt
+    cargo fmt --all
 
 # Install the CLI version matching the Dioxus crates
 install-deps:

@@ -68,6 +68,13 @@ jobs:
         run: |
           cargo install sqlx-cli --no-default-features --features rustls,postgres
           sqlx migrate run
+      # Preview-only keys rotate on redeploy, invalidating existing preview cookies.
+      - name: Generate preview session key
+        id: session
+        run: |
+          secret="$(openssl rand -base64 64 | tr -d '\n')"
+          echo "::add-mask::$secret"
+          echo "secret=$secret" >> "$GITHUB_OUTPUT"
       - id: deploy
         uses: LilDojd/fly-pr-review-apps@1.2.1
         with:
@@ -75,6 +82,7 @@ jobs:
             DATABASE_URL=${{ steps.create_branch.outputs.db_url_pooled }}
             SENTRY_DSN=${{ secrets.SENTRY_DSN }}
             GABIOINF_SECRET=${{ secrets.GABIOINF_SECRET }}
+            SESSION_SECRET=${{ steps.session.outputs.secret }}
             DOMAIN_URL=gabioinf-pr-${{ github.event.number }}.fly.dev
           name: gabioinf-pr-${{ github.event.number }}
 

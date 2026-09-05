@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::hide::Hide;
 use axum_extra::extract::cookie::Key;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
@@ -47,6 +46,28 @@ fn decode_session_key(encoded: &str) -> Result<Key, &'static str> {
     Key::try_from(bytes.as_slice()).map_err(|_| "SESSION_SECRET must decode to at least 64 bytes")
 }
 impl AppConfig {
+    /// The site's origin (`https://gabioinf.dev`, `http://localhost:8080`), derived
+    /// from `domain`, which may be a bare host or a full origin.
+    ///
+    /// # Errors
+    /// When `domain` (or the `DOMAIN_URL` override) is not a valid http(s) origin.
+    pub fn origin(&self) -> Result<String, ConfigError> {
+        let domain = self.domain.trim_end_matches('/');
+        let candidate = if domain.contains("://") {
+            domain.to_string()
+        } else {
+            format!("https://{domain}")
+        };
+        let url = reqwest::Url::parse(&candidate)
+            .map_err(|error| ConfigError::Message(format!("domain `{domain}`: {error}")))?;
+        if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
+            return Err(ConfigError::Message(format!(
+                "domain `{domain}` must be an http(s) origin"
+            )));
+        }
+        Ok(url.origin().ascii_serialization())
+    }
+
     pub fn new<S: AsRef<str>>(base: S) -> Result<Self, ConfigError> {
         let run_mode = if cfg!(debug_assertions) {
             "development"
@@ -55,7 +76,7 @@ impl AppConfig {
         };
         let domain = std::env::var("DOMAIN_URL").ok();
         let base = base.as_ref();
-        let mut s = Config::builder()
+        let s = Config::builder()
             .add_source(File::with_name(&format!("{base}/config/default")).required(true))
             .add_source(File::with_name(&format!("{base}/config/{run_mode}")).required(false))
             .add_source(
@@ -89,16 +110,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_config() {
+    fn default_rate_limits_are_usable() {
         let config = Config::builder()
             .add_source(File::with_name("./config/default").required(true))
             .build()
             .unwrap();
+        let limits: RateLimiting = config.get("ratelimiting").unwrap();
+
+        assert!(limits.requests_per_second > 0);
+        assert!(limits.burst_size > 0);
+    }
+
+    #[test]
+    fn origin_accepts_hosts_and_full_origins() {
+        let config = |domain: &str| AppConfig {
+            domain: domain.to_string(),
+            ratelimiting: RateLimiting {
+                requests_per_second: 1,
+                burst_size: 1,
+            },
+            database: DatabaseConfig {
+                url: Hide::new(String::new()),
+            },
+            gabioinf: GabioinfConfig {
+                id: String::new(),
+                secret: Hide::new(String::new()),
+            },
+            session: SessionConfig {
+                secret: Key::generate(),
+            },
+        };
         assert_eq!(
-            config.get_int("ratelimiting.requests_per_second").unwrap(),
-            5
+            config("gabioinf.dev").origin().unwrap(),
+            "https://gabioinf.dev"
         );
-        assert_eq!(config.get_int("ratelimiting.burst_size").unwrap(), 10);
+        assert_eq!(
+            config("http://localhost:8080/").origin().unwrap(),
+            "http://localhost:8080"
+        );
+        assert!(config("http:://localhost:8080").origin().is_err());
+        assert!(config("ftp://gabioinf.dev").origin().is_err());
     }
 
     #[test]

@@ -1,27 +1,11 @@
-//! Database connection and utility functions.
-//!
-//! This module provides types and functions for managing database connections
-//! and performing basic database operations.
+//! Shared PostgreSQL pool and the `/v1/ping` database probe.
 use super::{AppState, errors::BResult};
 use axum::{extract::State, response::IntoResponse};
-/// A type alias for the PostgreSQL connection pool.
-///
-/// This alias simplifies the usage of SQLx's connection pool throughout the application.
-pub type DbConnPool = sqlx::Pool<sqlx::Postgres>;
-/// Checks if the database connection is alive.
-///
-/// This function executes a simple query to verify if the database connection is working.
-///
-/// # Arguments
-///
-/// * `conn` - A reference to the database connection pool.
-///
-/// # Returns
-///
-/// * `true` if the database connection is successful.
-/// * `false` if the connection fails.
+
+pub type DbConnPool = sqlx::PgPool;
+
+/// Returns `200 Pong` when PostgreSQL is reachable; failures use the API error response.
 pub async fn ping_db(State(state): State<AppState>) -> BResult<impl IntoResponse> {
-    let conn = state.db;
-    sqlx::query!("SELECT 1 AS one").fetch_one(&conn).await?;
+    sqlx::query!("SELECT 1 AS one").fetch_one(&state.db).await?;
     Ok((axum::http::StatusCode::OK, "Pong"))
 }

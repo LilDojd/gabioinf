@@ -3,13 +3,11 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
 use sqlx::{FromRow, Type};
 use time::OffsetDateTime;
-extern crate derive_more;
-use derive_more::{From, Into};
 /// Represents an ID of a guestbook entry
 ///
 /// This type is a newtype wrapper around `i64` to provide type safety and clarity
 /// when dealing with guestbook IDs.
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, From, Into, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "server", derive(Type), sqlx(transparent))]
 pub struct GuestbookId(pub(crate) i64);
 impl GuestbookId {
@@ -69,8 +67,6 @@ impl Default for GuestbookEntry {
 pub struct NewGuestbookEntry {
     /// The id of the guest creating the entry.
     pub author_id: GuestId,
-    /// The username of the guest creating the entry.
-    pub author_username: String,
     /// The message content for the new guestbook entry.
     pub message: String,
     /// An optional signature for the new guestbook entry.
@@ -83,7 +79,6 @@ impl From<NewGuestbookEntry> for GuestbookEntry {
             message: entry.message,
             signature: entry.signature,
             author_id: entry.author_id,
-            author_username: entry.author_username,
             ..Default::default()
         }
     }

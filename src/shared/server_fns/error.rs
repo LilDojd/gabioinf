@@ -20,7 +20,7 @@ pub enum ServerError {
 impl ServerError {
     #[cfg(feature = "server")]
     pub(crate) fn internal(context: &'static str, error: impl fmt::Debug) -> Self {
-        dioxus_logger::tracing::error!(context, error = ?error, "Server function failed");
+        tracing::error!(context, error = ?error, "Server function failed");
         Self::Internal
     }
 }
@@ -30,9 +30,9 @@ impl fmt::Display for ServerError {
         formatter.write_str(match self {
             Self::Validation(message) => message,
             Self::InvalidRequest => "The request was invalid",
-            Self::Unauthenticated => "Sign in before changing the guestbook",
+            Self::Unauthenticated => "Sign in first",
             Self::Forbidden => "You are not allowed to perform this action",
-            Self::NotFound => "Signature no longer exists",
+            Self::NotFound => "That no longer exists",
             Self::Conflict => "You have already signed the guestbook",
             Self::Unavailable => "The service is temporarily unavailable",
             Self::Internal => "An internal error occurred",

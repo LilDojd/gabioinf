@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                DELETE FROM reactions\n                WHERE target_kind = $1\n                  AND post_slug = $2\n                  AND comment_id IS NOT DISTINCT FROM $3\n                  AND guest_id = $4\n                  AND emoji = $5\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "reaction_target",
+            "kind": {
+              "Enum": [
+                "post",
+                "comment"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2ff1b2c7c79f1295c48118119b9ac72ccf87981b35916b5854c900a37597c976"
+}

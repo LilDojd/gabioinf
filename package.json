@@ -1,7 +1,10 @@
 {
+  "scripts": {
+    "test:browser": "node --test tests/browser.test.mjs"
+  },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
-    "@tailwindcss/typography": "^0.5.20",
+    "playwright": "1.61.1",
     "tailwindcss": "^4.3.3"
   },
   "packageManager": "npm@11.17.0"

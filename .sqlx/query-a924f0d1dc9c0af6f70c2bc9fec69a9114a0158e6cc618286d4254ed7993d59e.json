@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH inserted AS (\n                INSERT INTO comments (post_slug, author_id, parent_id, body)\n                SELECT $1::VARCHAR(80), $2::BIGINT, $3::BIGINT, $4::VARCHAR(2000)\n                WHERE $3::BIGINT IS NULL OR EXISTS (\n                    SELECT 1 FROM comments\n                    WHERE id = $3::BIGINT\n                      AND post_slug = $1::VARCHAR(80)\n                      AND parent_id IS NULL\n                )\n                RETURNING id, parent_id, author_id, body, created_at\n            )\n            SELECT\n                i.id AS \"id: CommentId\",\n                i.parent_id AS \"parent_id?: CommentId\",\n                g.username,\n                g.github_id AS \"github_id: GithubId\",\n                i.body,\n                i.created_at\n            FROM inserted i\n            JOIN guests g ON g.id = i.author_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: CommentId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "parent_id?: CommentId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "github_id: GithubId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "body",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int8",
+        "Int8",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a924f0d1dc9c0af6f70c2bc9fec69a9114a0158e6cc618286d4254ed7993d59e"
+}

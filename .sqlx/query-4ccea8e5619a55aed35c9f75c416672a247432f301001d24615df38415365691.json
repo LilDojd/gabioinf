@@ -1,0 +1,60 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH g AS (\n                INSERT INTO guestbook (message, signature, author_id)\n                VALUES ($1, $2, $3)\n                RETURNING *\n            )\n            SELECT\n                g.id AS \"id: GuestbookId\",\n                g.message,\n                g.signature,\n                g.created_at,\n                g.updated_at,\n                g.author_id AS \"author_id: GuestId\",\n                u.username AS author_username\n            FROM g JOIN guests u ON u.id = g.author_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: GuestbookId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "message",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "signature",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "author_id: GuestId",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "author_username",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4ccea8e5619a55aed35c9f75c416672a247432f301001d24615df38415365691"
+}

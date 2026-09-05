@@ -1,133 +1,136 @@
-use crate::{Route, components::Hr, markdown::Markdown};
+use crate::Route;
 use dioxus::prelude::*;
+
 #[component]
 pub fn AboutMe() -> Element {
     rsx! {
-        div { class: "container mx-auto px-4 py-8",
-            article { class: "prose prose-invert prose-stone prose-h2:mb-0 lg:prose-lg !max-w-none",
-                h1 { "about me" }
-                p {
-                    "Hey, I'm George. I've been studying Bioengineering and Bioinformatics at "
-                    a {
-                        href: "https://fbb.msu.ru/",
-                        class: "alien-link",
-                        rel: "noopener noreferrer",
-                        target: "_blank",
-                        "FBB MSU"
-                    }
-                    ". Now, I live in UAE with my wonderful wife (she drew the alien, btw.) and a cat named "
-                    a {
-                        href: "https://teamsesh.bigcartel.com/",
-                        class: "alien-link",
-                        rel: "noopener noreferrer",
-                        target: "_blank",
-                        "Sesh"
-                    }
-                    " ↓"
+        section { class: "prose-font flex flex-col gap-11 text-pretty text-lg leading-[1.5] text-prose xl:text-[19px]",
+            div { class: "flex flex-col gap-5",
+                header { class: "flex flex-col gap-2 font-recursive",
+                    span { class: "label-mono", "// about" }
+                    h1 { class: "heading-casual m-0 text-[30px] leading-[1.2] text-text", "about me" }
                 }
-                figure { class: "max-w-prose ml-auto mr-auto block",
-                    img {
-                        class: "w-full h-auto aspect-[1.18/1]",
-                        src: asset!("/assets/sesh.avif", ImageAssetOptions::new().with_avif()),
-                        alt: "Sesh the cat",
-                    }
-                    figcaption { "yes, he is a pirate" }
+                p { class: "m-0",
+                    "Hi, my name is George. I've been studying Bioengineering and Bioinformatics at "
+                    External { href: "https://fbb.msu.ru/", "FBB MSU" }
+                    ". I now live and work in the UAE with my wife and our cat, Sesh."
                 }
-                Markdown { value: r#"I like learning new stuff, playing videogames competitively, doing scientific illustrations and renders and pick up a new hobby or two every friday."# }
-                p {
-                    r#"This site is my digital garden.
-                   I don't intend to put up paywalls, collect your data, or track your actions. 
-                   It is merely a place for self-expression and experimentation. If you DO want me to collect your data,
-                   please leave a signature in my "#
-                    Link { to: Route::Guestbook {}, class: "alien-link", "guestbook" }
-                    ". Enjoy <3"
+                figure { class: "m-0 mt-1 flex flex-col gap-3",
+                    img { class: "block w-80 max-w-full rounded-md", src: asset!("/assets/sesh.avif"), alt: "Sesh the cat" }
+                    figcaption { class: "text-sm text-muted", "We found Sesh in a park with a severe eye infection. He had to have the eye removed, but he's doing well now." }
                 }
-                h3 { "contacts" }
-                ul {
-                    li { "Email: yawner@pm.me" }
-                    li {
-                        a {
-                            href: "https://www.linkedin.com/in/georgiy-andreev/",
-                            class: "alien-link",
-                            rel: "noopener noreferrer",
-                            target: "_blank",
-                            "LinkedIn"
-                        }
-                    }
-                    li {
-                        a {
-                            href: "https://github.com/LilDojd",
-                            class: "alien-link",
-                            rel: "noopener noreferrer",
-                            target: "_blank",
-                            "GitHub"
-                        }
-                    }
+                p { class: "m-0", "I like learning new things, playing video games competitively, creating scientific illustrations, and recreational programming." }
+                p { class: "m-0",
+                    "I use this site to share technical writing and personal projects. You can leave a note in my "
+                    Link { to: Route::Guestbook {}, class: "link-dashed", "guestbook" }
+                    "."
                 }
-                h2 { "what i'm up to" }
-                Hr { comment: "apr 2025".to_string() }
-                Markdown { value: r#"
-                I am excited to share that I have joined [GenBio AI](https://genbio.ai/) as a Research Engineer on a quest to
-                build first-in-class foundational models for biology! Life is great.
-                "# }
-                Hr { comment: "dec 2024".to_string() }
-                Markdown { value: r#"
-                I currently work full-time as a software engineer at [InSilico Medicine](https://insilico.com/). 
-                We do some cool drug design-related stuff that involves a lot of AI. I am particularly proud
-                of my contribution to the development of [INS018_055](https://www.eurekalert.org/news-releases/1048870) for the 
-                treatment of IPF. I hope it gets to patients soon! Also, there is [Alchemistry](https://insilico.com/chemistry42#rec745522589).
+                div { class: "mt-1 flex flex-wrap gap-2 font-recursive",
+                    a { href: "mailto:yawner@pm.me", class: "pill px-[11px] py-[5px] text-[13px]", "yawner@pm.me" }
+                    Contact { href: "https://www.linkedin.com/in/georgiy-andreev/", "linkedin ↗" }
+                    Contact { href: "https://github.com/LilDojd", "github ↗" }
+                    a { href: asset!("/assets/CV_GeorgyAndreev_042025.pdf"), target: "_blank", rel: "noopener noreferrer", class: "pill px-[11px] py-[5px] text-[13px]", "cv (pdf) ↗" }
+                }
+            }
 
-                Also:
-                - tinkering with this website
-                - trying to build a molecular dynamics engine in Rust 🦀
-                - getting into embedded with [RMK](https://github.com/HaoboGu/rmk)
-                "# }
-                h2 { "what i'm using" }
-                Hr {}
-                h3 { "software" }
-                Markdown { value: r#"
-                                This website is built with [Dioxus](https://github.com/DioxusLabs/dioxus) and 
-                                [axum](https://github.com/tokio-rs/axum), and is deployed on 
-                                [Fly.io](https://fly.io/).
-                                
-                                - python stuff in [VSCode](https://code.visualstudio.com/)
-                                - everything else in [neovim](https://neovim.io/)
-                                - notes: [Obsidian](https://obsidian.md/)
-                                - terminal: [kitty](https://github.com/kovidgoyal/kitty)
-                                
-                                I try to keep my dotfiles up-to-date [here](https://github.com/LilDojd/dotfiles).
-            "# }
-                h3 { "hardware" }
-                Markdown {
-                    value: r#"
-                                - Macbook: M1 MacBook Pro 16" 2021, 32GB RAM
-                                - PC:
-                                    - CPU: [AMD Ryzen 9 7950X](https://www.amd.com/en/products/processors/desktops/ryzen/7000-series/amd-ryzen-9-7950x.html)
-                                    - MB: [ROG STRIX X670E-E](https://rog.asus.com/motherboards/rog-strix/rog-strix-x670e-e-gaming-wifi-model/)
-                                    - Memory: [4xDDR5 16GB 6200MHz](https://www.corsair.com/us/en/p/memory/cmt32gx5m2x6200c36w/dominatora-platinum-rgb-32gb-2x16gb-ddr5-dram-6200mhz-c36-memory-kit-a-white-cmt32gx5m2x6200c36w) - yeah, 4x16Gb I know. but they were cheap when I was building my PC.
-                                    - Storage: [SSD 980 Pro 2TB M.2](https://www.samsung.com/us/computing/memory-storage/solid-state-drives/980-pro-pcie-4-0-nvme-ssd-2tb-mz-v8p2t0b-am/) + 4Tb HDD
-                                    - GPU: [Zotac RTX 4090](https://www.zotac.com/us/product/graphics_card/zotac-gaming-geforce-rtx-4090-amp-extreme-airo)
-                                    - PSU: [ASUS ROG Thor 1200W Platinum](https://rog.asus.com/power-supply-units/rog-thor/rog-thor-1200p-model/)
-                                    - Case: [Lian Li O11 Dynamic Evo](https://lian-li.com/product/o11-dynamic-evo/)
-                                - Peripheral:
-                                    - Keys: [Sofle V2](https://josefadamcik.github.io/SofleKeyboard/) and [Logitech G915 LIGHTSPEED](https://www.logitechg.com/en-ae/products/gaming-keyboards/g915-low-profile-wireless-mechanical-gaming-keyboard.html)
-                                    - Monitors: [LG 32UN880-B 32](https://www.lg.com/ae/consumer-monitors/lg-32un880-b) and [LG 27GP950-B](https://www.lg.com/ae/consumer-monitors/lg-27gp950-b)
-                                    - Headphones: [Sony WH-1000XM3](https://www.sony.com/en-ae/electronics/headband-headphones/wh-1000xm3)
-            "#,
+            div { class: "flex flex-col gap-5",
+                span { class: "label-mono", "// what i'm up to" }
+                LabelRow { label: "apr 2025", accent: true,
+                    p { class: "m-0",
+                        "I joined "
+                        External { href: "https://genbio.ai/", "GenBio AI" }
+                        " as a Research Engineer, working on foundation models for biology."
+                    }
                 }
-                h2 { "other" }
-                Hr {}
-                ul {
-                    li {
-                        a {
-                            href: asset!("/assets/CV_GeorgyAndreev_042025.pdf"),
-                            class: "alien-link",
-                            target: "_blank",
-                            r"CV"
+                div { class: "text-muted",
+                    LabelRow { label: "dec 2024",
+                        p { class: "m-0",
+                            "I worked as a software engineer at "
+                            External { href: "https://insilico.com/", "InSilico Medicine" }
+                            " on AI-assisted drug discovery. My work included contributions to "
+                            External { href: "https://www.eurekalert.org/news-releases/1048870", "INS018_055" }
+                            " for the treatment of IPF and "
+                            External { href: "https://insilico.com/chemistry42#rec745522589", "Alchemistry" }
+                            "."
                         }
+                    }
+                }
+                LabelRow { label: "also", small: true,
+                    div { class: "flex flex-col gap-1",
+                        span { "developing this website" }
+                        span { "building a molecular dynamics engine in Rust" }
+                        span { "learning embedded development with " External { href: "https://github.com/HaoboGu/rmk", "RMK" } }
+                    }
+                }
+            }
+
+            div { class: "flex flex-col gap-5 text-[15px]",
+                span { class: "label-mono", "// what i'm using" }
+                LabelRow { label: "software", small: true,
+                    div { class: "flex flex-col gap-1.5",
+                        p { class: "m-0 mb-1.5",
+                            "This website is built with " External { href: "https://github.com/DioxusLabs/dioxus", "Dioxus" }
+                            " and " External { href: "https://github.com/tokio-rs/axum", "axum" }
+                            ", and is deployed on " External { href: "https://fly.io/", "Fly.io" } "."
+                        }
+                        span { "editor: " External { href: "https://helix-editor.com/", "Helix" } }
+                        span { "notes: " External { href: "https://obsidian.md/", "Obsidian" } }
+                        span { "terminal: " External { href: "https://sw.kovidgoyal.net/kitty/", "kitty" } " (Linux), " External { href: "https://ghostty.org/", "Ghostty" } " (Mac)" }
+                        span { "slop: " External { href: "https://pi.dev/", "Pi" } }
+                        p { class: "m-0 mt-1.5", "My system flake: " External { href: "https://github.com/LilDojd/rhizome", "rhizome" } "." }
+                    }
+                }
+                LabelRow { label: "hardware", small: true,
+                    div { class: "grid grid-cols-[84px_1fr] gap-x-3.5 gap-y-1.5",
+                        HardwareLabel { "macbook" } span { "M1 MacBook Pro 16\" 2021, 32GB RAM" }
+                        HardwareLabel { "cpu" } span { "AMD Ryzen 9 9950X3D" }
+                        HardwareLabel { "mb" } span { "ROG Strix X870E-E" }
+                        HardwareLabel { "memory" } span { HardwareLink { href: "https://www.corsair.com/us/en/p/memory/cmt32gx5m2x6200c36w/dominatora-platinum-rgb-32gb-2x16gb-ddr5-dram-6200mhz-c36-memory-kit-a-white-cmt32gx5m2x6200c36w", "4xDDR5 16GB 6200MHz" } }
+                        HardwareLabel { "storage" } span { HardwareLink { href: "https://www.samsung.com/us/computing/memory-storage/solid-state-drives/980-pro-pcie-4-0-nvme-ssd-2tb-mz-v8p2t0b-am/", "SSD 980 Pro 2TB M.2" } " + 4Tb HDD" }
+                        HardwareLabel { "gpu" } HardwareLink { href: "https://www.zotac.com/us/product/graphics_card/zotac-gaming-geforce-rtx-4090-amp-extreme-airo", "Zotac RTX 4090" }
+                        HardwareLabel { "psu" } HardwareLink { href: "https://rog.asus.com/power-supply-units/rog-thor/rog-thor-1200p-model/", "ASUS ROG Thor 1200W Platinum" }
+                        HardwareLabel { "case" } span { "NZXT H9 Flow Dual-Chamber ATX" }
+                        HardwareLabel { "keyboards" } span { "I have a collection of split keyboards. My daily drivers are " HardwareLink { href: "https://josefadamcik.github.io/SofleKeyboard/", "Sofle V2" } " and QK Alice Duo." }
+                        HardwareLabel { "monitors" } span { HardwareLink { href: "https://www.lg.com/ae/consumer-monitors/lg-32un880-b", "LG 32UN880-B 32" } " and " HardwareLink { href: "https://www.lg.com/ae/consumer-monitors/lg-27gp950-b", "LG 27GP950-B" } }
+                        HardwareLabel { "headphones" } span { "SteelSeries Arctis Nova Elite" }
                     }
                 }
             }
         }
     }
+}
+
+#[component]
+fn External(href: &'static str, children: Element) -> Element {
+    rsx! { a { href, target: "_blank", rel: "noopener noreferrer", class: "quiet-link", {children} } }
+}
+
+#[component]
+fn Contact(href: &'static str, children: Element) -> Element {
+    rsx! { a { href, target: "_blank", rel: "noopener noreferrer", class: "pill px-[11px] py-[5px] text-[13px]", {children} } }
+}
+
+#[component]
+fn LabelRow(
+    label: &'static str,
+    children: Element,
+    accent: Option<bool>,
+    small: Option<bool>,
+) -> Element {
+    rsx! {
+        div { class: if small.unwrap_or(false) { "grid grid-cols-[60px_1fr] gap-4 text-[15px] md:grid-cols-[72px_1fr]" } else { "grid grid-cols-[60px_1fr] gap-4 md:grid-cols-[72px_1fr]" },
+            span { class: if accent.unwrap_or(false) { "label-mono pt-1 text-accent" } else { "label-mono pt-1" }, {label.to_string()} }
+            {children}
+        }
+    }
+}
+
+#[component]
+fn HardwareLabel(children: Element) -> Element {
+    rsx! { span { class: "label-mono pt-[3px]", {children} } }
+}
+
+#[component]
+fn HardwareLink(href: &'static str, children: Element) -> Element {
+    rsx! { a { href, target: "_blank", rel: "noopener noreferrer", class: "text-secondary no-underline hover:text-accent", {children} } }
 }
