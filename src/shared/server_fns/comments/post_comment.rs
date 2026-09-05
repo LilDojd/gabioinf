@@ -14,7 +14,7 @@ fn validate_body(body: String) -> Result<(String, String), ServerError> {
             "Comment must be between 1 and 2000 characters".to_string(),
         ));
     }
-    crate::backend::profanity::validate_not_offensive(&body)
+    crate::backend::profanity::validate_no_severe_content(&body)
         .map_err(|_| ServerError::Validation("Comment contains offensive content".to_string()))?;
     let body_html = crate::backend::markdown::render(&body)
         .map_err(|error| ServerError::Validation(format!("Invalid Markdown: {error}")))?;
@@ -58,6 +58,29 @@ mod tests {
 
         assert_eq!(body, "**hello**");
         assert_eq!(html, "<p><strong>hello</strong></p>\n");
+    }
+
+    #[test]
+    fn validation_allows_clean_mild_and_moderate_comments() {
+        for text in [
+            "This is a clean message",
+            "This is a bad word: crap",
+            "F u c k",
+        ] {
+            let (body, html) = validate_body(format!("  {text}  ")).unwrap();
+            assert_eq!(body, text);
+            assert_eq!(html, format!("<p>{text}</p>\n"));
+        }
+    }
+
+    #[test]
+    fn validation_rejects_severe_comments_with_user_facing_error() {
+        assert_eq!(
+            validate_body("  i hope you die  ".to_string()),
+            Err(ServerError::Validation(
+                "Comment contains offensive content".to_string()
+            ))
+        );
     }
 
     #[test]
