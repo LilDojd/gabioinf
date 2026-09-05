@@ -1,6 +1,9 @@
 mod blog;
-pub use blog::{BlogVideo, CodeBlock, GcCalculator};
+pub use blog::{BlogVideo, GcCalculator};
+mod code_block;
+pub use code_block::CodeBlock;
 mod comments;
+pub(crate) mod syntax;
 pub use comments::Comments;
 mod errors;
 pub(crate) use errors::server_error_message;

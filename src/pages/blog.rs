@@ -58,9 +58,6 @@ pub fn BlogPost(slug: String) -> Element {
     let Some(post) = find_post(&slug) else {
         return rsx! { crate::pages::NotFound { route: vec!["blog".to_string(), slug] } };
     };
-    let mut reactions = use_loader(move || server_fns::load_reactions(post.slug.to_string()))?;
-    let viewer = use_loader(server_fns::get_user)?;
-
     rsx! {
         article { class: "flex flex-col gap-7",
             Link { to: Route::Blog {}, class: "label-mono w-fit no-underline hover:text-accent", "← all rambles" }
@@ -76,34 +73,49 @@ pub fn BlogPost(slug: String) -> Element {
             }
             div {
                 div { class: "post-body",
-                    for block in post.body {
+                    for (index, block) in post.body.iter().enumerate() {
                         match block {
-                            PostBlock::Html(html) => rsx! { div { dangerous_inner_html: *html } },
-                            PostBlock::Code { language, title, lines, highlighted, source } => rsx! {
+                            PostBlock::Html(html) => rsx! { crate::components::syntax::HighlightedHtml { key: "{post.slug}-html-{index}", html: *html } },
+                            PostBlock::Code { language, title, highlighted, source } => rsx! {
                                 CodeBlock {
+                                    key: "{post.slug}-code-{index}",
+                                    id: format!("blog-{}-code-{}", post.slug, index + 1),
                                     language: *language,
                                     title: *title,
-                                    lines: *lines,
                                     highlighted: *highlighted,
                                     source: *source,
                                 }
                             },
-                            PostBlock::GcCalculator => rsx! { GcCalculator {} },
-                            PostBlock::Video { src, title } => rsx! { BlogVideo { src: *src, title: *title } },
+                            PostBlock::GcCalculator => rsx! { GcCalculator { key: "{post.slug}-gc-{index}" } },
+                            PostBlock::Video { src, title } => rsx! { BlogVideo { key: "{post.slug}-video-{index}", src: *src, title: *title } },
                         }
                     }
                 }
-                div { class: "mt-6",
-                    ReactionBar {
-                        target: ReactionTarget::Post { slug: post.slug.to_string() },
-                        counts: reactions.read().post.clone(),
-                        signed_in: viewer.read().is_some(),
-                        on_change: move |counts| reactions.write().post = counts,
-                    }
+            }
+            // Public article content and controls must not wait for database-backed discussion.
+            ErrorBoundary {
+                handle_error: |_| rsx! { p { role: "alert", class: "label-mono", "Discussion is unavailable. Reload the page to retry." } },
+                SuspenseBoundary {
+                    fallback: |_| rsx! { p { role: "status", class: "label-mono", "Loading discussion…" } },
+                    PostDiscussion { slug: post.slug }
                 }
             }
-            Comments { slug: post.slug, reactions, viewer }
         }
+    }
+}
+
+#[component]
+fn PostDiscussion(slug: &'static str) -> Element {
+    let mut reactions = use_loader(move || server_fns::load_reactions(slug.to_string()))?;
+    let viewer = use_loader(server_fns::get_user)?;
+    rsx! {
+        ReactionBar {
+            target: ReactionTarget::Post { slug: slug.to_string() },
+            counts: reactions.read().post.clone(),
+            signed_in: viewer.read().is_some(),
+            on_change: move |counts| reactions.write().post = counts,
+        }
+        Comments { slug, reactions, viewer }
     }
 }
 

@@ -1,4 +1,3 @@
-use arborium::{Config, Highlighter, HtmlFormat, advanced::html_escape};
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd, html};
 use serde::Deserialize;
 use std::{
@@ -38,13 +37,10 @@ struct Post {
 
 enum BodyBlock {
     Html(String),
-    /// A fenced code block: one highlighted HTML fragment per line, plus the raw
-    /// source for the copy button. Fence info may carry a title and highlighted
-    /// lines: ```` ```rust title="src/main.rs" {2,5-7} ````.
+    /// A code block with optional title and emphasized lines; highlighted in the browser.
     Code {
         language: Option<String>,
         title: Option<String>,
-        lines: Vec<String>,
         highlighted: Vec<usize>,
         source: String,
     },
@@ -67,13 +63,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<_>>();
     paths.sort();
 
-    let mut highlighter = Highlighter::with_config(Config {
-        max_injection_depth: 0,
-        html_format: HtmlFormat::ClassNamesWithPrefix("syntax".to_string()),
-    });
     let mut posts = paths
         .iter()
-        .map(|path| load_post(path, &mut highlighter))
+        .map(|path| load_post(path))
         .collect::<Result<Vec<_>, _>>()?;
     posts.sort_by(|left, right| {
         right
@@ -87,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn load_post(path: &Path, highlighter: &mut Highlighter) -> io::Result<Post> {
+fn load_post(path: &Path) -> io::Result<Post> {
     let source = fs::read_to_string(path)?;
     let path_label = path.display().to_string();
     let slug = path
@@ -122,8 +114,7 @@ fn load_post(path: &Path, highlighter: &mut Highlighter) -> io::Result<Post> {
     if markdown.is_empty() {
         return Err(invalid(&path_label, "post body cannot be empty"));
     }
-    let body =
-        render_body(markdown, highlighter).map_err(|message| invalid(&path_label, message))?;
+    let body = render_body(markdown).map_err(|message| invalid(&path_label, message))?;
 
     Ok(Post {
         slug,
@@ -220,14 +211,15 @@ fn estimate_read_minutes(markdown: &str) -> usize {
     words.div_ceil(200).max(1)
 }
 
-fn render_body(markdown: &str, highlighter: &mut Highlighter) -> Result<Vec<BodyBlock>, String> {
+fn render_body(markdown: &str) -> Result<Vec<BodyBlock>, String> {
     let mut parser = Parser::new_ext(markdown, markdown_options());
     let mut events = Vec::new();
     let mut blocks = Vec::new();
+    let mut depth = 0;
 
     while let Some(event) = parser.next() {
         match event {
-            Event::Start(Tag::CodeBlock(kind)) => {
+            Event::Start(Tag::CodeBlock(kind)) if depth == 0 => {
                 let mut source = String::new();
                 loop {
                     match parser.next() {
@@ -239,10 +231,14 @@ fn render_body(markdown: &str, highlighter: &mut Highlighter) -> Result<Vec<Body
                     }
                 }
                 push_html_block(&mut blocks, &mut events);
-                blocks.push(render_code_block(&kind, source, highlighter)?);
+                blocks.push(render_code_block(&kind, source)?);
             }
             Event::Html(element) => match parse_custom_element(element.trim())? {
                 Some(component) => {
+                    // HtmlBlock itself contributes one level; enclosing lists/quotes must stay intact.
+                    if depth > 1 {
+                        return Err("custom elements must be at the top level".to_string());
+                    }
                     push_html_block(&mut blocks, &mut events);
                     blocks.push(component);
                 }
@@ -262,7 +258,14 @@ fn render_body(markdown: &str, highlighter: &mut Highlighter) -> Result<Vec<Body
             {
                 return Err(format!("unsafe URL `{dest_url}`"));
             }
-            event => events.push(event),
+            event => {
+                match &event {
+                    Event::Start(_) => depth += 1,
+                    Event::End(_) => depth -= 1,
+                    _ => {}
+                }
+                events.push(event);
+            }
         }
     }
 
@@ -354,22 +357,13 @@ fn parse_attributes(mut input: &str) -> Result<Vec<(String, String)>, String> {
     }
 }
 
-fn render_code_block(
-    kind: &CodeBlockKind<'_>,
-    source: String,
-    highlighter: &mut Highlighter,
-) -> Result<BodyBlock, String> {
+fn render_code_block(kind: &CodeBlockKind<'_>, source: String) -> Result<BodyBlock, String> {
     let info = match kind {
         CodeBlockKind::Indented => "",
         CodeBlockKind::Fenced(info) => info.trim(),
     };
     let (fence, options) = info.split_once(char::is_whitespace).unwrap_or((info, ""));
-    // Only Rust is highlighted; other fences stay plain text but keep their label.
-    let (language, grammar) = match fence {
-        "" => (None, None),
-        "rs" | "rust" => (Some("rust"), Some("rust")),
-        other => (Some(other), None),
-    };
+    let language = (!fence.is_empty()).then(|| fence.to_string());
     let FenceOptions { title, highlighted } = parse_fence_options(options)?;
     let source = source.trim_end_matches('\n').to_string();
     let line_count = source.lines().count().max(1);
@@ -378,13 +372,9 @@ fn render_code_block(
             "highlighted line {line} is past the end of the block"
         ));
     }
-    let html = grammar
-        .and_then(|grammar| highlighter.highlight(grammar, &source).ok())
-        .unwrap_or_else(|| html_escape(&source));
     Ok(BodyBlock::Code {
-        language: language.map(str::to_string),
+        language,
         title,
-        lines: split_html_lines(&html),
         highlighted,
         source,
     })
@@ -447,39 +437,6 @@ fn parse_line(text: &str) -> Result<usize, String> {
         .ok()
         .filter(|line| *line >= 1)
         .ok_or_else(|| format!("invalid line number `{text}` in code fence"))
-}
-
-/// Splits highlighter output into one fragment per source line. Tokens such as
-/// block comments span lines, so open `<span>`s are closed at each line end and
-/// reopened on the next line, keeping every fragment well-formed on its own.
-fn split_html_lines(html: &str) -> Vec<String> {
-    let mut lines = Vec::new();
-    let mut open_tags: Vec<&str> = Vec::new();
-    let mut current = String::new();
-    let mut rest = html;
-    while !rest.is_empty() {
-        if let Some(after) = rest.strip_prefix('\n') {
-            current.extend(open_tags.iter().map(|_| "</span>"));
-            lines.push(std::mem::take(&mut current));
-            current.extend(open_tags.iter().copied());
-            rest = after;
-        } else if let Some(after) = rest.strip_prefix("</span>") {
-            open_tags.pop();
-            current.push_str("</span>");
-            rest = after;
-        } else if rest.starts_with("<span") {
-            let end = rest.find('>').map_or(rest.len(), |end| end + 1);
-            open_tags.push(&rest[..end]);
-            current.push_str(&rest[..end]);
-            rest = &rest[end..];
-        } else {
-            let end = rest.find(['\n', '<']).unwrap_or(rest.len()).max(1);
-            current.push_str(&rest[..end]);
-            rest = &rest[end..];
-        }
-    }
-    lines.push(current);
-    lines
 }
 
 fn is_safe_url(url: &str) -> bool {
@@ -546,18 +503,12 @@ fn block_literal(block: &BodyBlock) -> String {
         BodyBlock::Code {
             language,
             title,
-            lines,
             highlighted,
             source,
         } => format!(
-            "PostBlock::Code {{ language: {}, title: {}, lines: &[{}], highlighted: &{highlighted:?}, source: {source:?} }}",
+            "PostBlock::Code {{ language: {}, title: {}, highlighted: &{highlighted:?}, source: {source:?} }}",
             option_literal(language.as_deref()),
             option_literal(title.as_deref()),
-            lines
-                .iter()
-                .map(|line| format!("{line:?}"))
-                .collect::<Vec<_>>()
-                .join(", "),
         ),
         BodyBlock::GcCalculator => "PostBlock::GcCalculator".to_string(),
         BodyBlock::Video { src, title } => format!(
@@ -584,4 +535,77 @@ fn date_literal(date: Date) -> String {
 
 fn invalid(path: &str, message: impl std::fmt::Display) -> io::Error {
     io::Error::other(format!("{path}: {message}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn code_preserves_source_without_a_compiled_language_grammar() {
+        for language in ["python", "nix", "typescript", "an-unknown-language"] {
+            let source = "# café 🦀\nprint('<script> & text')";
+            let markdown = format!("```{language} title=\"example\" {{2}}\n{source}\n```");
+            let blocks = render_body(&markdown).unwrap();
+            let [
+                BodyBlock::Code {
+                    language: actual,
+                    title,
+                    highlighted,
+                    source: actual_source,
+                },
+            ] = blocks.as_slice()
+            else {
+                panic!("a top-level fence must produce a code viewer");
+            };
+            assert_eq!(actual.as_deref(), Some(language));
+            assert_eq!(title.as_deref(), Some("example"));
+            assert_eq!(highlighted, &[2]);
+            assert_eq!(actual_source, source);
+        }
+    }
+
+    #[test]
+    fn nested_code_remains_inside_its_markdown_container() {
+        for (markdown, open, close) in [
+            (
+                "> before\n>\n> ```python\n> print('<ok>')\n> ```\n>\n> after",
+                "<blockquote>",
+                "</blockquote>",
+            ),
+            (
+                "- before\n\n  ```python\n  print('<ok>')\n  ```\n\n  after",
+                "<li>",
+                "</li>",
+            ),
+        ] {
+            let blocks = render_body(markdown).unwrap();
+            let [BodyBlock::Html(html)] = blocks.as_slice() else {
+                panic!("nested code must not split an open HTML container");
+            };
+            let code = html.find("<pre><code").unwrap();
+            assert!(html.find(open).unwrap() < code);
+            assert!(html.find("</code></pre>").unwrap() < html.find(close).unwrap());
+            assert!(html.contains("&lt;ok&gt;"));
+            assert!(html.find("after").unwrap() < html.find(close).unwrap());
+        }
+    }
+
+    #[test]
+    fn custom_components_cannot_split_nested_containers() {
+        assert!(matches!(
+            render_body("<GcCalculator />").unwrap().as_slice(),
+            [BodyBlock::GcCalculator]
+        ));
+        for markdown in ["> <GcCalculator />", "- <GcCalculator />"] {
+            assert!(render_body(markdown).is_err(), "{markdown}");
+        }
+    }
+
+    #[test]
+    fn highlighted_lines_must_exist_in_the_code_block() {
+        assert!(render_body("```rust {2}\nfn main() {}\n```").is_err());
+        assert!(render_body("```rust {0}\nfn main() {}\n```").is_err());
+        assert!(render_body("```rust {1}\nfn main() {}\n```").is_ok());
+    }
 }
