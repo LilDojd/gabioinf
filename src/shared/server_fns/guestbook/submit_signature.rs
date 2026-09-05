@@ -76,6 +76,67 @@ pub async fn submit_signature(payload: CreateEntryRequest) -> Result<GuestbookEn
     }
 }
 
+/// Build an authenticated request context for posting tests without GitHub or a running server.
+#[cfg(all(test, feature = "server"))]
+pub(crate) async fn moderation_test_context(
+    pool: sqlx::PgPool,
+) -> dioxus::fullstack::FullstackContext {
+    use crate::{
+        backend::auth::{AuthBackend, AuthSession, build_oauth_client},
+        shared::models::{GithubId, Guest},
+    };
+    use axum::{
+        extract::FromRequestParts,
+        http::{Request, Response},
+    };
+    use dioxus::fullstack::FullstackContext;
+    use std::{convert::Infallible, sync::Arc};
+    use tower::{ServiceExt, service_fn};
+    use tower_sessions::{MemoryStore, Session};
+
+    let state = AppState::new(
+        pool,
+        "https://example.test".into(),
+        axum_extra::extract::cookie::Key::generate(),
+    );
+    let guest = state
+        .guest_repo
+        .upsert(&Guest {
+            github_id: GithubId(1),
+            username: "moderation-test".into(),
+            name: "Moderation Test".into(),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+    let backend = AuthBackend::new(
+        state.guest_repo.clone(),
+        build_oauth_client("test-client", "test-secret", &state.origin),
+        reqwest::Client::new(),
+    );
+    // Let axum-login create its session extension, then retain the real request parts.
+    let capture = service_fn(|request: Request<()>| async move {
+        Ok::<_, Infallible>(Response::new(Some(request.into_parts().0)))
+    });
+    let mut request = Request::new(());
+    request
+        .extensions_mut()
+        .insert(Session::new(None, Arc::new(MemoryStore::default()), None));
+    let mut parts = axum_login::AuthManager::new(capture, backend, "moderation-test")
+        .oneshot(request)
+        .await
+        .unwrap()
+        .into_body()
+        .unwrap();
+    let mut session = AuthSession::from_request_parts(&mut parts, &())
+        .await
+        .unwrap();
+    session.login(&guest).await.unwrap();
+    parts.extensions.insert(session);
+    parts.extensions.insert(state);
+    FullstackContext::new(parts)
+}
+
 #[cfg(all(test, feature = "server"))]
 mod tests {
     use super::*;
@@ -85,6 +146,39 @@ mod tests {
             message: message.to_string(),
             signature: None,
         }
+    }
+
+    #[sqlx::test]
+    async fn authenticated_submission_rejects_severe_content_without_inserting(pool: sqlx::PgPool) {
+        let context = moderation_test_context(pool.clone()).await;
+        context
+            .scope(async {
+                assert_eq!(
+                    submit_signature(request("i hope you die")).await,
+                    Err(ServerError::Validation(
+                        "Message contains offensive content".into()
+                    ))
+                );
+                assert_eq!(
+                    sqlx::query_scalar::<_, i64>("SELECT count(*) FROM guestbook")
+                        .fetch_one(&pool)
+                        .await
+                        .unwrap(),
+                    0
+                );
+
+                let entry = submit_signature(request("  This is a bad word: crap  "))
+                    .await
+                    .unwrap();
+                let stored: String =
+                    sqlx::query_scalar("SELECT message FROM guestbook WHERE id = $1")
+                        .bind(entry.id.as_value())
+                        .fetch_one(&pool)
+                        .await
+                        .unwrap();
+                assert_eq!(stored, "This is a bad word: crap");
+            })
+            .await;
     }
 
     #[test]
