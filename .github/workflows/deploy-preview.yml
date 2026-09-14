@@ -60,7 +60,7 @@ jobs:
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: |
           echo "DATABASE_URL=${{ steps.create_branch.outputs.db_url_pooled }}" >> "$GITHUB_ENV"
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           # Last nightly before rustc's LLVM 23 wasm regression.
           toolchain: nightly-2026-08-05
