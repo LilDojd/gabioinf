@@ -112,7 +112,7 @@ jobs:
         with:
           name: gabioinf-pr-${{ github.event.number }}
       - name: 🎟 Get GitHub App token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: get-token
         with:
           app-id: ${{ secrets.GH_APP_ID }}
