@@ -118,7 +118,7 @@ jobs:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
       - name: 🗑 Delete deployment environment
-        uses: strumwolf/delete-deployment-environment@v3
+        uses: strumwolf/delete-deployment-environment@v4
         with:
           # Use a JWT created with your GitHub App's private key
           token: ${{ steps.get-token.outputs.token }}
