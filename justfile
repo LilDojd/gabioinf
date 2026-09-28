@@ -58,12 +58,12 @@ check-posts:
 check:
     cargo fmt --all --check
     SQLX_OFFLINE=true cargo clippy --locked --all-targets --all-features -- -D warnings
-    SQLX_OFFLINE=true cargo check --locked --features web --target wasm32-unknown-unknown
+    SQLX_OFFLINE=true cargo clippy --locked --features web --target wasm32-unknown-unknown -- -D warnings
 
 # PostgreSQL tests create their own isolated databases
 test:
     devenv processes up postgres --detach
-    SQLX_OFFLINE=true cargo test --locked --all-features
+    SQLX_OFFLINE=true cargo nextest run --locked --features server
 
 # Serve an explicit test catalog without publishing fixtures on the normal site
 serve-test-content:
