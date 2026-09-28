@@ -1,5 +1,5 @@
 use crate::{
-    components::{GithubMark, ReactionBar, server_error_message},
+    components::{GithubMark, ReactionBar, server_error_message, short_date},
     shared::{
         models::{
             Comment, CommentAuthor, CommentId, Guest, ReactionCount, ReactionTarget, Reactions,
@@ -8,10 +8,7 @@ use crate::{
     },
 };
 use dioxus::prelude::*;
-use time::{format_description::well_known::Rfc3339, macros::format_description};
-
-const COMMENT_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
-    format_description!("[day padding:none] [month repr:short] [year]");
+use time::format_description::well_known::Rfc3339;
 
 #[component]
 pub fn Comments(
@@ -280,18 +277,12 @@ fn CommentMeta(
     rsx! {
         div { class: "label-mono flex items-baseline gap-2.5",
             a { href: profile, target: "_blank", rel: "noopener noreferrer", class: "text-secondary no-underline hover:text-accent", "{author.username}" }
-            time { datetime: created_at.format(&Rfc3339).unwrap_or_default(), "{comment_date(created_at)}" }
+            time { datetime: created_at.format(&Rfc3339).unwrap_or_default(), {short_date(created_at.date())} }
             if author.is_owner {
                 span { class: "rounded-[3px] bg-[rgb(194_249_187_/_0.1)] px-1.5 py-0.5 text-[10px] text-accent", "author" }
             }
         }
     }
-}
-
-fn comment_date(date: time::OffsetDateTime) -> String {
-    date.format(COMMENT_DATE)
-        .expect("the static comment date format is valid")
-        .to_lowercase()
 }
 
 fn request_delete(

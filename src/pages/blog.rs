@@ -1,14 +1,12 @@
 use crate::{
     Route,
     blog::{PostBlock, find_post, published_posts},
-    components::{BlogVideo, CodeBlock, Comments, GcCalculator, ReactionBar},
+    components::{BlogVideo, CodeBlock, Comments, GcCalculator, ReactionBar, short_date},
     shared::{models::ReactionTarget, server_fns},
 };
 use dioxus::prelude::*;
 use time::{Date, macros::format_description};
 
-const POST_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
-    format_description!("[day padding:none] [month repr:short] [year]");
 const ROW_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short]");
 
@@ -65,7 +63,7 @@ pub fn BlogPost(slug: String) -> Element {
                 h1 { class: "heading-casual m-0 text-pretty text-[34px] leading-[1.15] tracking-[-.015em]", "{post.title}" }
                 div { class: "flex flex-wrap items-center gap-3",
                     span { class: "label-mono",
-                        time { datetime: post.published.to_string(), "{post_date(post.published)}" }
+                        time { datetime: post.published.to_string(), {short_date(post.published)} }
                         " · {post.read_minutes} min read"
                     }
                     PostTags { tags: post.tags }
@@ -130,12 +128,6 @@ fn PostTags(tags: &'static [&'static str]) -> Element {
             }
         }
     }
-}
-
-fn post_date(date: Date) -> String {
-    date.format(POST_DATE)
-        .expect("the static date format is valid")
-        .to_lowercase()
 }
 
 fn row_date(date: Date) -> String {

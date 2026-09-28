@@ -3,6 +3,8 @@ pub use blog::{BlogVideo, GcCalculator};
 mod code_block;
 pub use code_block::CodeBlock;
 mod comments;
+mod dates;
+pub(crate) use dates::short_date;
 pub(crate) mod syntax;
 pub use comments::Comments;
 mod errors;
