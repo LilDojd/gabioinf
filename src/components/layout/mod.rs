@@ -279,23 +279,8 @@ fn CommandPalette() -> Element {
 fn run_command(target: CommandTarget, navigator: Navigator, mut ui: UiState) {
     match target {
         CommandTarget::Page(page) => navigate(page, navigator),
-        CommandTarget::External(url) => {
-            #[cfg(feature = "web")]
-            if let Some(window) = web_sys::window() {
-                let _ = window.open_with_url_and_target_and_features(url, "_blank", "noopener");
-            }
-            #[cfg(not(feature = "web"))]
-            let _ = url;
-        }
-        CommandTarget::Cv => {
-            let url = CV.to_string();
-            #[cfg(feature = "web")]
-            if let Some(window) = web_sys::window() {
-                let _ = window.open_with_url_and_target_and_features(&url, "_blank", "noopener");
-            }
-            #[cfg(not(feature = "web"))]
-            let _ = url;
-        }
+        CommandTarget::External(url) => open_in_new_tab(url),
+        CommandTarget::Cv => open_in_new_tab(&CV.to_string()),
         CommandTarget::Retype => {
             navigator.push(Route::Home {});
             let next = (ui.retype)().wrapping_add(1);
@@ -304,6 +289,15 @@ fn run_command(target: CommandTarget, navigator: Navigator, mut ui: UiState) {
         CommandTarget::Sesh => summon_sesh(ui),
     }
     ui.palette_open.set(false);
+}
+
+fn open_in_new_tab(url: &str) {
+    #[cfg(feature = "web")]
+    if let Some(window) = web_sys::window() {
+        let _ = window.open_with_url_and_target_and_features(url, "_blank", "noopener");
+    }
+    #[cfg(not(feature = "web"))]
+    let _ = url;
 }
 
 #[cfg(any(feature = "web", test))]

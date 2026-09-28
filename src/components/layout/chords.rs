@@ -37,18 +37,13 @@ pub(super) enum Action {
 
 #[derive(Default)]
 pub(super) struct Chords {
-    pub now_millis: f64,
     pending_g: Option<f64>,
     count: Option<(u32, f64)>,
     sesh: VecDeque<char>,
 }
 
 impl Chords {
-    pub fn handle(&mut self, key: &Key) -> Option<Action> {
-        self.handle_at(key, self.now_millis)
-    }
-
-    fn handle_at(&mut self, key: &Key, now_millis: f64) -> Option<Action> {
+    pub fn handle(&mut self, key: &Key, now_millis: f64) -> Option<Action> {
         match key {
             Key::Escape => return Some(Action::CloseOverlays),
             Key::MetaK => return Some(Action::TogglePalette),
@@ -139,22 +134,22 @@ mod tests {
         let mut chords = Chords::default();
 
         assert!(matches!(
-            chords.handle(&Key::Escape),
+            chords.handle(&Key::Escape, 0.0),
             Some(Action::CloseOverlays)
         ));
         assert!(matches!(
-            chords.handle(&Key::MetaK),
+            chords.handle(&Key::MetaK, 0.0),
             Some(Action::TogglePalette)
         ));
         assert!(matches!(
-            chords.handle(&Key::Slash),
+            chords.handle(&Key::Slash, 0.0),
             Some(Action::OpenPalette)
         ));
         assert!(matches!(
-            chords.handle(&Key::Question),
+            chords.handle(&Key::Question, 0.0),
             Some(Action::ToggleHelp)
         ));
-        assert!(chords.handle(&Key::Other).is_none());
+        assert!(chords.handle(&Key::Other, 0.0).is_none());
     }
 
     #[test]
@@ -162,24 +157,24 @@ mod tests {
         let mut chords = Chords::default();
         let now = 0.0;
 
-        assert!(chords.handle_at(&Key::Character('1'), now).is_none());
-        assert!(chords.handle_at(&Key::Character('0'), now).is_none());
+        assert!(chords.handle(&Key::Character('1'), now).is_none());
+        assert!(chords.handle(&Key::Character('0'), now).is_none());
         assert!(
-            chords.handle_at(&Key::Character('j'), now)
+            chords.handle(&Key::Character('j'), now)
                 == Some(Action::Scroll {
                     direction: Direction::Down,
                     count: Some(10),
                 })
         );
 
-        assert!(chords.handle_at(&Key::Character('g'), now).is_none());
+        assert!(chords.handle(&Key::Character('g'), now).is_none());
         assert!(matches!(
-            chords.handle_at(&Key::Character('b'), now),
+            chords.handle(&Key::Character('b'), now),
             Some(Action::Navigate(Route::Blog {}))
         ));
 
         for key in ['s', 'e', '1', 's', 'h'] {
-            let action = chords.handle_at(&Key::Character(key), now);
+            let action = chords.handle(&Key::Character(key), now);
             if key == 'h' {
                 assert!(action == Some(Action::Sesh));
             }
@@ -190,10 +185,10 @@ mod tests {
     fn expires_count_prefixes() {
         let mut chords = Chords::default();
         let now = 0.0;
-        chords.handle_at(&Key::Character('4'), now);
+        chords.handle(&Key::Character('4'), now);
 
         assert!(
-            chords.handle_at(&Key::Character('k'), now + CHORD_TIMEOUT_MILLIS + 1.0)
+            chords.handle(&Key::Character('k'), now + CHORD_TIMEOUT_MILLIS + 1.0)
                 == Some(Action::Scroll {
                     direction: Direction::Up,
                     count: None,

@@ -64,11 +64,7 @@ pub fn install(ui: UiState, navigator: Navigator) {
                 return;
             }
 
-            let action = {
-                let mut chords = chords.borrow_mut();
-                chords.now_millis = event.time_stamp();
-                chords.handle(&key)
-            };
+            let action = chords.borrow_mut().handle(&key, event.time_stamp());
             let Some(action) = action else {
                 return;
             };
