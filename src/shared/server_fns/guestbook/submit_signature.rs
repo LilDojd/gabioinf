@@ -45,11 +45,33 @@ fn validation_message(errors: &validator::ValidationErrors) -> String {
 }
 
 #[cfg(feature = "server")]
+const MAX_SIGNATURE_BYTES: usize = 256 * 1024;
+
+#[cfg(feature = "server")]
+fn is_small_png(encoded: &str) -> bool {
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+
+    encoded.len() <= MAX_SIGNATURE_BYTES.div_ceil(3) * 4
+        && STANDARD
+            .decode(encoded)
+            .is_ok_and(|png| png.starts_with(b"\x89PNG\r\n\x1a\n"))
+}
+
+#[cfg(feature = "server")]
 fn validate_payload(mut payload: CreateEntryRequest) -> Result<CreateEntryRequest, ServerError> {
     payload.message = payload.message.trim().to_string();
     payload
         .validate()
         .map_err(|errors| ServerError::Validation(validation_message(&errors)))?;
+    if payload
+        .signature
+        .as_deref()
+        .is_some_and(|signature| !is_small_png(signature))
+    {
+        return Err(ServerError::Validation(
+            "Signature must be a PNG drawing under 256 KB".to_string(),
+        ));
+    }
     Ok(payload)
 }
 
@@ -211,5 +233,31 @@ mod tests {
         }
         assert!(validate_payload(request("a")).is_ok());
         assert!(validate_payload(request(&format!("{}hello", "café ".repeat(50)))).is_ok());
+    }
+
+    #[test]
+    fn validation_accepts_png_signatures_and_rejects_anything_else() {
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
+
+        let signed = |bytes: &[u8]| CreateEntryRequest {
+            signature: Some(STANDARD.encode(bytes)),
+            ..request("hello")
+        };
+        let png = b"\x89PNG\r\n\x1a\nrest";
+        let oversized = [png.as_slice(), &vec![0; MAX_SIGNATURE_BYTES]].concat();
+        let rejected = Err(ServerError::Validation(
+            "Signature must be a PNG drawing under 256 KB".to_string(),
+        ));
+
+        assert!(validate_payload(signed(png)).is_ok());
+        assert_eq!(validate_payload(signed(b"<svg/>")), rejected);
+        assert_eq!(validate_payload(signed(&oversized)), rejected);
+        assert_eq!(
+            validate_payload(CreateEntryRequest {
+                signature: Some("not base64!".into()),
+                ..request("hello")
+            }),
+            rejected
+        );
     }
 }
