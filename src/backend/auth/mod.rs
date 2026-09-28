@@ -130,7 +130,7 @@ impl AuthnBackend for AuthBackend {
             .error_for_status()?;
         let github_user = response.json::<NewGuest>().await?;
         tracing::debug!("Received user data from GitHub: {:?}", github_user);
-        let guest = self.guest_repo.upsert(&github_user.into()).await?;
+        let guest = self.guest_repo.upsert(&github_user).await?;
         Ok(Some(guest))
     }
     async fn get_user(&self, user_id: &UserId<Self>) -> BResult<Option<Self::User>> {

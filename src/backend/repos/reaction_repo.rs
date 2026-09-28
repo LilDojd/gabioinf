@@ -137,17 +137,16 @@ mod tests {
     use super::*;
     use crate::{
         backend::repos::{CommentRepo, GuestRepo},
-        shared::models::{GithubId, Guest},
+        shared::models::{GithubId, Guest, NewGuest},
     };
     use sqlx::PgPool;
 
     async fn create_guest(pool: &PgPool, number: i64) -> Guest {
         GuestRepo::new(pool.clone())
-            .upsert(&Guest {
-                github_id: GithubId(number),
-                name: format!("Test User {number}"),
+            .upsert(&NewGuest {
+                id: GithubId(number),
                 username: format!("reactionuser{number}"),
-                ..Default::default()
+                name: Some(format!("Test User {number}")),
             })
             .await
             .unwrap()

@@ -1,5 +1,7 @@
 use crate::backend::errors::{ApiError, BResult};
-use crate::shared::models::{GuestId, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage};
+use crate::shared::models::{
+    GuestId, GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage, NewGuestbookEntry,
+};
 
 #[derive(Debug, Clone)]
 pub struct GuestbookRepo {
@@ -11,7 +13,7 @@ impl GuestbookRepo {
         Self { pool }
     }
 
-    pub async fn create(&self, entry: &GuestbookEntry) -> BResult<Option<GuestbookEntry>> {
+    pub async fn create(&self, entry: &NewGuestbookEntry) -> BResult<Option<GuestbookEntry>> {
         Ok(sqlx::query_as!(
             GuestbookEntry,
             r#"
@@ -158,27 +160,26 @@ mod tests {
     use super::*;
     use crate::{
         backend::repos::GuestRepo,
-        shared::models::{GithubId, Guest},
+        shared::models::{GithubId, Guest, NewGuest},
     };
     use sqlx::PgPool;
 
     async fn create_guest(pool: &PgPool, number: i64) -> Guest {
         GuestRepo::new(pool.clone())
-            .upsert(&Guest {
-                github_id: GithubId(number),
-                name: format!("Test User {number}"),
+            .upsert(&NewGuest {
+                id: GithubId(number),
                 username: format!("testuser{number}"),
-                ..Default::default()
+                name: Some(format!("Test User {number}")),
             })
             .await
             .unwrap()
     }
 
     async fn create_entry_for(repo: &GuestbookRepo, guest: &Guest) -> GuestbookEntry {
-        repo.create(&GuestbookEntry {
+        repo.create(&NewGuestbookEntry {
             message: format!("Message from {}", guest.username),
             author_id: guest.id,
-            ..Default::default()
+            signature: None,
         })
         .await
         .unwrap()
@@ -201,10 +202,10 @@ mod tests {
         create_entry_for(&repo, &guest).await;
 
         let duplicate = repo
-            .create(&GuestbookEntry {
+            .create(&NewGuestbookEntry {
                 message: "Again".into(),
                 author_id: guest.id,
-                ..Default::default()
+                signature: None,
             })
             .await
             .unwrap();

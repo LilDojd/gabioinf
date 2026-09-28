@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO guests (github_id, name, username)\n            VALUES ($1, $2, $3)\n            ON CONFLICT (github_id) DO UPDATE\n            SET name = excluded.name, username = excluded.username, updated_at = NOW()\n            RETURNING id AS \"id: GuestId\", github_id AS \"github_id: GithubId\", name, username, created_at, updated_at\n            ",
+  "query": "\n            INSERT INTO guests (github_id, name, username)\n            VALUES ($1, COALESCE($2, $3), $3)\n            ON CONFLICT (github_id) DO UPDATE\n            SET name = excluded.name, username = excluded.username, updated_at = NOW()\n            RETURNING id AS \"id: GuestId\", github_id AS \"github_id: GithubId\", name, username, created_at, updated_at\n            ",
   "describe": {
     "columns": [
       {
@@ -73,8 +73,8 @@
     "parameters": {
       "Left": [
         "Int8",
-        "Varchar",
-        "Varchar"
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
@@ -86,5 +86,5 @@
       false
     ]
   },
-  "hash": "294d89fcfa5742fa7e2ee600f5ca4b46505fde887c55b0b39635c9e17d62d8a8"
+  "hash": "87b05c09d7e3ccede000a6b038ee01b29d1f8d93dc5837cbe53793dad80df47e"
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
-use sqlx::{FromRow, Type};
+use sqlx::Type;
 use time::OffsetDateTime;
 /// Represents a GitHub user ID.
 ///
@@ -34,7 +34,6 @@ impl GuestId {
 }
 /// Represents a guest in the system.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct Guest {
     /// The unique identifier for the guest.
     pub id: GuestId,
@@ -49,6 +48,7 @@ pub struct Guest {
     /// The timestamp when the guest record was last updated.
     pub updated_at: OffsetDateTime,
 }
+#[cfg(test)]
 impl Default for Guest {
     fn default() -> Self {
         Self {
@@ -71,14 +71,4 @@ pub struct NewGuest {
     pub username: String,
     /// The full name of the GitHub user, if available.
     pub name: Option<String>,
-}
-impl From<NewGuest> for Guest {
-    fn from(val: NewGuest) -> Self {
-        Guest {
-            github_id: val.id,
-            name: val.name.unwrap_or_else(|| val.username.clone()),
-            username: val.username,
-            ..Default::default()
-        }
-    }
 }

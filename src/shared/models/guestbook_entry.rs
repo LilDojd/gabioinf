@@ -1,7 +1,7 @@
 use super::GuestId;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "server")]
-use sqlx::{FromRow, Type};
+use sqlx::Type;
 use time::OffsetDateTime;
 /// Represents an ID of a guestbook entry
 ///
@@ -17,7 +17,6 @@ impl GuestbookId {
 }
 /// Represents an entry in the guestbook.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[cfg_attr(feature = "server", derive(FromRow), sqlx(transparent))]
 pub struct GuestbookEntry {
     /// The unique identifier for the guestbook entry.
     pub id: GuestbookId,
@@ -51,6 +50,7 @@ pub struct GuestbookPage {
     pub total: usize,
 }
 
+#[cfg(test)]
 impl Default for GuestbookEntry {
     fn default() -> Self {
         Self {
@@ -74,14 +74,4 @@ pub struct NewGuestbookEntry {
     /// An optional signature for the new guestbook entry.
     /// This is typically provided as Base64 encoded image data.
     pub signature: Option<String>,
-}
-impl From<NewGuestbookEntry> for GuestbookEntry {
-    fn from(entry: NewGuestbookEntry) -> Self {
-        Self {
-            message: entry.message,
-            signature: entry.signature,
-            author_id: entry.author_id,
-            ..Default::default()
-        }
-    }
 }

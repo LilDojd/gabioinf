@@ -86,8 +86,7 @@ pub async fn submit_signature(payload: CreateEntryRequest) -> Result<GuestbookEn
         author_id: guest.id,
         message: payload.message,
         signature: payload.signature,
-    }
-    .into();
+    };
 
     match state.guestbook_repo.create(&new_entry).await {
         Ok(Some(entry)) => Ok(entry),
@@ -103,7 +102,7 @@ pub(crate) async fn moderation_test_context(
 ) -> dioxus::fullstack::FullstackContext {
     use crate::{
         backend::auth::{AuthBackend, AuthSession, build_oauth_client},
-        shared::models::{GithubId, Guest},
+        shared::models::{GithubId, NewGuest},
     };
     use axum::{
         extract::FromRequestParts,
@@ -117,11 +116,10 @@ pub(crate) async fn moderation_test_context(
     let state = AppState::new(pool);
     let guest = state
         .guest_repo
-        .upsert(&Guest {
-            github_id: GithubId(1),
+        .upsert(&NewGuest {
+            id: GithubId(1),
             username: "moderation-test".into(),
-            name: "Moderation Test".into(),
-            ..Default::default()
+            name: Some("Moderation Test".into()),
         })
         .await
         .unwrap();
