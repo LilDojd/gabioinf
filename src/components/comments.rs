@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use dioxus::prelude::*;
-use time::macros::format_description;
+use time::{format_description::well_known::Rfc3339, macros::format_description};
 
 const COMMENT_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
     format_description!("[day padding:none] [month repr:short] [year]");
@@ -280,7 +280,7 @@ fn CommentMeta(
     rsx! {
         div { class: "label-mono flex items-baseline gap-2.5",
             a { href: profile, target: "_blank", rel: "noopener noreferrer", class: "text-secondary no-underline hover:text-accent", "{author.username}" }
-            time { datetime: created_at.to_string(), "{comment_date(created_at)}" }
+            time { datetime: created_at.format(&Rfc3339).unwrap_or_default(), "{comment_date(created_at)}" }
             if author.is_owner {
                 span { class: "rounded-[3px] bg-[rgb(194_249_187_/_0.1)] px-1.5 py-0.5 text-[10px] text-accent", "author" }
             }
