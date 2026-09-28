@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            WITH g AS (\n                INSERT INTO guestbook (message, signature, author_id)\n                VALUES ($1, $2, $3)\n                RETURNING *\n            )\n            SELECT\n                g.id AS \"id: GuestbookId\",\n                g.message,\n                g.signature,\n                g.created_at,\n                g.updated_at,\n                g.author_id AS \"author_id: GuestId\",\n                u.username AS author_username\n            FROM g JOIN guests u ON u.id = g.author_id\n            ",
+  "query": "\n            WITH g AS (\n                INSERT INTO guestbook (message, signature, author_id)\n                VALUES ($1, $2, $3)\n                ON CONFLICT (author_id) DO NOTHING\n                RETURNING *\n            )\n            SELECT\n                g.id AS \"id: GuestbookId\",\n                g.message,\n                g.signature,\n                g.created_at,\n                g.updated_at,\n                g.author_id AS \"author_id: GuestId\",\n                u.username AS author_username\n            FROM g JOIN guests u ON u.id = g.author_id\n            ",
   "describe": {
     "columns": [
       {
@@ -98,5 +98,5 @@
       false
     ]
   },
-  "hash": "4ccea8e5619a55aed35c9f75c416672a247432f301001d24615df38415365691"
+  "hash": "e5946204712886bc4e43fe6891797697f0fa9e15a71ebd1ff2aac24171dde860"
 }
