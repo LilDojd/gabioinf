@@ -61,9 +61,7 @@ pub fn CodeBlock(
                         {
                             // Do not replace the text nodes beneath a reader's selection.
                             // Dioxus cancels this task when the keyed block unmounts.
-                            while browser::has_text_selection() {
-                                wasmtimer::tokio::sleep(std::time::Duration::from_millis(100)).await;
-                            }
+                            super::syntax::selection_released(None).await;
                             highlighted_lines.set(Some(lines));
                         }
                     });
@@ -505,12 +503,6 @@ mod browser {
         // without scrolling or overwriting the router's existing history state.
         let _ = window.dispatch_event(&web_sys::Event::new(SELECTION_CHANGE).ok()?);
         Some(())
-    }
-
-    pub(super) fn has_text_selection() -> bool {
-        web_sys::window()
-            .and_then(|window| window.get_selection().ok().flatten())
-            .is_some_and(|selection| !selection.is_collapsed())
     }
 
     pub(super) fn focus_line(id: &str, number: usize) {

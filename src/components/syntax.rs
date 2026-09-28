@@ -21,6 +21,23 @@ pub(super) async fn highlight_code(language: Option<&str>, source: &str) -> Opti
     eval.join::<Option<String>>().await.ok().flatten()
 }
 
+#[cfg(feature = "web")]
+pub(super) async fn selection_released(within: Option<&web_sys::Node>) {
+    while web_sys::window()
+        .and_then(|window| window.get_selection().ok().flatten())
+        .is_some_and(|selection| {
+            !selection.is_collapsed()
+                && within.is_none_or(|node| {
+                    selection
+                        .contains_node_with_allow_partial_containment(node, true)
+                        .unwrap_or(false)
+                })
+        })
+    {
+        wasmtimer::tokio::sleep(std::time::Duration::from_millis(100)).await;
+    }
+}
+
 /// For already-sanitized Markdown HTML only. Dioxus treats the inner DOM as opaque.
 #[component]
 pub(crate) fn HighlightedHtml(html: String, #[props(default)] class: String) -> Element {
@@ -55,18 +72,7 @@ fn highlight_markdown(event: MountedEvent) {
                 let Some(html) = highlight_code(language.as_deref(), &source).await else {
                     return;
                 };
-                while code.is_connected()
-                    && web_sys::window()
-                        .and_then(|window| window.get_selection().ok().flatten())
-                        .is_some_and(|selection| {
-                            !selection.is_collapsed()
-                                && selection
-                                    .contains_node_with_allow_partial_containment(&code, true)
-                                    .unwrap_or(false)
-                        })
-                {
-                    wasmtimer::tokio::sleep(std::time::Duration::from_millis(100)).await;
-                }
+                selection_released(Some(&code)).await;
                 if code.is_connected() && code.text_content().as_deref() == Some(source.as_str()) {
                     code.set_inner_html(&html);
                 }
