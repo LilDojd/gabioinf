@@ -168,10 +168,8 @@ serde_json = "1.0.151"
 tower-sessions = { version = "0.15.0", default-features = false, features = ["memory-store"] }
 
 [profile.release]
-opt-level = 3
 lto = true
 codegen-units = 1
-panic = "abort"
 strip = true
 
 [profile.release.build-override]
@@ -180,12 +178,14 @@ debug = false
 opt-level = 3
 strip = "symbols"
 
+[profile.server-release]
+inherits = "release"
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+panic = "abort"
+
 [profile.wasm-dev]
 inherits = "dev"
 opt-level = 1
-
-[profile.server-dev]
-inherits = "dev"
-
-[profile.android-dev]
-inherits = "dev"
