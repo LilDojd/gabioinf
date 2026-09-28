@@ -157,19 +157,19 @@ pub fn SignatureList(mut count: Signal<Option<usize>>) -> Element {
                     SignatureSkeleton { key: "{index}" }
                 }
             }
+            if loading() && loaded_once() {
+                SignatureSkeleton {}
+                div { class: "hidden md:block",
+                    SignatureSkeleton {}
+                }
+            }
         }
         if !loaded_once() && load_error.read().is_none() {
             span { role: "status", class: "label-mono", "loading signatures…" }
         }
         if loading() && loaded_once() {
-            div {
-                role: "status",
-                aria_label: if refresh_first() { "Refreshing signatures" } else { "Loading more signatures" },
-                class: "grid grid-cols-1 gap-2.5 py-3 md:grid-cols-2",
-                SignatureSkeleton { compact: true }
-                div { class: "hidden md:block",
-                    SignatureSkeleton { compact: true }
-                }
+            span { role: "status", class: "sr-only",
+                if refresh_first() { "Refreshing signatures" } else { "Loading more signatures" }
             }
         } else if let Some(error) = load_error.read().as_ref() {
             div { role: "alert", class: "flex flex-col items-center gap-3 py-5 text-mars",
@@ -229,14 +229,14 @@ fn SignatureCard(props: SignatureCardProps) -> Element {
 }
 
 #[component]
-fn SignatureSkeleton(#[props(default)] compact: bool) -> Element {
+fn SignatureSkeleton() -> Element {
     rsx! {
-        article { class: "card flex animate-pulse flex-col gap-3.5 p-4",
+        article { class: "card flex animate-pulse flex-col gap-3.5 p-4", aria_hidden: "true",
             div { class: "flex flex-col gap-2",
                 div { class: "h-3.5 w-5/6 rounded bg-hover-row" }
                 div { class: "h-3.5 w-2/3 rounded bg-hover-row" }
             }
-            div { class: "rounded-sm bg-hover-row", class: if compact { "h-10" } else { "signature-area" } }
+            div { class: "signature-area rounded-sm bg-hover-row" }
             div { class: "h-3 w-2/5 rounded bg-hover-row" }
         }
     }
