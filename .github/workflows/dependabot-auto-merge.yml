@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
-      # Merges once the required `build-and-test` check on main passes.
       - name: Enable auto-merge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
