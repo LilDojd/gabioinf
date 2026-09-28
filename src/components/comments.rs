@@ -18,22 +18,19 @@ pub fn Comments(
 ) -> Element {
     let mut comments = use_loader(move || server_fns::load_comments(slug.to_string()))?;
     let mut body = use_signal(String::new);
-    let mut reply_target = use_signal(|| None::<CommentId>);
+    let mut selected_reply = use_signal(|| None::<CommentId>);
     let mut submitting = use_signal(|| false);
     let mut submit_error = use_signal(|| None::<String>);
     let action_error = use_signal(|| None::<(CommentId, String)>);
     let deleting = use_signal(|| false);
 
-    // Deleting the selected thread returns the existing draft to the top-level composer.
-    use_effect(move || {
-        if let Some(id) = reply_target()
-            && !comments
+    let reply_target = use_memo(move || {
+        selected_reply().filter(|id| {
+            comments
                 .read()
                 .iter()
-                .any(|comment| comment.id == id && comment.parent_id.is_none())
-        {
-            reply_target.set(None);
-        }
+                .any(|comment| comment.id == *id && comment.parent_id.is_none())
+        })
     });
 
     let reply_author = reply_target().and_then(|id| {
@@ -50,7 +47,7 @@ pub fn Comments(
             reply_author,
             submitting: submitting(),
             error: submit_error(),
-            on_cancel: move |_| reply_target.set(None),
+            on_cancel: move |_| selected_reply.set(None),
             on_submit: move |_| {
                 if submitting() {
                     return;
@@ -64,7 +61,7 @@ pub fn Comments(
                         Ok(comment) => {
                             comments.write().push(comment);
                             body.set(String::new());
-                            reply_target.set(None);
+                            selected_reply.set(None);
                         }
                         Err(error) => {
                             tracing::error!("Could not post comment: {error:?}");
@@ -129,7 +126,7 @@ pub fn Comments(
                         can_reply: viewer.read().is_some() && !submitting(),
                         reaction_counts: reactions.read().comments.get(&root.id).cloned().unwrap_or_default(),
                         error: action_error.read().as_ref().filter(|(id, _)| *id == root.id).map(|(_, error)| error.clone()),
-                        on_reply: move |id| reply_target.set(Some(id)),
+                        on_reply: move |id| selected_reply.set(Some(id)),
                         deleting: deleting(),
                         on_delete: move |id| request_delete(comments, action_error, deleting, id),
                         on_reactions_change: {
