@@ -2,7 +2,7 @@
 //! CORS, security headers, a timeout and per-visitor rate limiting.
 use crate::backend::AppState;
 use crate::backend::db::ping_db;
-use crate::backend::{auth, rate_limit::CookieExtractor};
+use crate::backend::{auth, rate_limit::FlyClientIpExtractor};
 use axum::body::Body;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::{Response, StatusCode};
@@ -27,7 +27,7 @@ use tower_http::cors::CorsLayer;
 /// Adds the sign-in and database ping routes with API-specific middleware.
 pub fn api_router(
     state: AppState,
-    governor_conf: Arc<GovernorConfig<CookieExtractor, NoOpMiddleware<QuantaInstant>>>,
+    governor_conf: Arc<GovernorConfig<FlyClientIpExtractor, NoOpMiddleware<QuantaInstant>>>,
 ) -> Router {
     let cors = CorsLayer::new()
         .allow_credentials(true)

@@ -1916,7 +1916,6 @@ dependencies = [
  "config",
  "dioxus",
  "dioxus-logger",
- "forwarded-header-value",
  "getrandom 0.4.3",
  "governor",
  "oauth2",

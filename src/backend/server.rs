@@ -5,7 +5,7 @@ use crate::backend::blog;
 use crate::backend::config::AppConfig;
 use crate::backend::health;
 use crate::backend::observability;
-use crate::backend::rate_limit::CookieExtractor;
+use crate::backend::rate_limit::FlyClientIpExtractor;
 use anyhow::Context;
 use axum::{Extension, Router, extract::Request, middleware, routing::get};
 use axum_login::AuthManagerLayerBuilder;
@@ -58,7 +58,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         GovernorConfigBuilder::default()
             .period(Duration::from_secs(1) / config.ratelimiting.requests_per_second.get())
             .burst_size(config.ratelimiting.burst_size)
-            .key_extractor(CookieExtractor)
+            .key_extractor(FlyClientIpExtractor)
             .finish()
             .context("invalid rate limiter configuration")?,
     );
