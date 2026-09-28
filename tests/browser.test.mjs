@@ -225,3 +225,33 @@ test("drawing a signature keeps the chosen ink", async () => {
     assert.equal(await green.getAttribute("aria-checked"), "true");
   } finally { await context.close(); }
 });
+
+test("loading more signatures continues the card grid without a gap", async () => {
+  const context = await browser.newContext();
+  let releaseNextPage;
+  const nextPage = new Promise((resolve) => { releaseNextPage = resolve; });
+  try {
+    const entry = (id) => ({ ...signaturePage.entries[0], id, message: `Visitor message ${id}` });
+    await context.route("**/api/load_guestbook_user*", (route) => json(route, "Unauthenticated"));
+    await context.route("**/api/load_signatures*", async (route) => {
+      if (route.request().postData()?.includes("created_at")) {
+        await nextPage;
+        return json(route, { entries: [entry(3)], next_cursor: null, total: 3 });
+      }
+      return json(route, { entries: [entry(2), entry(1)], next_cursor: { created_at: timestamp, id: 1 }, total: 3 });
+    });
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 1280, height: 600 });
+    await page.goto(`${origin}/guestbook`);
+    await page.getByText("Visitor message 1", { exact: true }).waitFor();
+    await page.mouse.wheel(0, 4000);
+    const placeholder = page.locator("article.animate-pulse").first();
+    await placeholder.waitFor();
+    const card = await page.locator("article.card:not(.animate-pulse)").last().boundingBox();
+    const skeleton = await placeholder.boundingBox();
+    assert.ok(skeleton.y - (card.y + card.height) <= 12, `placeholder sits ${skeleton.y - (card.y + card.height)}px below the cards`);
+    releaseNextPage();
+    await page.getByText("Visitor message 3", { exact: true }).waitFor();
+  } finally { releaseNextPage(); await context.close(); }
+});
+
