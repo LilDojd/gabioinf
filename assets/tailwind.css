@@ -319,9 +319,6 @@
   .z-30 {
     z-index: 30;
   }
-  .z-40 {
-    z-index: 40;
-  }
   .z-50 {
     z-index: 50;
   }
@@ -627,9 +624,6 @@
   }
   .w-full {
     width: 100%;
-  }
-  .max-w-\[calc\(100\%-48px\)\] {
-    max-width: calc(100% - 48px);
   }
   .max-w-full {
     max-width: 100%;
@@ -937,9 +931,6 @@
   }
   .bg-\[rgba\(10\,11\,13\,\.6\)\] {
     background-color: rgba(10,11,13,.6);
-  }
-  .bg-\[rgba\(10\,11\,13\,\.7\)\] {
-    background-color: rgba(10,11,13,.7);
   }
   .bg-accent {
     background-color: var(--color-accent);

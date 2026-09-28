@@ -1,4 +1,4 @@
-use crate::Route;
+use crate::{Route, components::Modal};
 use dioxus::prelude::*;
 use dioxus_router::{Navigator, components::Outlet};
 use std::time::Duration;
@@ -236,40 +236,39 @@ fn CommandPalette() -> Element {
     let no_results = results.is_empty();
 
     rsx! {
-        div {
-            class: "fixed inset-0 z-40 flex items-start justify-center bg-[rgba(10,11,13,.6)] pt-[18vh] backdrop-blur-sm",
-            onclick: move |_| close_overlays(ui),
-            div {
-                class: "w-[440px] max-w-[calc(100%-48px)] overflow-hidden rounded-lg border border-border-strong bg-surface shadow-[0_20px_60px_rgba(0,0,0,.5)]",
-                onclick: move |event| event.stop_propagation(),
-                input {
-                    onmounted: move |event| async move { let _ = event.data().set_focus(true).await; },
-                    class: "palette-input w-full border-0 border-b border-card bg-transparent px-4 py-3.5 text-base text-text outline-none placeholder:text-label",
-                    placeholder: "where to?",
-                    value: query,
-                    oninput: move |event| query.set(event.value()),
-                    onkeydown: move |event| {
-                        if event.key() == Key::Enter
-                            && let Some(command) = first
-                        {
-                            run_command(command.target, navigator, ui);
-                        }
-                    },
+        Modal {
+            on_close: move |_| close_overlays(ui),
+            label: "command palette",
+            top: true,
+            panel_class: "w-[440px] max-w-full overflow-hidden",
+            input {
+                aria_label: "where to?",
+                onmounted: move |event| async move { let _ = event.data().set_focus(true).await; },
+                class: "palette-input w-full border-0 border-b border-card bg-transparent px-4 py-3.5 text-base text-text outline-none placeholder:text-label",
+                placeholder: "where to?",
+                value: query,
+                oninput: move |event| query.set(event.value()),
+                onkeydown: move |event| {
+                    if event.key() == Key::Enter
+                        && let Some(command) = first
+                    {
+                        run_command(command.target, navigator, ui);
+                    }
+                },
+            }
+            div { class: "flex max-h-80 flex-col overflow-y-auto p-1.5",
+                for (index, command) in results.into_iter().enumerate() {
+                    button {
+                        key: "{command.label}",
+                        r#type: "button",
+                        class: "flex w-full items-baseline justify-between gap-4 rounded-sm px-2.5 py-2 text-left text-sm", class: if index == 0 { "bg-hover-row text-accent" } else { "bg-transparent text-secondary hover:bg-hover-row hover:text-accent" },
+                        onclick: move |_| run_command(command.target, navigator, ui),
+                        span { "{command.label}" }
+                        span { class: "label-mono text-[11px]", "{command.hint}" }
+                    }
                 }
-                div { class: "flex max-h-80 flex-col overflow-y-auto p-1.5",
-                    for (index, command) in results.into_iter().enumerate() {
-                        button {
-                            key: "{command.label}",
-                            r#type: "button",
-                            class: "flex w-full items-baseline justify-between gap-4 rounded-sm px-2.5 py-2 text-left text-sm", class: if index == 0 { "bg-hover-row text-accent" } else { "bg-transparent text-secondary hover:bg-hover-row hover:text-accent" },
-                            onclick: move |_| run_command(command.target, navigator, ui),
-                            span { "{command.label}" }
-                            span { class: "label-mono text-[11px]", "{command.hint}" }
-                        }
-                    }
-                    if no_results {
-                        span { class: "label-mono px-2.5 py-3", "nothing out here" }
-                    }
+                if no_results {
+                    span { class: "label-mono px-2.5 py-3", "nothing out here" }
                 }
             }
         }
@@ -314,20 +313,17 @@ fn scroll_progress(scroll_y: f64, scroll_height: f64, viewport_height: f64) -> f
 fn HelpSheet() -> Element {
     let ui = use_context::<UiState>();
     rsx! {
-        div {
-            class: "fixed inset-0 z-40 flex items-center justify-center bg-[rgba(10,11,13,.6)] backdrop-blur-sm",
-            onclick: move |_| close_overlays(ui),
-            div {
-                class: "grid w-[360px] max-w-[calc(100%-48px)] grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 rounded-lg border border-border-strong bg-surface px-[22px] py-5 text-[13px] text-secondary shadow-[0_20px_60px_rgba(0,0,0,.5)]",
-                onclick: move |event| event.stop_propagation(),
-                span { class: "label-mono col-span-2 mb-1", "// keys" }
-                kbd { class: "mono text-accent", "/" } span { "jump anywhere" }
-                kbd { class: "mono text-accent", "g h · b · p · a · g" } span { "home, blog, projects, about, guestbook" }
-                kbd { class: "mono text-accent", "j / k" } span { "scroll, the neovim way" }
-                kbd { class: "mono text-accent", "?" } span { "this" }
-                kbd { class: "mono text-accent", "esc" } span { "close" }
-                span { class: "label-mono col-span-2 mt-2 text-faint", "there are a few more. the cat knows." }
-            }
+        Modal {
+            on_close: move |_| close_overlays(ui),
+            label: "keyboard shortcuts",
+            panel_class: "grid w-[360px] max-w-full grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 px-[22px] py-5 text-[13px] text-secondary",
+            span { class: "label-mono col-span-2 mb-1", "// keys" }
+            kbd { class: "mono text-accent", "/" } span { "jump anywhere" }
+            kbd { class: "mono text-accent", "g h · b · p · a · g" } span { "home, blog, projects, about, guestbook" }
+            kbd { class: "mono text-accent", "j / k" } span { "scroll, the neovim way" }
+            kbd { class: "mono text-accent", "?" } span { "this" }
+            kbd { class: "mono text-accent", "esc" } span { "close" }
+            span { class: "label-mono col-span-2 mt-2 text-faint", "there are a few more. the cat knows." }
         }
     }
 }
