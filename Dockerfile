@@ -2,7 +2,12 @@ ARG APPNAME=gabioinf
 
 ARG OUTDIR=target/dx/${APPNAME}/release/web
 
-FROM rustlang/rust:nightly-bookworm AS chef
+FROM node:24-alpine AS tailwind
+WORKDIR /app
+COPY . .
+RUN npm ci && npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --minify
+
+FROM rustlang/rust:nightly-bookworm AS builder
 
 # Pin the last nightly before rustc's LLVM 23 wasm regression.
 RUN rustup toolchain install nightly-2026-08-05 \
@@ -10,27 +15,9 @@ RUN rustup toolchain install nightly-2026-08-05 \
       --component clippy,rustfmt \
       --target wasm32-unknown-unknown \
     && rustup default nightly-2026-08-05
-RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-RUN cargo binstall cargo-chef@0.1.78 --locked -y
 RUN cargo install dioxus-cli@0.7.10 --locked
-WORKDIR /app
-
-FROM chef AS planner
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
-
-FROM node:24-alpine AS tailwind
-WORKDIR /app
-COPY . .
-RUN npm ci && npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --minify
-
-
-# Cook the dependencies using the recipe prepared earlier
-FROM chef AS builder 
-COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json --features server
-RUN cargo chef cook --release --recipe-path recipe.json --features web --target wasm32-unknown-unknown
 RUN apt-get update && apt-get install -y binaryen
+WORKDIR /app
 # Copy over the source code and build the project
 COPY . .
 # Copy tailwind.css we generated earlier
@@ -44,7 +31,7 @@ ARG APPNAME
 
 WORKDIR /usr/local/bin
 RUN apt-get update \
-  && apt-get install -y libssl-dev pkg-config ca-certificates \
+  && apt-get install -y ca-certificates \
   && apt-get clean && update-ca-certificates
 COPY --from=builder /app/$OUTDIR /usr/local/bin
 COPY --from=builder /app/config /usr/local/bin/config
