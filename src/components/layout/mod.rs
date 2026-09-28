@@ -37,21 +37,16 @@ pub fn Layout() -> Element {
     };
     use_context_provider(move || ui);
 
-    let clock = use_signal(abu_dhabi_time);
+    let mut clock = use_signal(abu_dhabi_time);
+    use_future(move || async move {
+        loop {
+            sleep(Duration::from_secs(30)).await;
+            clock.set(abu_dhabi_time());
+        }
+    });
     let progress = use_signal(|| 0.0_f32);
     #[cfg(feature = "web")]
-    {
-        use_effect(move || dom::install_reading_progress(progress));
-        let mut clock_update = clock;
-        use_effect(move || {
-            spawn(async move {
-                loop {
-                    sleep(Duration::from_secs(30)).await;
-                    clock_update.set(abu_dhabi_time());
-                }
-            });
-        });
-    }
+    use_effect(move || dom::install_reading_progress(progress));
 
     #[cfg(feature = "web")]
     {
