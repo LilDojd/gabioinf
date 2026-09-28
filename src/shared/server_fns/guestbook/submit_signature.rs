@@ -16,54 +16,12 @@ pub struct CreateEntryRequest {
     pub signature: Option<String>,
 }
 
-#[cfg(feature = "server")]
-const MAX_SIGNATURE_BYTES: usize = 256 * 1024;
-
-#[cfg(feature = "server")]
-fn is_small_png(encoded: &str) -> bool {
-    use base64::{Engine as _, engine::general_purpose::STANDARD};
-
-    encoded.len() <= MAX_SIGNATURE_BYTES.div_ceil(3) * 4
-        && STANDARD
-            .decode(encoded)
-            .is_ok_and(|png| png.starts_with(b"\x89PNG\r\n\x1a\n"))
-}
-
-#[cfg(feature = "server")]
-fn validate_payload(mut payload: CreateEntryRequest) -> Result<CreateEntryRequest, ServerError> {
-    use crate::{
-        backend::profanity::contains_severe_content, shared::models::GUESTBOOK_MESSAGE_MAX,
-    };
-
-    payload.message = payload.message.trim().to_string();
-    if !(1..=GUESTBOOK_MESSAGE_MAX).contains(&payload.message.chars().count()) {
-        return Err(ServerError::Validation(format!(
-            "Message must be between 1 and {GUESTBOOK_MESSAGE_MAX} characters"
-        )));
-    }
-    if contains_severe_content(&payload.message) {
-        return Err(ServerError::Validation(
-            "Message contains offensive content".to_string(),
-        ));
-    }
-    if payload
-        .signature
-        .as_deref()
-        .is_some_and(|signature| !is_small_png(signature))
-    {
-        return Err(ServerError::Validation(
-            "Signature must be a PNG drawing under 256 KB".to_string(),
-        ));
-    }
-    Ok(payload)
-}
-
 #[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn submit_signature(payload: CreateEntryRequest) -> Result<GuestbookEntry, ServerError> {
     use crate::shared::models::NewGuestbookEntry;
 
     let guest = auth.user().await.ok_or(ServerError::Unauthenticated)?;
-    let payload = validate_payload(payload)?;
+    let payload = crate::backend::validation::guestbook_entry(payload)?;
 
     let new_entry = NewGuestbookEntry {
         author_id: guest.id,
@@ -78,65 +36,10 @@ pub async fn submit_signature(payload: CreateEntryRequest) -> Result<GuestbookEn
     }
 }
 
-/// Build an authenticated request context for posting tests without GitHub or a running server.
-#[cfg(all(test, feature = "server"))]
-pub(crate) async fn moderation_test_context(
-    pool: sqlx::PgPool,
-) -> dioxus::fullstack::FullstackContext {
-    use crate::{
-        backend::auth::{AuthBackend, AuthSession, build_oauth_client},
-        shared::models::{GithubId, NewGuest},
-    };
-    use axum::{
-        extract::FromRequestParts,
-        http::{Request, Response},
-    };
-    use dioxus::fullstack::FullstackContext;
-    use std::{convert::Infallible, sync::Arc};
-    use tower::{ServiceExt, service_fn};
-    use tower_sessions::{MemoryStore, Session};
-
-    let state = AppState::new(pool);
-    let guest = state
-        .guest_repo
-        .upsert(&NewGuest {
-            id: GithubId(1),
-            username: "moderation-test".into(),
-            name: Some("Moderation Test".into()),
-        })
-        .await
-        .unwrap();
-    let backend = AuthBackend::new(
-        state.guest_repo.clone(),
-        build_oauth_client("test-client", "test-secret", "https://example.test"),
-        reqwest::Client::new(),
-    );
-    // Let axum-login create its session extension, then retain the real request parts.
-    let capture = service_fn(|request: Request<()>| async move {
-        Ok::<_, Infallible>(Response::new(Some(request.into_parts().0)))
-    });
-    let mut request = Request::new(());
-    request
-        .extensions_mut()
-        .insert(Session::new(None, Arc::new(MemoryStore::default()), None));
-    let mut parts = axum_login::AuthManager::new(capture, backend, "moderation-test")
-        .oneshot(request)
-        .await
-        .unwrap()
-        .into_body()
-        .unwrap();
-    let session = AuthSession::from_request_parts(&mut parts, &())
-        .await
-        .unwrap();
-    session.login(&guest).await.unwrap();
-    parts.extensions.insert(session);
-    parts.extensions.insert(state);
-    FullstackContext::new(parts)
-}
-
 #[cfg(all(test, feature = "server"))]
 mod tests {
     use super::*;
+    use crate::backend::test_support::moderation_test_context;
 
     fn request(message: &str) -> CreateEntryRequest {
         CreateEntryRequest {
@@ -176,67 +79,5 @@ mod tests {
                 assert_eq!(stored, "This is a bad word: crap");
             })
             .await;
-    }
-
-    #[test]
-    fn validation_trims_and_allows_clean_mild_and_moderate_messages() {
-        for message in [
-            "This is a clean message",
-            "This is a bad word: crap",
-            "F u c k",
-        ] {
-            let payload = validate_payload(request(&format!("  {message}  "))).unwrap();
-            assert_eq!(payload.message, message);
-        }
-    }
-
-    #[test]
-    fn validation_rejects_severe_messages_with_user_facing_error() {
-        assert_eq!(
-            validate_payload(request("  i hope you die  ")),
-            Err(ServerError::Validation(
-                "Message contains offensive content".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn validation_preserves_message_length_limits() {
-        for message in [String::new(), "  ".to_string(), "a".repeat(256)] {
-            assert_eq!(
-                validate_payload(request(&message)),
-                Err(ServerError::Validation(
-                    "Message must be between 1 and 255 characters".to_string()
-                ))
-            );
-        }
-        assert!(validate_payload(request("a")).is_ok());
-        assert!(validate_payload(request(&format!("{}hello", "café ".repeat(50)))).is_ok());
-    }
-
-    #[test]
-    fn validation_accepts_png_signatures_and_rejects_anything_else() {
-        use base64::{Engine as _, engine::general_purpose::STANDARD};
-
-        let signed = |bytes: &[u8]| CreateEntryRequest {
-            signature: Some(STANDARD.encode(bytes)),
-            ..request("hello")
-        };
-        let png = b"\x89PNG\r\n\x1a\nrest";
-        let oversized = [png.as_slice(), &vec![0; MAX_SIGNATURE_BYTES]].concat();
-        let rejected = Err(ServerError::Validation(
-            "Signature must be a PNG drawing under 256 KB".to_string(),
-        ));
-
-        assert!(validate_payload(signed(png)).is_ok());
-        assert_eq!(validate_payload(signed(b"<svg/>")), rejected);
-        assert_eq!(validate_payload(signed(&oversized)), rejected);
-        assert_eq!(
-            validate_payload(CreateEntryRequest {
-                signature: Some("not base64!".into()),
-                ..request("hello")
-            }),
-            rejected
-        );
     }
 }
