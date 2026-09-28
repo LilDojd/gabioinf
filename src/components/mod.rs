@@ -12,6 +12,8 @@ pub(crate) use errors::server_error_message;
 mod github_mark;
 pub use github_mark::GithubMark;
 pub mod layout;
+mod modal;
+pub(crate) use modal::Modal;
 mod reactions;
 pub use reactions::ReactionBar;
 mod signature_pad;

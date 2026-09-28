@@ -1,5 +1,5 @@
 use crate::{
-    components::{Button, ButtonVariant, SignaturePad},
+    components::{Button, ButtonVariant, Modal, SignaturePad},
     shared::server_fns::CreateEntryRequest,
 };
 use dioxus::prelude::*;
@@ -38,51 +38,49 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: "fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,11,13,.7)] p-5 backdrop-blur-sm",
-            onclick: move |_| {
+        Modal {
+            on_close: move |_| {
                 if !props.submitting { props.on_close.call(()); }
             },
-            div {
-                class: "w-full max-w-lg rounded-md border border-border-strong bg-surface p-5 shadow-[0_20px_60px_rgba(0,0,0,.5)]",
-                onclick: move |event| event.stop_propagation(),
-                h2 { class: "heading-casual m-0 mb-4 text-xl", "sign guestbook" }
-                form { class: "flex flex-col gap-4", onsubmit: move |event| event.prevent_default(),
-                    label { class: "label-mono flex flex-col gap-2",
-                        "leave a message"
-                        div { class: "relative",
-                            textarea {
-                                class: "prose-font min-h-24 w-full resize-y rounded-md border bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint", class: if validation.read().is_some() { "border-mars focus:border-mars" } else { "border-card focus:border-accent" },
-                                placeholder: "wow, you are the coolest dude i have ever seen...",
-                                maxlength: MAX_MESSAGE_LENGTH,
-                                disabled: props.submitting,
-                                value: message,
-                                oninput: move |event| {
-                                    let value = event.value();
-                                    if value.chars().count() <= MAX_MESSAGE_LENGTH {
-                                        message.set(value);
-                                        validation.set(None);
-                                    }
-                                },
-                            }
-                            span { class: "absolute right-2 bottom-1 text-[11px] text-label", "{character_count} / {MAX_MESSAGE_LENGTH}" }
-                        }
-                    }
-                    if let Some(error) = validation.read().as_ref().or(props.submit_error.as_ref()) {
-                        span { role: "alert", class: "label-mono text-mars", {error.to_string()} }
-                    }
-                    div { class: "label-mono flex flex-col gap-2", role: "group", aria_labelledby: "signature-pad-label",
-                        span { id: "signature-pad-label", "sign here (optional)" }
-                        SignaturePad {
-                            class: "h-48 w-full rounded-md border border-card bg-code",
+            label: "sign guestbook",
+            panel_class: "w-full max-w-lg p-5",
+            h2 { class: "heading-casual m-0 mb-4 text-xl", "sign guestbook" }
+            form { class: "flex flex-col gap-4", onsubmit: move |event| event.prevent_default(),
+                label { class: "label-mono flex flex-col gap-2",
+                    "leave a message"
+                    div { class: "relative",
+                        textarea {
+                            class: "prose-font min-h-24 w-full resize-y rounded-md border bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint", class: if validation.read().is_some() { "border-mars focus:border-mars" } else { "border-card focus:border-accent" },
+                            placeholder: "wow, you are the coolest dude i have ever seen...",
+                            maxlength: MAX_MESSAGE_LENGTH,
+                            onmounted: move |event| async move { let _ = event.data().set_focus(true).await; },
                             disabled: props.submitting,
-                            on_change: move |png| signature.set(png),
+                            value: message,
+                            oninput: move |event| {
+                                let value = event.value();
+                                if value.chars().count() <= MAX_MESSAGE_LENGTH {
+                                    message.set(value);
+                                    validation.set(None);
+                                }
+                            },
                         }
+                        span { class: "absolute right-2 bottom-1 text-[11px] text-label", "{character_count} / {MAX_MESSAGE_LENGTH}" }
                     }
-                    div { class: "flex justify-end gap-2",
-                        Button { variant: ButtonVariant::Secondary, disabled: props.submitting, onclick: move |_| props.on_close.call(()), "cancel" }
-                        Button { disabled: props.submitting, onclick: submit, if props.submitting { "signing…" } else { "sign" } }
+                }
+                if let Some(error) = validation.read().as_ref().or(props.submit_error.as_ref()) {
+                    span { role: "alert", class: "label-mono text-mars", {error.to_string()} }
+                }
+                div { class: "label-mono flex flex-col gap-2", role: "group", aria_labelledby: "signature-pad-label",
+                    span { id: "signature-pad-label", "sign here (optional)" }
+                    SignaturePad {
+                        class: "h-48 w-full rounded-md border border-card bg-code",
+                        disabled: props.submitting,
+                        on_change: move |png| signature.set(png),
                     }
+                }
+                div { class: "flex justify-end gap-2",
+                    Button { variant: ButtonVariant::Secondary, disabled: props.submitting, onclick: move |_| props.on_close.call(()), "cancel" }
+                    Button { disabled: props.submitting, onclick: submit, if props.submitting { "signing…" } else { "sign" } }
                 }
             }
         }
