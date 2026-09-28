@@ -52,7 +52,7 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                         "leave a message"
                         div { class: "relative",
                             textarea {
-                                class: if validation.read().is_some() { "prose-font min-h-24 w-full resize-y rounded-md border border-mars bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint focus:border-mars" } else { "prose-font min-h-24 w-full resize-y rounded-md border border-card bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint focus:border-accent" },
+                                class: "prose-font min-h-24 w-full resize-y rounded-md border bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint", class: if validation.read().is_some() { "border-mars focus:border-mars" } else { "border-card focus:border-accent" },
                                 placeholder: "wow, you are the coolest dude i have ever seen...",
                                 maxlength: MAX_MESSAGE_LENGTH,
                                 disabled: props.submitting,

@@ -162,7 +162,7 @@ pub fn AreciboFooter() -> Element {
                     for shift in (0..12).rev() {
                         span {
                             key: "{shift}",
-                            class: if year & (1 << shift) != 0 { "block size-[7px] bg-text" } else { "block size-[7px] bg-empty-cell" },
+                            class: "block size-[7px]", class: if year & (1 << shift) != 0 { "bg-text" } else { "bg-empty-cell" },
                         }
                     }
                 }
