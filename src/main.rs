@@ -1,8 +1,7 @@
 #![allow(non_snake_case)]
 use dioxus::fullstack::FullstackContext;
 use dioxus::prelude::*;
-use std::{borrow::Cow, str::FromStr};
-use tracing::Level;
+use std::borrow::Cow;
 mod auth;
 #[cfg(feature = "server")]
 mod backend;
@@ -16,20 +15,11 @@ use components::layout::Layout;
 use pages::{AboutMe, Blog, BlogPost, Guestbook, Home, NotFound, Projects};
 static STYLES: Asset = asset!("/assets/styles");
 fn main() -> anyhow::Result<()> {
-    let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-    let log_level = Level::from_str(&log_level).unwrap_or(Level::INFO);
     #[cfg(not(feature = "server"))]
-    dioxus_logger::init(log_level).expect("failed to init logger");
-    #[cfg(feature = "server")]
-    let _sentry = backend::observability::init(log_level);
-    #[cfg(not(feature = "server"))]
-    LaunchBuilder::new()
-        .with_cfg(web! {
-            dioxus::web::Config::new().hydrate(true)
-        })
-        .launch(App);
+    dioxus::launch(App);
     #[cfg(feature = "server")]
     {
+        let _sentry = backend::observability::init();
         tracing::info!("Starting server");
         // Dioxus 0.7.10 incremental cache hits currently lose custom route statuses.
         let config = ServeConfig::new().enable_out_of_order_streaming();
