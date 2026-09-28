@@ -67,7 +67,6 @@ pub struct Canvas {
     element: HtmlCanvasElement,
     strokes: Vec<Stroke>,
     current: Option<Stroke>,
-    ink: Ink,
     stroke_options: StrokeOptions,
 }
 
@@ -78,7 +77,6 @@ impl Canvas {
             element,
             strokes: Vec::new(),
             current: None,
-            ink: Ink::default(),
             stroke_options: StrokeOptions::default(),
         };
         canvas.fit_to_element();
@@ -110,13 +108,9 @@ impl Canvas {
         self.redraw();
     }
 
-    pub fn set_ink(&mut self, ink: Ink) {
-        self.ink = ink;
-    }
-
-    pub fn pointer_down(&mut self, event: &PointerEvent) {
+    pub fn pointer_down(&mut self, ink: Ink, event: &PointerEvent) {
         self.current = Some(Stroke {
-            ink: self.ink,
+            ink,
             points: vec![self.point_from(event)],
         });
         self.redraw();
