@@ -60,6 +60,7 @@ pub struct Credentials {
 pub struct AuthBackend {
     guest_repo: GuestRepo,
     client: SetOauthClient,
+    token_client: oauth2::reqwest::Client,
     reqwest_client: reqwest::Client,
 }
 impl AuthBackend {
@@ -68,9 +69,16 @@ impl AuthBackend {
         client: SetOauthClient,
         reqwest_client: reqwest::Client,
     ) -> Self {
+        // oauth2 is pinned to reqwest 0.12, so it cannot share `reqwest_client` (0.13).
+        // Redirects are disabled as the oauth2 docs recommend, to rule out SSRF via the token endpoint.
+        let token_client = oauth2::reqwest::ClientBuilder::new()
+            .redirect(oauth2::reqwest::redirect::Policy::none())
+            .build()
+            .expect("the OAuth token client builds");
         Self {
             guest_repo,
             client,
+            token_client,
             reqwest_client,
         }
     }
@@ -100,17 +108,11 @@ impl AuthnBackend for AuthBackend {
             return Ok(None);
         }
         tracing::debug!("Received OAuth callback");
-        // oauth2 is pinned to reqwest 0.12, so it cannot share `self.reqwest_client` (0.13).
-        // Redirects are disabled as the oauth2 docs recommend, to rule out SSRF via the token endpoint.
-        let token_client = oauth2::reqwest::ClientBuilder::new()
-            .redirect(oauth2::reqwest::redirect::Policy::none())
-            .build()
-            .map_err(|error| Self::Error::Authentication(error.to_string()))?;
         let token = self
             .client
             .exchange_code(AuthorizationCode::new(creds.code))
             .set_pkce_verifier(creds.pkce_verifier)
-            .request_async(&token_client)
+            .request_async(&self.token_client)
             .await
             .map_err(|error| Self::Error::Authentication(describe_token_error(&error)))?;
         tracing::debug!("Getting user data from GitHub API");
