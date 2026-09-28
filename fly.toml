@@ -20,7 +20,7 @@ processes = ['app']
 grace_period = '10s'
 interval = '30s'
 method = 'GET'
-path = '/health/ready'
+path = '/health/live'
 timeout = '5s'
 
 [deploy]

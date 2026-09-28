@@ -82,7 +82,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         .layer(SentryHttpLayer::new().enable_transaction())
         .layer(NewSentryLayer::<Request>::new_from_top());
     let app = Router::new()
-        .nest("/health", health::router(postgres.clone()))
+        .nest("/health", health::router())
         .merge(static_assets)
         .merge(application)
         .layer(
@@ -96,7 +96,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         .with_context(|| format!("failed to bind server to {address}"))?;
 
     let deletion_task = tokio::task::spawn(
-        session_store.continuously_delete_expired(tokio::time::Duration::from_secs(60)),
+        session_store.continuously_delete_expired(tokio::time::Duration::from_secs(24 * 60 * 60)),
     );
     let governor_task = tokio::task::spawn(async move {
         loop {
