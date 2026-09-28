@@ -9,15 +9,11 @@ RUN npm ci && npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --min
 
 FROM rustlang/rust:nightly-bookworm AS builder
 
-# Pin the last nightly before rustc's LLVM 23 wasm regression.
-RUN rustup toolchain install nightly-2026-08-05 \
-      --profile minimal \
-      --component clippy,rustfmt \
-      --target wasm32-unknown-unknown \
-    && rustup default nightly-2026-08-05
+WORKDIR /app
+COPY rust-toolchain.toml .
+RUN rustup toolchain install
 RUN cargo install dioxus-cli@0.7.10 --locked
 RUN apt-get update && apt-get install -y binaryen
-WORKDIR /app
 # Copy over the source code and build the project
 COPY . .
 # Copy tailwind.css we generated earlier
