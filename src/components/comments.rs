@@ -276,7 +276,7 @@ fn CommentMeta(
             a { href: profile, target: "_blank", rel: "noopener noreferrer", class: "text-secondary no-underline hover:text-accent", "{author.username}" }
             time { datetime: created_at.format(&Rfc3339).unwrap_or_default(), {short_date(created_at.date())} }
             if author.is_owner {
-                span { class: "rounded-[3px] bg-[rgb(194_249_187_/_0.1)] px-1.5 py-0.5 text-[10px] text-accent", "author" }
+                span { class: "rounded-[3px] bg-accent/10 px-1.5 py-0.5 text-[10px] text-accent", "author" }
             }
         }
     }
