@@ -5,11 +5,9 @@
 use super::{
     UiState,
     chords::{Action, Chords, Direction, Key},
-    close_overlays,
-    dom::DioxusScope,
-    summon_sesh,
+    close_overlays, summon_sesh,
 };
-use dioxus::prelude::{WritableExt, dioxus_router::Navigator};
+use dioxus::prelude::{Callback, WritableExt, dioxus_router::Navigator};
 use std::{cell::RefCell, rc::Rc};
 use web_sys::{
     HtmlElement, KeyboardEvent, ScrollBehavior, ScrollToOptions, Window,
@@ -32,7 +30,6 @@ pub fn install(ui: UiState, navigator: Navigator) {
     let Some(window) = web_sys::window() else {
         return;
     };
-    let scope = DioxusScope::current();
 
     web_sys::console::log_2(
         &JsValue::from_str(
@@ -43,79 +40,75 @@ pub fn install(ui: UiState, navigator: Navigator) {
 
     let chords = Rc::new(RefCell::new(Chords::default()));
     let held = Rc::new(RefCell::new(None::<HeldScroll>));
-    let animation = install_scroll_animation(&window, held.clone(), ui, scope.clone());
+    let animation = install_scroll_animation(&window, held.clone(), ui);
 
     let keydown = {
         let window = window.clone();
         let chords = chords.clone();
         let held = held.clone();
         let animation = animation.clone();
-        let scope = scope.clone();
-        Closure::<dyn FnMut(KeyboardEvent)>::new(move |event: KeyboardEvent| {
-            scope.enter(|| {
-                let key = event_key(&event);
-                let typing = is_typing(&event);
+        let on_keydown = Callback::new(move |event: KeyboardEvent| {
+            let key = event_key(&event);
+            let typing = is_typing(&event);
 
-                if matches!(key, Key::MetaK) || (matches!(key, Key::Slash) && !typing) {
-                    event.prevent_default();
-                }
-                if event.repeat() && matches!(key, Key::Character('j' | 'k')) {
-                    return;
-                }
-                if typing && !matches!(key, Key::Escape | Key::MetaK) {
-                    return;
-                }
-                if overlays_open(ui) && !matches!(key, Key::Escape | Key::MetaK) {
-                    return;
-                }
+            if matches!(key, Key::MetaK) || (matches!(key, Key::Slash) && !typing) {
+                event.prevent_default();
+            }
+            if event.repeat() && matches!(key, Key::Character('j' | 'k')) {
+                return;
+            }
+            if typing && !matches!(key, Key::Escape | Key::MetaK) {
+                return;
+            }
+            if overlays_open(ui) && !matches!(key, Key::Escape | Key::MetaK) {
+                return;
+            }
 
-                let action = {
-                    let mut chords = chords.borrow_mut();
-                    chords.now_millis = event.time_stamp();
-                    chords.handle(&key)
-                };
-                let Some(action) = action else {
-                    return;
-                };
-                match action {
-                    Action::Scroll { direction, count } => {
-                        if let Some(count) = count {
-                            stop_hold(&window, &held, false);
-                            scroll(&window, direction, f64::from(count) * STEP_PIXELS, true);
-                        } else {
-                            start_hold(&window, &held, &animation, direction, event.time_stamp());
-                        }
+            let action = {
+                let mut chords = chords.borrow_mut();
+                chords.now_millis = event.time_stamp();
+                chords.handle(&key)
+            };
+            let Some(action) = action else {
+                return;
+            };
+            match action {
+                Action::Scroll { direction, count } => {
+                    if let Some(count) = count {
+                        stop_hold(&window, &held, false);
+                        scroll(&window, direction, f64::from(count) * STEP_PIXELS, true);
+                    } else {
+                        start_hold(&window, &held, &animation, direction, event.time_stamp());
                     }
-                    action => perform(action, ui, navigator),
                 }
-            })
-        })
+                action => perform(action, ui, navigator),
+            }
+        });
+        Closure::<dyn FnMut(KeyboardEvent)>::new(move |event| on_keydown.call(event))
     };
 
     let keyup = {
         let window = window.clone();
         let held = held.clone();
-        let scope = scope.clone();
-        Closure::<dyn FnMut(KeyboardEvent)>::new(move |event: KeyboardEvent| {
-            scope.enter(|| {
-                let direction = match event.key().to_ascii_lowercase().as_str() {
-                    "j" => Direction::Down,
-                    "k" => Direction::Up,
-                    _ => return,
-                };
-                let short_tap = held.borrow().is_some_and(|active| {
-                    active.direction == direction
-                        && event.time_stamp() - active.started < TAP_MILLIS
-                        && !overlays_open(ui)
-                });
-                if held
-                    .borrow()
-                    .is_some_and(|active| active.direction == direction)
-                {
-                    stop_hold(&window, &held, short_tap);
-                }
-            })
-        })
+        let on_keyup = Callback::new(move |event: KeyboardEvent| {
+            let direction = match event.key().to_ascii_lowercase().as_str() {
+                "j" => Direction::Down,
+                "k" => Direction::Up,
+                _ => return,
+            };
+            let short_tap = held.borrow().is_some_and(|active| {
+                active.direction == direction
+                    && event.time_stamp() - active.started < TAP_MILLIS
+                    && !overlays_open(ui)
+            });
+            if held
+                .borrow()
+                .is_some_and(|active| active.direction == direction)
+            {
+                stop_hold(&window, &held, short_tap);
+            }
+        });
+        Closure::<dyn FnMut(KeyboardEvent)>::new(move |event| on_keyup.call(event))
     };
 
     if window
@@ -142,46 +135,44 @@ fn install_scroll_animation(
     window: &Window,
     held: Rc<RefCell<Option<HeldScroll>>>,
     ui: UiState,
-    scope: DioxusScope,
 ) -> AnimationCallback {
     let animation = AnimationCallback::default();
     let callback_slot = animation.clone();
     let frame_window = window.clone();
     let frame_held = held.clone();
 
-    *animation.borrow_mut() = Some(Closure::new(move |timestamp: f64| {
-        scope.enter(|| {
-            let mut active_scroll = frame_held.borrow_mut();
-            let Some(active) = active_scroll.as_mut() else {
-                return;
-            };
-            if overlays_open(ui) {
-                *active_scroll = None;
-                return;
-            }
+    let on_frame = Callback::new(move |timestamp: f64| {
+        let mut active_scroll = frame_held.borrow_mut();
+        let Some(active) = active_scroll.as_mut() else {
+            return;
+        };
+        if overlays_open(ui) {
+            *active_scroll = None;
+            return;
+        }
 
-            let elapsed = timestamp - active.started;
-            if elapsed >= TAP_MILLIS {
-                if let Some(last_frame) = active.last_frame {
-                    let seconds = ((timestamp - last_frame).min(50.0)) / 1000.0;
-                    scroll(
-                        &frame_window,
-                        active.direction,
-                        HOLD_PIXELS_PER_SECOND * seconds,
-                        false,
-                    );
-                }
-                active.last_frame = Some(timestamp);
+        let elapsed = timestamp - active.started;
+        if elapsed >= TAP_MILLIS {
+            if let Some(last_frame) = active.last_frame {
+                let seconds = ((timestamp - last_frame).min(50.0)) / 1000.0;
+                scroll(
+                    &frame_window,
+                    active.direction,
+                    HOLD_PIXELS_PER_SECOND * seconds,
+                    false,
+                );
             }
+            active.last_frame = Some(timestamp);
+        }
 
-            if let Some(callback) = callback_slot.borrow().as_ref()
-                && let Ok(frame_id) =
-                    frame_window.request_animation_frame(callback.as_ref().unchecked_ref())
-            {
-                active.frame_id = frame_id;
-            }
-        })
-    }));
+        if let Some(callback) = callback_slot.borrow().as_ref()
+            && let Ok(frame_id) =
+                frame_window.request_animation_frame(callback.as_ref().unchecked_ref())
+        {
+            active.frame_id = frame_id;
+        }
+    });
+    *animation.borrow_mut() = Some(Closure::new(move |timestamp| on_frame.call(timestamp)));
 
     animation
 }

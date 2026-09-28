@@ -428,7 +428,6 @@ async fn copy_to_clipboard(source: &str) -> bool {
 #[cfg(feature = "web")]
 mod browser {
     use super::*;
-    use dioxus::core::Runtime;
     use web_sys::{
         Window,
         wasm_bindgen::{JsCast, closure::Closure},
@@ -468,11 +467,10 @@ mod browser {
             };
             let mut restore = restore;
             restore(true);
-            let runtime = Runtime::current();
-            let scope = runtime.current_scope_id();
-            let callback = Closure::new(move |event: web_sys::Event| {
-                runtime.in_scope(scope, || restore(event.type_() != SELECTION_CHANGE));
+            let on_event = Callback::new(move |event: web_sys::Event| {
+                restore(event.type_() != SELECTION_CHANGE);
             });
+            let callback = Closure::new(move |event| on_event.call(event));
             let listener = Self { window, callback };
             for event in EVENTS {
                 listener
