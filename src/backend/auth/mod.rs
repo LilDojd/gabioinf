@@ -188,7 +188,17 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::{
+        body::Body,
+        http::{
+            Request, StatusCode,
+            header::{COOKIE, LOCATION, SET_COOKIE},
+        },
+    };
+    use axum_login::AuthManagerLayerBuilder;
     use sqlx::postgres::PgPoolOptions;
+    use tower::ServiceExt;
+    use tower_sessions::{MemoryStore, SessionManagerLayer};
 
     fn test_backend() -> AuthBackend {
         let pool = PgPoolOptions::new()
@@ -225,5 +235,45 @@ mod tests {
                 .query_pairs()
                 .any(|(key, value)| key == "code_challenge_method" && value == "S256")
         );
+    }
+
+    #[tokio::test]
+    async fn cancelled_sign_in_returns_to_the_requested_page() {
+        let app = router().layer(
+            AuthManagerLayerBuilder::new(
+                test_backend(),
+                SessionManagerLayer::new(MemoryStore::default()),
+            )
+            .build(),
+        );
+        let login = app
+            .clone()
+            .oneshot(
+                Request::get("/login?next=/guestbook")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let cookie = login.headers()[SET_COOKIE]
+            .to_str()
+            .unwrap()
+            .split(';')
+            .next()
+            .unwrap()
+            .to_string();
+
+        let callback = app
+            .oneshot(
+                Request::get("/oauth/callback?error=access_denied&state=unused")
+                    .header(COOKIE, cookie)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(callback.status(), StatusCode::SEE_OTHER);
+        assert_eq!(callback.headers()[LOCATION], "/guestbook");
     }
 }
