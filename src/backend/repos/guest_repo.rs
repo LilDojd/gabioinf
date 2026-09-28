@@ -1,5 +1,5 @@
 use crate::backend::errors::BResult;
-use crate::shared::models::{GithubId, Guest, GuestId};
+use crate::shared::models::{GithubId, Guest, GuestId, NewGuest};
 
 #[derive(Debug, Clone)]
 pub struct GuestRepo {
@@ -11,17 +11,17 @@ impl GuestRepo {
         Self { pool }
     }
 
-    pub async fn upsert(&self, guest: &Guest) -> BResult<Guest> {
+    pub async fn upsert(&self, guest: &NewGuest) -> BResult<Guest> {
         Ok(sqlx::query_as!(
             Guest,
             r#"
             INSERT INTO guests (github_id, name, username)
-            VALUES ($1, $2, $3)
+            VALUES ($1, COALESCE($2, $3), $3)
             ON CONFLICT (github_id) DO UPDATE
             SET name = excluded.name, username = excluded.username, updated_at = NOW()
             RETURNING id AS "id: GuestId", github_id AS "github_id: GithubId", name, username, created_at, updated_at
             "#,
-            guest.github_id.as_value(),
+            guest.id.as_value(),
             guest.name,
             guest.username,
         )
@@ -48,17 +48,17 @@ mod tests {
     #[sqlx::test]
     async fn upsert_and_fetch_guest(pool: PgPool) {
         let repo = GuestRepo::new(pool);
-        let mut guest = Guest {
-            github_id: GithubId(12345),
-            name: "Test User".to_string(),
+        let mut guest = NewGuest {
+            id: GithubId(12345),
             username: "testuser".to_string(),
-            ..Default::default()
+            name: None,
         };
 
         let created = repo.upsert(&guest).await.unwrap();
-        guest.name = "Updated User".to_string();
+        guest.name = Some("Updated User".to_string());
         let updated = repo.upsert(&guest).await.unwrap();
 
+        assert_eq!(created.name, "testuser");
         assert_eq!(updated.id, created.id);
         assert_eq!(updated.name, "Updated User");
         assert_eq!(repo.find_by_id(created.id).await.unwrap(), Some(updated));
@@ -67,21 +67,14 @@ mod tests {
     #[sqlx::test]
     async fn a_released_username_can_sign_in_on_another_account(pool: PgPool) {
         let repo = GuestRepo::new(pool);
-        let original = Guest {
-            github_id: GithubId(1),
-            name: "Original".to_string(),
+        let guest = |id| NewGuest {
+            id: GithubId(id),
             username: "shared".to_string(),
-            ..Default::default()
-        };
-        let newcomer = Guest {
-            github_id: GithubId(2),
-            name: "Newcomer".to_string(),
-            username: "shared".to_string(),
-            ..Default::default()
+            name: None,
         };
 
-        repo.upsert(&original).await.unwrap();
+        repo.upsert(&guest(1)).await.unwrap();
 
-        assert_eq!(repo.upsert(&newcomer).await.unwrap().github_id, GithubId(2));
+        assert_eq!(repo.upsert(&guest(2)).await.unwrap().github_id, GithubId(2));
     }
 }
