@@ -1,5 +1,5 @@
 #[cfg(feature = "server")]
-use crate::backend::{AppState, auth::SessionWrapper};
+use crate::backend::{AppState, auth::AuthSession};
 use crate::{
     auth::AuthState,
     shared::{
@@ -25,9 +25,9 @@ pub async fn load_signatures(
         .map_err(|error| ServerError::internal("load guestbook entries", error))
 }
 
-#[server(session:SessionWrapper, state:axum::Extension<AppState>)]
+#[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn load_guestbook_user() -> Result<AuthState, ServerError> {
-    let Some(guest) = session.session.user().await else {
+    let Some(guest) = auth.user().await else {
         return Ok(AuthState::Unauthenticated);
     };
     let entry = state

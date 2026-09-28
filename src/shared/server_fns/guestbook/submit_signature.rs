@@ -3,7 +3,7 @@
 //! This module contains the handler function for creating a new guestbook entry,
 //! along with the necessary request payload structure.
 #[cfg(feature = "server")]
-use crate::backend::{AppState, auth::SessionWrapper, errors::ApiError};
+use crate::backend::{AppState, auth::AuthSession, errors::ApiError};
 use crate::shared::{models::GuestbookEntry, server_fns::ServerError};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -53,15 +53,11 @@ fn validate_payload(mut payload: CreateEntryRequest) -> Result<CreateEntryReques
     Ok(payload)
 }
 
-#[server(session:SessionWrapper, state:axum::Extension<AppState>)]
+#[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn submit_signature(payload: CreateEntryRequest) -> Result<GuestbookEntry, ServerError> {
     use crate::shared::models::NewGuestbookEntry;
 
-    let guest = session
-        .session
-        .user()
-        .await
-        .ok_or(ServerError::Unauthenticated)?;
+    let guest = auth.user().await.ok_or(ServerError::Unauthenticated)?;
     let payload = validate_payload(payload)?;
 
     let new_entry = NewGuestbookEntry {

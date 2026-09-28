@@ -19,7 +19,7 @@ use crate::{
     },
     shared::models::{Guest, GuestId, NewGuest},
 };
-use axum::{Router, extract::FromRequestParts, http::request::Parts};
+use axum::Router;
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use oauth2::{
     AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, TokenResponse,
@@ -150,40 +150,6 @@ fn describe_token_error<E: std::error::Error, R: oauth2::ErrorResponse>(
 }
 
 pub type AuthSession = axum_login::AuthSession<AuthBackend>;
-#[derive(Debug, Clone)]
-pub struct SessionWrapper {
-    pub session: AuthSession,
-}
-#[derive(Debug)]
-pub struct StateError;
-impl std::error::Error for StateError {}
-impl std::fmt::Display for StateError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(internal) state error")
-    }
-}
-impl axum::response::IntoResponse for StateError {
-    fn into_response(self) -> axum::response::Response {
-        (
-            axum::http::status::StatusCode::INTERNAL_SERVER_ERROR,
-            "(internal) state error",
-        )
-            .into_response()
-    }
-}
-impl<S> FromRequestParts<S> for SessionWrapper
-where
-    S: Send + Sync,
-{
-    type Rejection = StateError;
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let session = AuthSession::from_request_parts(parts, state).await;
-        match session {
-            Ok(session) => Ok(Self { session }),
-            Err(_) => Err(StateError),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {

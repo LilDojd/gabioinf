@@ -1,7 +1,7 @@
 #[cfg(feature = "server")]
 use crate::backend::{
     AppState,
-    auth::SessionWrapper,
+    auth::AuthSession,
     repos::{CommentRepo, ReactionRepo},
 };
 #[cfg(feature = "server")]
@@ -12,16 +12,12 @@ use crate::shared::{
 };
 use dioxus::prelude::*;
 
-#[server(session:SessionWrapper, state:axum::Extension<AppState>)]
+#[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn toggle_reaction(
     target: ReactionTarget,
     emoji: Emoji,
 ) -> Result<Vec<ReactionCount>, ServerError> {
-    let user = session
-        .session
-        .user()
-        .await
-        .ok_or(ServerError::Unauthenticated)?;
+    let user = auth.user().await.ok_or(ServerError::Unauthenticated)?;
     toggle_for_guest(
         &state.reaction_repo,
         &state.comment_repo,
