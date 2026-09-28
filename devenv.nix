@@ -53,9 +53,7 @@ in
     };
     rust = {
       enable = true;
-      channel = "nightly";
-      version = "2026-08-05";
-      targets = [ "wasm32-unknown-unknown" ];
+      toolchainFile = ./rust-toolchain.toml;
     };
   };
 

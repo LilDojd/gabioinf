@@ -38,11 +38,6 @@ jobs:
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          # Last nightly before rustc's LLVM 23 wasm regression.
-          toolchain: nightly-2026-08-05
-          components: rustfmt, clippy
-          target: wasm32-unknown-unknown
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Clippy
