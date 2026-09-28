@@ -5013,8 +5013,10 @@ dependencies = [
  "bitflags 2.13.2",
  "bytes",
  "http",
+ "http-body",
  "percent-encoding",
  "pin-project-lite",
+ "tokio",
  "tower-layer",
  "tower-service",
 ]
