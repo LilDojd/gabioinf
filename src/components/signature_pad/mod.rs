@@ -30,7 +30,6 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
         let png = canvas.read().as_ref().and_then(Canvas::trimmed_png);
         props.on_change.call(png);
     };
-    // Every pointer/undo/clear handler needs the same "borrow the canvas mutably" dance.
     let mut with_canvas = move |edit: fn(&mut Canvas, &PointerEvent), event: PointerEvent| {
         if let Some(canvas) = canvas.write().as_mut() {
             edit(canvas, &event);
@@ -55,7 +54,11 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                     #[cfg(not(feature = "web"))]
                     let _ = event;
                 },
-                onpointerdown: move |event| with_canvas(Canvas::pointer_down, event),
+                onpointerdown: move |event| {
+                    if let Some(canvas) = canvas.write().as_mut() {
+                        canvas.pointer_down(ink(), &event);
+                    }
+                },
                 onpointermove: move |event| with_canvas(Canvas::pointer_move, event),
                 onpointerup: move |event| {
                     with_canvas(Canvas::pointer_up, event);
@@ -81,12 +84,7 @@ pub fn SignaturePad(props: SignaturePadProps) -> Element {
                         class: "size-4 rounded-full border-2 transition-transform hover:scale-110",
                         class: if ink() == choice { "border-text scale-110" } else { "border-transparent" },
                         style: "background: {choice.css()}",
-                        onclick: move |_| {
-                            ink.set(choice);
-                            if let Some(canvas) = canvas.write().as_mut() {
-                                canvas.set_ink(choice);
-                            }
-                        },
+                        onclick: move |_| ink.set(choice),
                     }
                 }
             }
