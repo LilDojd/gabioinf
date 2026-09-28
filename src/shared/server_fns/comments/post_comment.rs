@@ -1,5 +1,5 @@
 #[cfg(feature = "server")]
-use crate::backend::{AppState, auth::SessionWrapper};
+use crate::backend::{AppState, auth::AuthSession};
 use crate::shared::{
     models::{Comment, CommentId},
     server_fns::ServerError,
@@ -23,17 +23,13 @@ fn validate_body(body: String) -> Result<(String, String), ServerError> {
     Ok((body, body_html))
 }
 
-#[server(session:SessionWrapper, state:axum::Extension<AppState>)]
+#[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn post_comment(
     slug: String,
     body: String,
     parent_id: Option<CommentId>,
 ) -> Result<Comment, ServerError> {
-    let user = session
-        .session
-        .user()
-        .await
-        .ok_or(ServerError::Unauthenticated)?;
+    let user = auth.user().await.ok_or(ServerError::Unauthenticated)?;
     if crate::blog::find_post(&slug).is_none() {
         return Err(ServerError::Validation(
             "That blog post does not exist".to_string(),

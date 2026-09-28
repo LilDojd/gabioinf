@@ -1,11 +1,11 @@
 #[cfg(feature = "server")]
-use crate::backend::{AppState, auth::SessionWrapper};
+use crate::backend::{AppState, auth::AuthSession};
 use crate::shared::{models::Reactions, server_fns::ServerError};
 use dioxus::prelude::*;
 
-#[server(session:SessionWrapper, state:axum::Extension<AppState>)]
+#[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn load_reactions(slug: String) -> Result<Reactions, ServerError> {
-    let viewer = session.session.user().await.map(|user| user.id);
+    let viewer = auth.user().await.map(|user| user.id);
     state
         .reaction_repo
         .counts_for_post(&slug, viewer)

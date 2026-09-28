@@ -1,10 +1,10 @@
 #[cfg(feature = "server")]
-use crate::backend::auth::SessionWrapper;
+use crate::backend::auth::AuthSession;
 use crate::shared::{models::Guest, server_fns::ServerError};
 use dioxus::prelude::*;
-#[server(session:SessionWrapper)]
+#[server(auth:AuthSession)]
 pub async fn get_user() -> Result<Option<Guest>, ServerError> {
-    match session.session.user().await {
+    match auth.user().await {
         Some(user) => Ok(Some(user)),
         None => Ok(None),
     }
