@@ -8,6 +8,11 @@ use crate::backend::observability;
 use crate::backend::rate_limit::FlyClientIpExtractor;
 use anyhow::Context;
 use axum::{Extension, Router, extract::Request, middleware, routing::get};
+use axum_helmet::{
+    CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet, OriginAgentCluster, ReferrerPolicy,
+    StrictTransportSecurity, XContentTypeOptions, XDNSPrefetchControl, XDownloadOptions,
+    XFrameOptions, XPermittedCrossDomainPolicies, XXSSProtection,
+};
 use axum_login::AuthManagerLayerBuilder;
 use axum_login::tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer};
 use dioxus::{
@@ -79,7 +84,12 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let app = Router::new()
         .nest("/health", health::router(postgres.clone()))
         .merge(static_assets)
-        .merge(application);
+        .merge(application)
+        .layer(
+            security_headers()
+                .into_layer()
+                .expect("static security headers must be valid"),
+        );
     let address = dioxus::cli_config::fullstack_address_or_localhost();
     let listener = tokio::net::TcpListener::bind(address)
         .await
@@ -111,6 +121,25 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     result.context("server failed")?;
     tracing::info!("Server stopped");
     Ok(())
+}
+
+fn security_headers() -> Helmet {
+    Helmet::new()
+        .add(CrossOriginOpenerPolicy::same_origin())
+        .add(CrossOriginResourcePolicy::same_origin())
+        .add(OriginAgentCluster::new(true))
+        .add(ReferrerPolicy::no_referrer())
+        .add(
+            StrictTransportSecurity::new()
+                .max_age(15_552_000)
+                .include_sub_domains(),
+        )
+        .add(XContentTypeOptions::nosniff())
+        .add(XDNSPrefetchControl::off())
+        .add(XDownloadOptions::noopen())
+        .add(XFrameOptions::Deny)
+        .add(XPermittedCrossDomainPolicies::none())
+        .add(XXSSProtection::off())
 }
 
 async fn shutdown_signal() {
