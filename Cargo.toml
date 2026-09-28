@@ -67,7 +67,6 @@ tower_governor = { version = "0.8.0", default-features = false, features = [
   "axum",
   "tracing",
 ], optional = true }
-forwarded-header-value = { version = "0.1.1", optional = true }
 tower-sessions = { version = "0.15.0", default-features = false, features = [
   "axum-core",
   "signed",
@@ -148,7 +147,6 @@ server = [
   "dep:rustrict",
   "dep:validator",
   "dep:tower_governor",
-  "dep:forwarded-header-value",
   "dep:tower-sessions",
   "dep:tower-sessions-sqlx-store",
   "dep:axum-login",
