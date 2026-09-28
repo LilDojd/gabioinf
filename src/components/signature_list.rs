@@ -1,12 +1,12 @@
 use crate::auth::AuthState;
-use crate::components::{Button, ButtonVariant};
+use crate::components::{Button, ButtonVariant, short_date};
 use crate::shared::{
     models::{GuestbookCursor, GuestbookEntry, GuestbookId, GuestbookPage},
     server_fns,
 };
 use dioxus::prelude::*;
 use std::rc::Rc;
-use time::{OffsetDateTime, macros::format_description};
+use time::OffsetDateTime;
 
 mod cache;
 #[cfg(all(test, feature = "server"))]
@@ -14,8 +14,6 @@ mod lifecycle_tests;
 pub(crate) use cache::{SignatureCache, spawn_signature_mutation};
 
 const INITIAL_SKELETONS: usize = 6;
-const ENTRY_DATE: &[time::format_description::BorrowedFormatItem<'_>] =
-    format_description!("[day padding:none] [month repr:short] [year]");
 
 #[component]
 pub fn SignatureList(mut count: Signal<Option<usize>>) -> Element {
@@ -211,13 +209,7 @@ struct SignatureCardProps {
 
 #[component]
 fn SignatureCard(props: SignatureCardProps) -> Element {
-    let date = props
-        .entry
-        .created_at
-        .date()
-        .format(ENTRY_DATE)
-        .expect("the static date format is valid")
-        .to_lowercase();
+    let date = short_date(props.entry.created_at.date());
     rsx! {
         article { class: "card relative flex h-full flex-col gap-3.5 p-4",
             if let Some(action) = props.action { {action} }
