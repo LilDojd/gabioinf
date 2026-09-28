@@ -1,12 +1,22 @@
 {
   config,
   pkgs,
-  inputs,
   ...
 }:
 let
   databaseName = "gabioinf";
-  wasmTooling = inputs.wasm_bindgen_cli.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  wasmBindgenCli = pkgs.buildWasmBindgenCli rec {
+    src = pkgs.fetchCrate {
+      pname = "wasm-bindgen-cli";
+      version = "0.2.129";
+      hash = "sha256-pcecKQd7E8Opw6bkFoE569epUi7gh5qpQF1e5PJY6V8=";
+    };
+    cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+      inherit src;
+      inherit (src) pname version;
+      hash = "sha256-vmUrWVU7kPJJxO5qIVeAkwQyWDELO1Z4Z5gitz2kco8=";
+    };
+  };
 in
 {
   env.DATABASE_URL = "postgresql://${databaseName}@localhost/${databaseName}?host=${config.env.PGHOST}";
@@ -51,7 +61,7 @@ in
 
   packages = [
     # Match the wasm-bindgen crate version locked by Dioxus.
-    wasmTooling.wasm-bindgen-cli
+    wasmBindgenCli
     pkgs.flyctl
     pkgs.just
     pkgs.cargo-machete
