@@ -22,15 +22,7 @@ pub fn CodeBlock(
     let mut link_failed = use_signal(|| false);
 
     #[cfg(feature = "web")]
-    let listener =
-        use_hook(|| std::rc::Rc::new(std::cell::RefCell::new(None::<browser::HashListener>)));
-    #[cfg(feature = "web")]
-    {
-        let listener = listener.clone();
-        use_drop(move || {
-            listener.borrow_mut().take();
-        });
-    }
+    let mut listener = use_signal(|| None::<browser::HashListener>);
 
     let mut select = move |number: usize, extend: bool| {
         selection.write().select(number, extend);
@@ -62,7 +54,7 @@ pub fn CodeBlock(
             onmounted: move |_| {
                 #[cfg(feature = "web")]
                 {
-                    *listener.borrow_mut() = browser::HashListener::install(block_id(), line_count, selection);
+                    listener.set(browser::HashListener::install(block_id(), line_count, selection));
                     spawn(async move {
                         if let Some(html) = super::syntax::highlight_code(language, source).await
                             && let Some(lines) = split_html_lines(&html, line_count)
