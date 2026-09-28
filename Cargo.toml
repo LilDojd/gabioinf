@@ -38,7 +38,6 @@ axum = { version = "0.8.9", default-features = false, features = [
   "query",
   "tokio",
 ], optional = true }
-validator = { version = "0.21.0", features = ["derive"], optional = true }
 tokio = { version = "1.53.1", features = [
   "net",
   "rt-multi-thread",
@@ -137,7 +136,6 @@ server = [
   "dep:tower-http",
   "dep:oauth2",
   "dep:rustrict",
-  "dep:validator",
   "dep:tower_governor",
   "dep:tower-sessions",
   "dep:tower-sessions-sqlx-store",

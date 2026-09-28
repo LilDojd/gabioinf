@@ -1,10 +1,8 @@
 use crate::{
     components::{Button, ButtonVariant, Modal, SignaturePad},
-    shared::server_fns::CreateEntryRequest,
+    shared::{models::GUESTBOOK_MESSAGE_MAX, server_fns::CreateEntryRequest},
 };
 use dioxus::prelude::*;
-
-const MAX_MESSAGE_LENGTH: usize = 255;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct SignaturePopupProps {
@@ -52,19 +50,19 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                         textarea {
                             class: "prose-font min-h-24 w-full resize-y rounded-md border bg-code p-3 pb-7 text-base text-text outline-none placeholder:text-faint", class: if validation.read().is_some() { "border-mars focus:border-mars" } else { "border-card focus:border-accent" },
                             placeholder: "wow, you are the coolest dude i have ever seen...",
-                            maxlength: MAX_MESSAGE_LENGTH,
+                            maxlength: GUESTBOOK_MESSAGE_MAX,
                             onmounted: move |event| async move { let _ = event.data().set_focus(true).await; },
                             disabled: props.submitting,
                             value: message,
                             oninput: move |event| {
                                 let value = event.value();
-                                if value.chars().count() <= MAX_MESSAGE_LENGTH {
+                                if value.chars().count() <= GUESTBOOK_MESSAGE_MAX {
                                     message.set(value);
                                     validation.set(None);
                                 }
                             },
                         }
-                        span { class: "absolute right-2 bottom-1 text-[11px] text-label", "{character_count} / {MAX_MESSAGE_LENGTH}" }
+                        span { class: "absolute right-2 bottom-1 text-[11px] text-label", "{character_count} / {GUESTBOOK_MESSAGE_MAX}" }
                     }
                 }
                 if let Some(error) = validation.read().as_ref().or(props.submit_error.as_ref()) {
