@@ -4,7 +4,6 @@ pub mod api;
 pub mod auth;
 pub mod blog;
 pub mod config;
-pub mod db;
 pub mod errors;
 pub mod health;
 pub(crate) mod markdown;

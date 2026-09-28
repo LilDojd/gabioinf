@@ -1,52 +1,28 @@
-//! `/v1/*`: the non-Dioxus HTTP surface (sign-in, OAuth callback, DB ping) with
-//! CORS, security headers, a timeout and per-visitor rate limiting.
-use crate::backend::AppState;
-use crate::backend::db::ping_db;
+//! `/v1/*`: the non-Dioxus HTTP surface (sign-in and OAuth callback) with
+//! security headers, a timeout and per-visitor rate limiting.
 use crate::backend::{auth, rate_limit::FlyClientIpExtractor};
-use axum::body::Body;
-use axum::http::{Response, StatusCode};
-use axum::{Router, http};
+use axum::{Router, http::StatusCode};
 use axum_helmet::{
-    ContentSecurityPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet, HelmetLayer,
-    OriginAgentCluster, ReferrerPolicy, StrictTransportSecurity, XContentTypeOptions,
-    XDNSPrefetchControl, XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies,
-    XXSSProtection,
+    CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Helmet, HelmetLayer, OriginAgentCluster,
+    ReferrerPolicy, StrictTransportSecurity, XContentTypeOptions, XDNSPrefetchControl,
+    XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies, XXSSProtection,
 };
 use governor::clock::QuantaInstant;
 use governor::middleware::NoOpMiddleware;
-use http::HeaderValue;
-use http::Method;
-use http::header::{ACCEPT, AUTHORIZATION, ORIGIN};
 use std::sync::Arc;
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_governor::GovernorLayer;
 use tower_governor::governor::GovernorConfig;
-use tower_http::{cors::CorsLayer, timeout::TimeoutLayer};
-/// Adds the sign-in and database ping routes with API-specific middleware.
+use tower_http::timeout::TimeoutLayer;
+/// Adds the sign-in routes with API-specific middleware.
 pub fn api_router(
-    state: AppState,
     governor_conf: Arc<GovernorConfig<FlyClientIpExtractor, NoOpMiddleware<QuantaInstant>>>,
 ) -> Router {
-    let cors = CorsLayer::new()
-        .allow_credentials(true)
-        .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])
-        .allow_headers(vec![ORIGIN, AUTHORIZATION, ACCEPT])
-        .allow_origin(
-            state
-                .origin
-                .parse::<HeaderValue>()
-                .expect("the configured origin is a valid header value"),
-        );
     let helmet_layer: HelmetLayer = generate_general_helmet_headers()
         .into_layer()
         .expect("static security headers must be valid");
-    let api_router = Router::new()
-        .route("/ping", axum::routing::get(ping_db))
-        .with_state(state)
-        .merge(auth::router())
-        .layer(cors);
-    Router::new().merge(api_router).layer(
+    auth::router().layer(
         ServiceBuilder::new()
             .layer(GovernorLayer::new(governor_conf))
             .layer(TimeoutLayer::with_status_code(
@@ -54,18 +30,6 @@ pub fn api_router(
                 Duration::from_secs(10),
             ))
             .layer(helmet_layer)
-            .map_response(|mut res: Response<Body>| {
-                if res.headers().get("content-security-policy").is_none() {
-                    res.headers_mut().insert(
-                        "content-security-policy",
-                        generate_default_csp()
-                            .to_string()
-                            .parse()
-                            .expect("the static CSP is a valid header value"),
-                    );
-                }
-                res
-            })
             .into_inner(),
     )
 }
@@ -86,20 +50,4 @@ fn generate_general_helmet_headers() -> Helmet {
         .add(XFrameOptions::Deny)
         .add(XPermittedCrossDomainPolicies::none())
         .add(XXSSProtection::off())
-}
-fn generate_default_csp() -> ContentSecurityPolicy<'static> {
-    ContentSecurityPolicy::new()
-        .default_src(vec!["'self'"])
-        .base_uri(vec!["'none'"])
-        .font_src(vec!["'none'"])
-        .form_action(vec!["'none'"])
-        .frame_src(vec!["'none'"])
-        .frame_ancestors(vec!["'none'"])
-        .object_src(vec!["'none'"])
-        .script_src(vec!["'self'", "'wasm-unsafe-eval'"])
-        .style_src(vec!["'self'", "'unsafe-inline'"])
-        .img_src(vec!["'self'", "data:", "blob:"])
-        .connect_src(vec!["'self'", "https://api.github.com"])
-        .worker_src(vec!["'none'"])
-        .upgrade_insecure_requests()
 }

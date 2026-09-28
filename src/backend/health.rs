@@ -1,7 +1,7 @@
-use crate::backend::db::DbConnPool;
 use axum::{Router, extract::State, http::StatusCode, response::IntoResponse, routing::get};
+use sqlx::PgPool;
 
-pub fn router(db: DbConnPool) -> Router {
+pub fn router(db: PgPool) -> Router {
     Router::new()
         .route("/live", get(liveness))
         .route("/ready", get(readiness))
@@ -12,7 +12,7 @@ async fn liveness() -> impl IntoResponse {
     (StatusCode::OK, "alive")
 }
 
-async fn readiness(State(db): State<DbConnPool>) -> impl IntoResponse {
+async fn readiness(State(db): State<PgPool>) -> impl IntoResponse {
     if sqlx::query!("SELECT 1 AS one").fetch_one(&db).await.is_ok() {
         (StatusCode::OK, "ready")
     } else {
@@ -29,7 +29,7 @@ mod tests {
     use std::time::Duration;
     use tower::ServiceExt;
 
-    fn unavailable_pool() -> DbConnPool {
+    fn unavailable_pool() -> PgPool {
         PgPoolOptions::new()
             .acquire_timeout(Duration::from_millis(50))
             .connect_lazy("postgres://postgres:postgres@127.0.0.1:1/postgres")
