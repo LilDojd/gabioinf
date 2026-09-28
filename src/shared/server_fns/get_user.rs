@@ -4,7 +4,7 @@ use crate::shared::{models::Guest, server_fns::ServerError};
 use dioxus::prelude::*;
 #[server(session:SessionWrapper)]
 pub async fn get_user() -> Result<Option<Guest>, ServerError> {
-    match session.session.user {
+    match session.session.user().await {
         Some(user) => Ok(Some(user)),
         None => Ok(None),
     }

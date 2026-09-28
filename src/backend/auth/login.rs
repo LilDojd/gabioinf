@@ -29,7 +29,7 @@ async fn login(
     session: Session,
     Query(NextUrl { next }): Query<NextUrl>,
 ) -> impl IntoResponse {
-    let (auth_url, pending_authorization) = auth_session.backend.authorize_url_unscoped();
+    let (auth_url, pending_authorization) = auth_session.backend().authorize_url_unscoped();
     let next = next.as_deref().and_then(local_path);
     let stored = session
         .insert(PENDING_AUTHORIZATION_KEY, pending_authorization)

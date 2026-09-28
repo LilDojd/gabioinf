@@ -27,7 +27,7 @@ pub async fn load_signatures(
 
 #[server(session:SessionWrapper, state:axum::Extension<AppState>)]
 pub async fn load_guestbook_user() -> Result<AuthState, ServerError> {
-    let Some(guest) = session.session.user else {
+    let Some(guest) = session.session.user().await else {
         return Ok(AuthState::Unauthenticated);
     };
     let entry = state

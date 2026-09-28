@@ -4,7 +4,6 @@ use crate::shared::server_fns::ServerError;
 use dioxus::prelude::*;
 #[server(session:SessionWrapper)]
 pub async fn logout() -> Result<(), ServerError> {
-    let mut session = session;
     tracing::info!("Logging out");
     session
         .session

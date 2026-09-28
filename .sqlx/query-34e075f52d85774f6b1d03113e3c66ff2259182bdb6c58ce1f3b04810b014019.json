@@ -6,22 +6,36 @@
       {
         "ordinal": 0,
         "name": "comment_id?: CommentId",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "reactions",
+            "name": "comment_id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "emoji",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "reactions",
+            "name": "emoji"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "count!",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": "Expression"
       },
       {
         "ordinal": 3,
         "name": "reacted!",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {

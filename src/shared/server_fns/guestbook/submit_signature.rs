@@ -57,7 +57,11 @@ fn validate_payload(mut payload: CreateEntryRequest) -> Result<CreateEntryReques
 pub async fn submit_signature(payload: CreateEntryRequest) -> Result<GuestbookEntry, ServerError> {
     use crate::shared::models::NewGuestbookEntry;
 
-    let guest = session.session.user.ok_or(ServerError::Unauthenticated)?;
+    let guest = session
+        .session
+        .user()
+        .await
+        .ok_or(ServerError::Unauthenticated)?;
     let payload = validate_payload(payload)?;
 
     let new_entry = NewGuestbookEntry {
@@ -128,7 +132,7 @@ pub(crate) async fn moderation_test_context(
         .unwrap()
         .into_body()
         .unwrap();
-    let mut session = AuthSession::from_request_parts(&mut parts, &())
+    let session = AuthSession::from_request_parts(&mut parts, &())
         .await
         .unwrap();
     session.login(&guest).await.unwrap();
