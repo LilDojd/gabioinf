@@ -16,7 +16,7 @@ pub(crate) type SetOauthClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthzResp {
-    code: String,
+    code: Option<String>,
     state: CsrfToken,
 }
 #[derive(Deserialize, Serialize)]
@@ -78,6 +78,9 @@ mod get {
             pkce_verifier,
             next,
         } = pending;
+        let Some(code) = code else {
+            return Redirect::to(next.as_deref().unwrap_or("/")).into_response();
+        };
         let creds = Credentials {
             code,
             old_state: csrf_state,
