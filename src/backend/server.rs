@@ -63,12 +63,15 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
             .context("invalid rate limiter configuration")?,
     );
     let governor_limiter = governor_conf.limiter().clone();
+    let fullstack_state = FullstackState::new(cfg.into(), dxapp);
+    let static_assets = Router::new()
+        .serve_static_assets()
+        .with_state(fullstack_state.clone());
     let dioxus = Router::new()
         .register_server_functions()
         .route_layer(GovernorLayer::new(governor_conf.clone()))
-        .serve_static_assets()
         .fallback(get(FullstackState::render_handler))
-        .with_state(FullstackState::new(cfg.into(), dxapp));
+        .with_state(fullstack_state);
     let application = dioxus
         .merge(blog::router(&origin))
         .nest("/v1/", api_router(state.clone(), governor_conf))
@@ -79,6 +82,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         .layer(NewSentryLayer::<Request>::new_from_top());
     let app = Router::new()
         .nest("/health", health::router(postgres.clone()))
+        .merge(static_assets)
         .merge(application);
     let address = dioxus::cli_config::fullstack_address_or_localhost();
     let listener = tokio::net::TcpListener::bind(address)
