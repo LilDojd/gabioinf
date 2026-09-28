@@ -71,10 +71,7 @@ pub fn Layout() -> Element {
             }
             MobileFooter { clock: clock() }
             if matches!(route, Route::BlogPost { .. }) {
-                div {
-                    class: "reading-progress fixed top-0 left-0 z-20 h-0.5 w-full bg-accent",
-                    style: "transform: scaleX({progress})",
-                }
+                ReadingProgress { progress }
             }
             img {
                 class: if (ui.sesh_visible)() { "fixed right-6 bottom-0 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none" } else { "fixed right-6 -bottom-40 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none" },
@@ -83,6 +80,16 @@ pub fn Layout() -> Element {
             }
             if (ui.palette_open)() { CommandPalette {} }
             if (ui.help_open)() { HelpSheet {} }
+        }
+    }
+}
+
+#[component]
+fn ReadingProgress(progress: ReadSignal<f32>) -> Element {
+    rsx! {
+        div {
+            class: "reading-progress fixed top-0 left-0 z-20 h-0.5 w-full bg-accent",
+            style: "transform: scaleX({progress})",
         }
     }
 }
