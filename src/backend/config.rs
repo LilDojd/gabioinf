@@ -1,9 +1,9 @@
 use crate::hide::Hide;
-use axum_extra::extract::cookie::Key;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use config::{Config, ConfigError, Environment, File};
 use serde::{Deserialize, Deserializer, de};
 use std::num::NonZeroU32;
+use tower_sessions::cookie::Key;
 #[derive(Debug, Deserialize)]
 pub struct RateLimiting {
     pub requests_per_second: NonZeroU32,

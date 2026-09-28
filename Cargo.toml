@@ -47,9 +47,6 @@ tokio = { version = "1.53.1", features = [
   "signal",
   "time",
 ], optional = true }
-axum-extra = { version = "0.12.6", default-features = false, features = [
-  "cookie-private",
-], optional = true }
 sqlx = { version = "0.9.0", default-features = false, features = [
   "macros",
   "migrate",
@@ -138,7 +135,6 @@ server = [
   "dep:base64",
   "dep:governor",
   "dep:tokio",
-  "dep:axum-extra",
   "dep:sqlx",
   "dep:reqwest",
   "dep:tower",

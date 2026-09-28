@@ -37,11 +37,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let origin = config.origin().context("invalid site origin")?;
     let client = build_oauth_client(&config.gabioinf.id, &config.gabioinf.secret, &origin);
     let reqwest_client = reqwest::Client::new();
-    let state = AppState::new(
-        postgres.clone(),
-        origin.clone(),
-        config.session.secret.clone(),
-    );
+    let state = AppState::new(postgres.clone());
     let session_store = PostgresStore::new(postgres.clone());
     session_store
         .migrate()
@@ -49,7 +45,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         .context("failed to migrate session store")?;
     let session_layer = SessionManagerLayer::new(session_store.clone())
         .with_secure(true)
-        .with_signed(state.clone().key)
+        .with_signed(config.session.secret.clone())
         .with_same_site(SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
     let backend = AuthBackend::new(state.guest_repo.clone(), client, reqwest_client);
