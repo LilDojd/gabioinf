@@ -22,7 +22,7 @@ use crate::{
 use axum::{Router, extract::FromRequestParts, http::request::Parts};
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use oauth2::{
-    AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope, TokenResponse,
+    AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, TokenResponse,
     http::header::{AUTHORIZATION, USER_AGENT},
 };
 use reqwest::Url;
@@ -74,15 +74,11 @@ impl AuthBackend {
             reqwest_client,
         }
     }
-    pub fn authorize_url<I>(&self, scopes: I) -> (Url, PendingAuthorization)
-    where
-        I: IntoIterator<Item = Scope>,
-    {
+    pub fn authorize_url(&self, next: Option<String>) -> (Url, PendingAuthorization) {
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
         let (url, csrf_state) = self
             .client
             .authorize_url(CsrfToken::new_random)
-            .add_scopes(scopes)
             .set_pkce_challenge(pkce_challenge)
             .url();
         (
@@ -90,11 +86,9 @@ impl AuthBackend {
             PendingAuthorization {
                 csrf_state,
                 pkce_verifier,
+                next,
             },
         )
-    }
-    pub fn authorize_url_unscoped(&self) -> (Url, PendingAuthorization) {
-        self.authorize_url(std::iter::empty())
     }
 }
 impl AuthnBackend for AuthBackend {
@@ -210,8 +204,8 @@ mod tests {
     #[tokio::test]
     async fn authorization_url_uses_fresh_matching_s256_pkce_challenges() {
         let backend = test_backend();
-        let (first_url, first_pending) = backend.authorize_url_unscoped();
-        let (second_url, _) = backend.authorize_url_unscoped();
+        let (first_url, first_pending) = backend.authorize_url(None);
+        let (second_url, _) = backend.authorize_url(None);
         let first_challenge = first_url
             .query_pairs()
             .find(|(key, _)| key == "code_challenge")
