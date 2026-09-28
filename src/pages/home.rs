@@ -25,8 +25,11 @@ pub fn Home() -> Element {
                             let next = (ui.retype)().wrapping_add(1);
                             ui.retype.set(next);
                         },
-                        for generation in [(ui.retype)()] {
-                            Typewriter { key: "{generation}", text: GREETING, generation, completed: ui.greeting_completed }
+                        span { class: "sr-only", {GREETING} }
+                        span { aria_hidden: "true",
+                            for generation in [(ui.retype)()] {
+                                Typewriter { key: "{generation}", text: GREETING, generation, completed: ui.greeting_completed }
+                            }
                         }
                     }
                     div { class: "prose-font flex flex-col gap-3.5 text-[20px] leading-[1.45] text-prose text-pretty xl:text-[22px]",
