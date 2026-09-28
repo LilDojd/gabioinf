@@ -9,17 +9,22 @@ use dioxus::prelude::*;
 #[cfg(feature = "server")]
 fn validate_body(body: String) -> Result<(String, String), ServerError> {
     let body = body.trim().to_string();
-    if !(1..=2000).contains(&body.chars().count()) {
-        return Err(ServerError::Validation(
-            "Comment must be between 1 and 2000 characters".to_string(),
-        ));
+    use crate::{backend::profanity::contains_severe_content, shared::models::COMMENT_MAX};
+
+    if !(1..=COMMENT_MAX).contains(&body.chars().count()) {
+        return Err(ServerError::Validation(format!(
+            "Comment must be between 1 and {COMMENT_MAX} characters"
+        )));
     }
-    crate::backend::profanity::validate_no_severe_content(&body)
-        .map_err(|_| ServerError::Validation("Comment contains offensive content".to_string()))?;
+    let offensive = || ServerError::Validation("Comment contains offensive content".to_string());
+    if contains_severe_content(&body) {
+        return Err(offensive());
+    }
     let (body_html, visible_text) = crate::backend::markdown::render_with_text(&body)
         .map_err(|error| ServerError::Validation(format!("Invalid Markdown: {error}")))?;
-    crate::backend::profanity::validate_no_severe_content(&visible_text)
-        .map_err(|_| ServerError::Validation("Comment contains offensive content".to_string()))?;
+    if contains_severe_content(&visible_text) {
+        return Err(offensive());
+    }
     Ok((body, body_html))
 }
 

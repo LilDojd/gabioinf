@@ -15,6 +15,8 @@ impl GuestbookId {
         self.0
     }
 }
+pub const GUESTBOOK_MESSAGE_MAX: usize = 255;
+
 /// Represents an entry in the guestbook.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct GuestbookEntry {

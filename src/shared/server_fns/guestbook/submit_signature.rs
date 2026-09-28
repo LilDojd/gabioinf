@@ -7,41 +7,13 @@ use crate::backend::{AppState, auth::AuthSession};
 use crate::shared::{models::GuestbookEntry, server_fns::ServerError};
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "server")]
-use validator::Validate;
 
 /// Request payload for creating a new guestbook entry.
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "server", derive(Validate))]
 pub struct CreateEntryRequest {
     /// The message content of the new guestbook entry.
-    #[cfg_attr(
-        feature = "server",
-        validate(
-            length(
-                min = 1,
-                max = 255,
-                message = "Message must be between 1 and 255 characters"
-            ),
-            custom(
-                function = "crate::backend::profanity::validate_no_severe_content",
-                message = "Message contains offensive content"
-            )
-        )
-    )]
     pub message: String,
     pub signature: Option<String>,
-}
-
-#[cfg(feature = "server")]
-fn validation_message(errors: &validator::ValidationErrors) -> String {
-    errors
-        .field_errors()
-        .get("message")
-        .and_then(|errors| errors.first())
-        .and_then(|error| error.message.as_deref())
-        .unwrap_or("Invalid guestbook message")
-        .to_owned()
 }
 
 #[cfg(feature = "server")]
@@ -59,10 +31,21 @@ fn is_small_png(encoded: &str) -> bool {
 
 #[cfg(feature = "server")]
 fn validate_payload(mut payload: CreateEntryRequest) -> Result<CreateEntryRequest, ServerError> {
+    use crate::{
+        backend::profanity::contains_severe_content, shared::models::GUESTBOOK_MESSAGE_MAX,
+    };
+
     payload.message = payload.message.trim().to_string();
-    payload
-        .validate()
-        .map_err(|errors| ServerError::Validation(validation_message(&errors)))?;
+    if !(1..=GUESTBOOK_MESSAGE_MAX).contains(&payload.message.chars().count()) {
+        return Err(ServerError::Validation(format!(
+            "Message must be between 1 and {GUESTBOOK_MESSAGE_MAX} characters"
+        )));
+    }
+    if contains_severe_content(&payload.message) {
+        return Err(ServerError::Validation(
+            "Message contains offensive content".to_string(),
+        ));
+    }
     if payload
         .signature
         .as_deref()
