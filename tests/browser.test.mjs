@@ -12,6 +12,10 @@ before(async () => {
 });
 after(async () => { await browser?.close(); });
 
+async function hydrated(page) {
+  await page.locator("[data-dioxus-id]").first().waitFor({ state: "attached" });
+}
+
 async function openArticle(options = {}) {
   const context = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"] });
   if (options.offlineHighlighting) await context.route("https://cdn.jsdelivr.net/**", (route) => route.abort());
@@ -19,6 +23,7 @@ async function openArticle(options = {}) {
   await page.goto(article);
   const block = page.locator(".code-block").first();
   await block.getByRole("button", { name: "Copy code", exact: true }).waitFor();
+  await hydrated(page);
   return { context, page, block };
 }
 
@@ -173,5 +178,50 @@ test("reply composer opens beside its comment, focuses, and preserves the draft 
     await reply.fill("An unfinished reply");
     await page.getByRole("button", { name: "cancel", exact: true }).click();
     assert.equal(await page.getByRole("textbox", { name: "Comment", exact: true }).inputValue(), "An unfinished reply");
+  } finally { await context.close(); }
+});
+
+test("the command palette focuses its search every time it opens", async () => {
+  const context = await browser.newContext();
+  try {
+    const page = await context.newPage();
+    await page.goto(origin);
+    await hydrated(page);
+    const search = page.getByRole("textbox", { name: "where to?", exact: true });
+    await assert.doesNotReject(async () => {
+      for (let tries = 0; ; tries++) {
+        await page.keyboard.press("/");
+        try { return await search.waitFor({ timeout: 500 }); } catch (error) { if (tries === 10) throw error; }
+      }
+    }, "the window shortcuts install after hydration");
+    await page.keyboard.press("Escape");
+    await search.waitFor({ state: "detached" });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await page.keyboard.press("/");
+      await search.waitFor();
+      assert.ok(await search.evaluate((element) => document.activeElement === element));
+      await page.keyboard.press("Escape");
+      await search.waitFor({ state: "detached" });
+    }
+  } finally { await context.close(); }
+});
+
+test("drawing a signature keeps the chosen ink", async () => {
+  const context = await browser.newContext();
+  try {
+    await context.route("**/api/load_guestbook_user*", (route) => json(route, { Authenticated: { guest, entry: null } }));
+    await context.route("**/api/load_signatures*", (route) => json(route, signaturePage));
+    const page = await context.newPage();
+    await page.goto(`${origin}/guestbook`);
+    await hydrated(page);
+    await page.getByRole("button", { name: "sign guestbook", exact: true }).click();
+    const green = page.getByRole("radio", { name: "alien green", exact: true });
+    await green.click();
+    const pad = await page.locator("canvas").boundingBox();
+    await page.mouse.move(pad.x + 20, pad.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(pad.x + 80, pad.y + 60, { steps: 5 });
+    await page.mouse.up();
+    assert.equal(await green.getAttribute("aria-checked"), "true");
   } finally { await context.close(); }
 });
