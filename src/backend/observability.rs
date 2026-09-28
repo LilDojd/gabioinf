@@ -35,12 +35,11 @@ pub(crate) fn init(level: Level) -> ClientInitGuard {
 }
 
 pub(super) async fn sentry_user_context(request: Request, next: Next) -> Response {
-    if let Some(user) = request
-        .extensions()
-        .get::<AuthSession>()
-        .and_then(|session| session.user.as_ref())
+    let session = request.extensions().get::<AuthSession>().cloned();
+    if let Some(session) = session
+        && let Some(user) = session.user().await
     {
-        sentry::configure_scope(|scope| scope.set_user(Some(sentry_user(user))));
+        sentry::configure_scope(|scope| scope.set_user(Some(sentry_user(&user))));
     }
 
     next.run(request).await

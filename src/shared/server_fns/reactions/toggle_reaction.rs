@@ -17,7 +17,11 @@ pub async fn toggle_reaction(
     target: ReactionTarget,
     emoji: Emoji,
 ) -> Result<Vec<ReactionCount>, ServerError> {
-    let user = session.session.user.ok_or(ServerError::Unauthenticated)?;
+    let user = session
+        .session
+        .user()
+        .await
+        .ok_or(ServerError::Unauthenticated)?;
     toggle_for_guest(
         &state.reaction_repo,
         &state.comment_repo,

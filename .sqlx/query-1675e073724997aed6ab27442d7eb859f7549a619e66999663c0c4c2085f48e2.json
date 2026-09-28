@@ -6,37 +6,79 @@
       {
         "ordinal": 0,
         "name": "id: GuestbookId",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "guestbook",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "message",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "guestbook",
+            "name": "message"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "signature",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "guestbook",
+            "name": "signature"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "guestbook",
+            "name": "created_at"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "guestbook",
+            "name": "updated_at"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "author_id: GuestId",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "guestbook",
+            "name": "author_id"
+          }
+        }
       },
       {
         "ordinal": 6,
         "name": "author_username",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "guests",
+            "name": "username"
+          }
+        }
       }
     ],
     "parameters": {

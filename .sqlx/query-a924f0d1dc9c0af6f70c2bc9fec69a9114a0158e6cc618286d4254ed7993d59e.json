@@ -6,32 +6,68 @@
       {
         "ordinal": 0,
         "name": "id: CommentId",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "comments",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "parent_id?: CommentId",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "comments",
+            "name": "parent_id"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "username",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "guests",
+            "name": "username"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "github_id: GithubId",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "guests",
+            "name": "github_id"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "body",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "comments",
+            "name": "body"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "comments",
+            "name": "created_at"
+          }
+        }
       }
     ],
     "parameters": {

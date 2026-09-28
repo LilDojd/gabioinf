@@ -56,7 +56,7 @@ mod get {
     /// Failures are logged with their cause; the visitor only sees a short status
     /// page because nothing here is actionable for them.
     pub async fn callback(
-        mut auth_session: AuthSession,
+        auth_session: AuthSession,
         session: Session,
         Query(AuthzResp {
             code,

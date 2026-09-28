@@ -29,7 +29,11 @@ pub async fn post_comment(
     body: String,
     parent_id: Option<CommentId>,
 ) -> Result<Comment, ServerError> {
-    let user = session.session.user.ok_or(ServerError::Unauthenticated)?;
+    let user = session
+        .session
+        .user()
+        .await
+        .ok_or(ServerError::Unauthenticated)?;
     if crate::blog::find_post(&slug).is_none() {
         return Err(ServerError::Validation(
             "That blog post does not exist".to_string(),

@@ -4,7 +4,7 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
-    "playwright": "1.61.1",
+    "playwright": "1.63.0",
     "tailwindcss": "^4.3.3"
   },
   "packageManager": "npm@11.17.0"

@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 
 #[server(session:SessionWrapper, state:axum::Extension<AppState>)]
 pub async fn load_reactions(slug: String) -> Result<Reactions, ServerError> {
-    let viewer = session.session.user.map(|user| user.id);
+    let viewer = session.session.user().await.map(|user| user.id);
     state
         .reaction_repo
         .counts_for_post(&slug, viewer)
