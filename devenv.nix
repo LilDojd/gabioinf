@@ -32,9 +32,14 @@ in
     initialScript = "ALTER ROLE ${databaseName} CREATEDB;";
   };
 
+  processes.tailwind.exec = "tailwindcss -i input.css -o assets/tailwind.css --watch=always";
+
   processes.app = {
     exec = ''secretspec run --scope app -- env DATABASE_URL="$DATABASE_URL" dx serve'';
-    after = [ "devenv:processes:postgres" ];
+    after = [
+      "devenv:processes:postgres"
+      "devenv:processes:tailwind@started"
+    ];
   };
 
   scripts.prepare-sqlx.exec = ''
