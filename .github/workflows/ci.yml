@@ -57,5 +57,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - name: Run tests
         run: cargo nextest run --locked --features server
-      - name: Check web build
-        run: cargo check --locked --features web --target wasm32-unknown-unknown
+      - name: Clippy (web)
+        env:
+          SQLX_OFFLINE: "true"
+        run: cargo clippy --locked --features web --target wasm32-unknown-unknown -- -D warnings

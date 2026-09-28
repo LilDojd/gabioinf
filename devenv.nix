@@ -67,6 +67,7 @@ in
     pkgs.cargo-machete
     pkgs.cargo-audit
     pkgs.cargo-edit
+    pkgs.cargo-nextest
     pkgs.dioxus-cli
     pkgs.lld
     pkgs.sqlx-cli
