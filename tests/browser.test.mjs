@@ -54,7 +54,7 @@ test("copy and wrapping stay usable when grammar loading fails", async () => {
   try {
     const source = await displayedSource(block);
     await block.getByRole("button", { name: "Wrap lines", exact: true }).click();
-    assert.match(await block.getAttribute("class"), /code-wrap/);
+    await page.locator(".code-block.code-wrap").first().waitFor();
     assert.equal(await displayedSource(block), source);
     await block.getByRole("button", { name: "Copy code", exact: true }).click();
     await block.getByText("Code copied.", { exact: true }).waitFor();
@@ -149,7 +149,7 @@ test("article controls do not wait for database-backed discussion", async () => 
     await page.getByRole("link", { name: /Blog rendering showcase/ }).click();
     const block = page.locator(".code-block").first();
     await block.getByRole("button", { name: "Wrap lines", exact: true }).click({ timeout: 5000 });
-    assert.match(await block.getAttribute("class"), /code-wrap/);
+    await page.locator(".code-block.code-wrap").first().waitFor();
   } finally { release(); await context.close(); }
 });
 
