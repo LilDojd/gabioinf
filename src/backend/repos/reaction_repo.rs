@@ -3,14 +3,6 @@ use crate::{
     shared::models::{CommentId, Emoji, GuestId, ReactionCount, ReactionTarget, Reactions},
 };
 
-/// Mirrors PostgreSQL's enum while the shared target also carries its identifier.
-#[derive(Clone, Copy, Debug, sqlx::Type)]
-#[sqlx(type_name = "reaction_target", rename_all = "lowercase")]
-enum ReactionTargetKind {
-    Post,
-    Comment,
-}
-
 #[derive(Clone, Debug)]
 pub struct ReactionRepo {
     pool: sqlx::PgPool,
@@ -78,8 +70,8 @@ impl ReactionRepo {
         emoji: Emoji,
     ) -> BResult<bool> {
         let mut transaction = self.pool.begin().await?;
-        let (target_kind, post_slug, comment_id) = match target {
-            ReactionTarget::Post { slug } => (ReactionTargetKind::Post, slug, None),
+        let (post_slug, comment_id) = match target {
+            ReactionTarget::Post { slug } => (slug, None),
             ReactionTarget::Comment(id) => {
                 let Some(post_slug) =
                     sqlx::query_scalar!("SELECT post_slug FROM comments WHERE id = $1", id.0,)
@@ -88,16 +80,15 @@ impl ReactionRepo {
                 else {
                     return Ok(false);
                 };
-                (ReactionTargetKind::Comment, post_slug, Some(id.0))
+                (post_slug, Some(id.0))
             }
         };
         let inserted = sqlx::query!(
             r#"
-            INSERT INTO reactions (target_kind, post_slug, comment_id, guest_id, emoji)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO reactions (post_slug, comment_id, guest_id, emoji)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT DO NOTHING
             "#,
-            target_kind as ReactionTargetKind,
             post_slug,
             comment_id,
             guest_id.as_value(),
@@ -112,13 +103,11 @@ impl ReactionRepo {
             sqlx::query!(
                 r#"
                 DELETE FROM reactions
-                WHERE target_kind = $1
-                  AND post_slug = $2
-                  AND comment_id IS NOT DISTINCT FROM $3
-                  AND guest_id = $4
-                  AND emoji = $5
+                WHERE post_slug = $1
+                  AND comment_id IS NOT DISTINCT FROM $2
+                  AND guest_id = $3
+                  AND emoji = $4
                 "#,
-                target_kind as ReactionTargetKind,
                 post_slug,
                 comment_id,
                 guest_id.as_value(),
