@@ -4,8 +4,4 @@ ignore = [
   # Its pop() keys are String, whose Drop cannot panic, so the advisory's
   # panic-during-key-drop plus catch_unwind preconditions are not reachable.
   "RUSTSEC-2026-0253",
-  # rsa is retained only in SQLx's optional MySQL lockfile graph; even
-  # --all-features --target all has no dependency path to it. Cargo cannot
-  # prune it while the selected SQLx 0.8.6 manifests retain that graph.
-  "RUSTSEC-2023-0071",
 ]
