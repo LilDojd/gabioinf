@@ -74,7 +74,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
         .with_state(fullstack_state);
     let application = dioxus
         .merge(blog::router(&origin))
-        .nest("/v1/", api_router(state.clone(), governor_conf))
+        .nest("/v1/", api_router(governor_conf))
         .layer(middleware::from_fn(observability::sentry_user_context))
         .layer(Extension(state))
         .layer(auth_layer)

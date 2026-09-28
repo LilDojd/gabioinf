@@ -1,13 +1,11 @@
-use crate::backend::{
-    db::DbConnPool,
-    repos::{CommentRepo, GuestRepo, GuestbookRepo, ReactionRepo},
-};
+use crate::backend::repos::{CommentRepo, GuestRepo, GuestbookRepo, ReactionRepo};
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
+use sqlx::PgPool;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub db: DbConnPool,
+    pub db: PgPool,
     pub guest_repo: GuestRepo,
     pub guestbook_repo: GuestbookRepo,
     pub comment_repo: CommentRepo,
@@ -24,7 +22,7 @@ impl FromRef<AppState> for Key {
 }
 
 impl AppState {
-    pub fn new(db: DbConnPool, origin: String, key: Key) -> Self {
+    pub fn new(db: PgPool, origin: String, key: Key) -> Self {
         Self {
             db: db.clone(),
             guest_repo: GuestRepo::new(db.clone()),
