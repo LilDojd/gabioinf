@@ -94,11 +94,7 @@ pub(crate) async fn moderation_test_context(
     use tower::{ServiceExt, service_fn};
     use tower_sessions::{MemoryStore, Session};
 
-    let state = AppState::new(
-        pool,
-        "https://example.test".into(),
-        axum_extra::extract::cookie::Key::generate(),
-    );
+    let state = AppState::new(pool);
     let guest = state
         .guest_repo
         .upsert(&Guest {
@@ -111,7 +107,7 @@ pub(crate) async fn moderation_test_context(
         .unwrap();
     let backend = AuthBackend::new(
         state.guest_repo.clone(),
-        build_oauth_client("test-client", "test-secret", &state.origin),
+        build_oauth_client("test-client", "test-secret", "https://example.test"),
         reqwest::Client::new(),
     );
     // Let axum-login create its session extension, then retain the real request parts.
