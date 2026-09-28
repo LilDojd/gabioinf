@@ -12,3 +12,6 @@ pub mod profanity;
 pub mod rate_limit;
 pub mod repos;
 pub mod server;
+#[cfg(test)]
+pub(crate) mod test_support;
+pub(crate) mod validation;

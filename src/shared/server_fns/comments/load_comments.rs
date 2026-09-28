@@ -13,7 +13,7 @@ pub async fn load_comments(slug: String) -> Result<Vec<Comment>, ServerError> {
 
     rows.into_iter()
         .map(|row| {
-            super::render_comment(row)
+            row.render()
                 .map_err(|error| ServerError::internal("render stored comment", error))
         })
         .collect()

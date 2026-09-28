@@ -1,6 +1,9 @@
 use crate::{
-    backend::errors::BResult,
-    shared::models::{CommentId, GithubId, GuestId},
+    backend::{
+        errors::BResult,
+        markdown::{self, MarkdownError},
+    },
+    shared::models::{Comment, CommentAuthor, CommentId, GithubId, GuestId, OWNER_GITHUB_ID},
 };
 use time::OffsetDateTime;
 
@@ -12,6 +15,27 @@ pub(crate) struct CommentRow {
     pub github_id: GithubId,
     pub body: String,
     pub created_at: OffsetDateTime,
+}
+
+impl CommentRow {
+    pub(crate) fn render(self) -> Result<Comment, MarkdownError> {
+        let body_html = markdown::render(&self.body)?;
+        Ok(self.with_html(body_html))
+    }
+
+    pub(crate) fn with_html(self, body_html: String) -> Comment {
+        Comment {
+            id: self.id,
+            parent_id: self.parent_id,
+            author: CommentAuthor {
+                username: self.username,
+                github_id: self.github_id,
+                is_owner: self.github_id == OWNER_GITHUB_ID,
+            },
+            body_html,
+            created_at: self.created_at,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

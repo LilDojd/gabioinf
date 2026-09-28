@@ -6,28 +6,6 @@ use crate::shared::{
 };
 use dioxus::prelude::*;
 
-#[cfg(feature = "server")]
-fn validate_body(body: String) -> Result<(String, String), ServerError> {
-    let body = body.trim().to_string();
-    use crate::{backend::profanity::contains_severe_content, shared::models::COMMENT_MAX};
-
-    if !(1..=COMMENT_MAX).contains(&body.chars().count()) {
-        return Err(ServerError::Validation(format!(
-            "Comment must be between 1 and {COMMENT_MAX} characters"
-        )));
-    }
-    let offensive = || ServerError::Validation("Comment contains offensive content".to_string());
-    if contains_severe_content(&body) {
-        return Err(offensive());
-    }
-    let (body_html, visible_text) = crate::backend::markdown::render_with_text(&body)
-        .map_err(|error| ServerError::Validation(format!("Invalid Markdown: {error}")))?;
-    if contains_severe_content(&visible_text) {
-        return Err(offensive());
-    }
-    Ok((body, body_html))
-}
-
 #[server(auth:AuthSession, state:axum::Extension<AppState>)]
 pub async fn post_comment(
     slug: String,
@@ -40,7 +18,7 @@ pub async fn post_comment(
             "That blog post does not exist".to_string(),
         ));
     }
-    let (body, body_html) = validate_body(body)?;
+    let (body, body_html) = crate::backend::validation::comment_body(body)?;
     let row = state
         .comment_repo
         .create(&slug, user.id, parent_id, &body)
@@ -52,13 +30,13 @@ pub async fn post_comment(
             )
         })?;
 
-    Ok(super::comment_with_html(row, body_html))
+    Ok(row.with_html(body_html))
 }
 
 #[cfg(all(test, feature = "server"))]
 mod tests {
     use super::*;
-    use crate::shared::server_fns::moderation_test_context;
+    use crate::backend::test_support::moderation_test_context;
 
     #[sqlx::test]
     async fn authenticated_comment_rejects_severe_content_without_inserting(pool: sqlx::PgPool) {
@@ -147,109 +125,5 @@ mod tests {
                 assert_eq!(stored, ("F u c k".into(), Some(root.id.0)));
             })
             .await;
-    }
-
-    #[test]
-    fn validation_trims_and_renders_safe_markdown() {
-        let (body, html) = validate_body("  **hello**  ".to_string()).unwrap();
-
-        assert_eq!(body, "**hello**");
-        assert_eq!(html, "<p><strong>hello</strong></p>\n");
-    }
-
-    #[test]
-    fn validation_allows_clean_mild_and_moderate_comments() {
-        for text in [
-            "This is a clean message",
-            "This is a bad word: crap",
-            "F u c k",
-        ] {
-            let (body, html) = validate_body(format!("  {text}  ")).unwrap();
-            assert_eq!(body, text);
-            assert_eq!(html, format!("<p>{text}</p>\n"));
-        }
-    }
-
-    #[test]
-    fn validation_rejects_severe_comments_with_user_facing_error() {
-        assert_eq!(
-            validate_body("  i hope you die  ".to_string()),
-            Err(ServerError::Validation(
-                "Comment contains offensive content".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn validation_rejects_equivalent_severe_text_in_entities_and_links() {
-        for body in [
-            "i h&#111;p&#101; y&#111;u d&#105;&#101;",
-            "i h&#x6f;p&#x65; y&#x6f;u d&#x69;&#x65;",
-            "i ho[pe](https://example.com) you die",
-            "i ho[**pe**](https://example.com) you die",
-        ] {
-            assert_eq!(
-                validate_body(body.to_string()),
-                Err(ServerError::Validation(
-                    "Comment contains offensive content".to_string()
-                )),
-                "{body:?}"
-            );
-        }
-    }
-
-    #[test]
-    fn validation_still_rejects_severe_raw_text_outside_link_labels() {
-        assert_eq!(
-            validate_body("[hello](https://example.com \"i hope you die\")".to_string()),
-            Err(ServerError::Validation(
-                "Comment contains offensive content".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn validation_allows_formatted_clean_mild_and_moderate_comments() {
-        for body in [
-            "**hello** [world](https://example.com)",
-            "This is [crap](https://example.com)",
-            "This is [cr&#97;p](https://example.com)",
-            "**F u c k**",
-        ] {
-            let (stored, _) =
-                validate_body(body.to_string()).unwrap_or_else(|error| panic!("{body:?}: {error}"));
-            assert_eq!(stored, body);
-        }
-    }
-
-    #[test]
-    fn validation_keeps_encoded_html_as_escaped_text() {
-        let (_, html) = validate_body("&lt;script&gt;alert(1)&lt;/script&gt;".to_string()).unwrap();
-        assert!(html.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
-        assert!(!html.contains("<script>"));
-    }
-
-    #[test]
-    fn validation_rejects_unsafe_markdown_links() {
-        assert!(matches!(
-            validate_body("[click](javascript:alert(1))".to_string()),
-            Err(ServerError::Validation(message)) if message.starts_with("Invalid Markdown:")
-        ));
-    }
-
-    #[test]
-    fn validation_rejects_empty_long_and_unsafe_comments() {
-        assert!(matches!(
-            validate_body("  ".to_string()),
-            Err(ServerError::Validation(_))
-        ));
-        assert!(matches!(
-            validate_body("a".repeat(2001)),
-            Err(ServerError::Validation(_))
-        ));
-        assert!(matches!(
-            validate_body("<script>alert(1)</script>".to_string()),
-            Err(ServerError::Validation(_))
-        ));
     }
 }
