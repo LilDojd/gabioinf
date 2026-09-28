@@ -152,12 +152,8 @@ server = [
 ]
 web = ["dioxus/web", "time/wasm-bindgen", "getrandom/wasm_js"]
 
-[[test]]
-name = "blog_build"
-path = "tests/blog_build.rs"
-required-features = ["server"]
-
 [dev-dependencies]
+pulldown-cmark = { version = "0.13.4", default-features = false, features = ["html"] }
 yaml_serde = "0.10.7"
 time = { version = "0.3.55", features = ["parsing"] }
 sentry = { version = "0.49.3", default-features = false, features = ["test"] }

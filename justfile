@@ -52,7 +52,7 @@ new-post slug:
 
 check-posts:
     SQLX_OFFLINE=true cargo test --locked --all-features blog
-    SQLX_OFFLINE=true cargo test --locked --features server --test blog_build
+    cargo test --locked --test blog_build
 
 # Keep the local checks aligned with CI
 check:
