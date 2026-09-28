@@ -69,54 +69,30 @@ impl GuestbookRepo {
         excluded_id: Option<GuestbookId>,
     ) -> BResult<GuestbookPage> {
         let per_page = per_page.clamp(1, 100);
-        let limit = per_page as i64 + 1 + i64::from(excluded_id.is_some());
-        let mut entries = if let Some(cursor) = cursor {
-            sqlx::query_as!(
-                GuestbookEntry,
-                r#"
-                SELECT
-                    g.id AS "id: GuestbookId",
-                    g.message,
-                    g.signature,
-                    g.created_at,
-                    g.updated_at,
-                    g.author_id AS "author_id: GuestId",
-                    u.username AS author_username
-                FROM guestbook g JOIN guests u ON u.id = g.author_id
-                WHERE (g.created_at, g.id) < ($1, $2)
-                ORDER BY g.created_at DESC, g.id DESC
-                LIMIT $3
-                "#,
-                cursor.created_at,
-                cursor.id.as_value(),
-                limit,
-            )
-            .fetch_all(&self.pool)
-            .await?
-        } else {
-            sqlx::query_as!(
-                GuestbookEntry,
-                r#"
-                SELECT
-                    g.id AS "id: GuestbookId",
-                    g.message,
-                    g.signature,
-                    g.created_at,
-                    g.updated_at,
-                    g.author_id AS "author_id: GuestId",
-                    u.username AS author_username
-                FROM guestbook g JOIN guests u ON u.id = g.author_id
-                ORDER BY g.created_at DESC, g.id DESC
-                LIMIT $1
-                "#,
-                limit,
-            )
-            .fetch_all(&self.pool)
-            .await?
-        };
-        if let Some(excluded_id) = excluded_id {
-            entries.retain(|entry| entry.id != excluded_id);
-        }
+        let mut entries = sqlx::query_as!(
+            GuestbookEntry,
+            r#"
+            SELECT
+                g.id AS "id: GuestbookId",
+                g.message,
+                g.signature,
+                g.created_at,
+                g.updated_at,
+                g.author_id AS "author_id: GuestId",
+                u.username AS author_username
+            FROM guestbook g JOIN guests u ON u.id = g.author_id
+            WHERE (g.created_at, g.id) < (COALESCE($1, 'infinity'::timestamptz), COALESCE($2::BIGINT, 0))
+              AND g.id IS DISTINCT FROM $3
+            ORDER BY g.created_at DESC, g.id DESC
+            LIMIT $4
+            "#,
+            cursor.map(|cursor| cursor.created_at),
+            cursor.map(|cursor| cursor.id.as_value()),
+            excluded_id.map(|id| id.as_value()),
+            per_page as i64 + 1,
+        )
+        .fetch_all(&self.pool)
+        .await?;
         let has_more = entries.len() > per_page;
         entries.truncate(per_page);
         let next_cursor = has_more.then(|| {

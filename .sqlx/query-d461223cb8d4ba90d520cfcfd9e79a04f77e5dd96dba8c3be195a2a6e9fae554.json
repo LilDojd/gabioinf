@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    g.id AS \"id: GuestbookId\",\n                    g.message,\n                    g.signature,\n                    g.created_at,\n                    g.updated_at,\n                    g.author_id AS \"author_id: GuestId\",\n                    u.username AS author_username\n                FROM guestbook g JOIN guests u ON u.id = g.author_id\n                ORDER BY g.created_at DESC, g.id DESC\n                LIMIT $1\n                ",
+  "query": "\n            SELECT\n                g.id AS \"id: GuestbookId\",\n                g.message,\n                g.signature,\n                g.created_at,\n                g.updated_at,\n                g.author_id AS \"author_id: GuestId\",\n                u.username AS author_username\n            FROM guestbook g JOIN guests u ON u.id = g.author_id\n            WHERE (g.created_at, g.id) < (COALESCE($1, 'infinity'::timestamptz), COALESCE($2::BIGINT, 0))\n              AND g.id IS DISTINCT FROM $3\n            ORDER BY g.created_at DESC, g.id DESC\n            LIMIT $4\n            ",
   "describe": {
     "columns": [
       {
@@ -83,6 +83,9 @@
     ],
     "parameters": {
       "Left": [
+        "Timestamptz",
+        "Int8",
+        "Int8",
         "Int8"
       ]
     },
@@ -96,5 +99,5 @@
       false
     ]
   },
-  "hash": "1675e073724997aed6ab27442d7eb859f7549a619e66999663c0c4c2085f48e2"
+  "hash": "d461223cb8d4ba90d520cfcfd9e79a04f77e5dd96dba8c3be195a2a6e9fae554"
 }
