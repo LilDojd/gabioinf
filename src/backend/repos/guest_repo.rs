@@ -63,4 +63,25 @@ mod tests {
         assert_eq!(updated.name, "Updated User");
         assert_eq!(repo.find_by_id(created.id).await.unwrap(), Some(updated));
     }
+
+    #[sqlx::test]
+    async fn a_released_username_can_sign_in_on_another_account(pool: PgPool) {
+        let repo = GuestRepo::new(pool);
+        let original = Guest {
+            github_id: GithubId(1),
+            name: "Original".to_string(),
+            username: "shared".to_string(),
+            ..Default::default()
+        };
+        let newcomer = Guest {
+            github_id: GithubId(2),
+            name: "Newcomer".to_string(),
+            username: "shared".to_string(),
+            ..Default::default()
+        };
+
+        repo.upsert(&original).await.unwrap();
+
+        assert_eq!(repo.upsert(&newcomer).await.unwrap().github_id, GithubId(2));
+    }
 }
