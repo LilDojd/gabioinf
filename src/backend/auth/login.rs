@@ -13,8 +13,6 @@ use axum::{
 use axum_login::tower_sessions::Session;
 use serde::Deserialize;
 
-pub const NEXT_URL_KEY: &str = "auth.next-url";
-
 #[derive(Debug, Deserialize)]
 pub struct NextUrl {
     next: Option<String>,
@@ -29,12 +27,12 @@ async fn login(
     session: Session,
     Query(NextUrl { next }): Query<NextUrl>,
 ) -> impl IntoResponse {
-    let (auth_url, pending_authorization) = auth_session.backend().authorize_url_unscoped();
-    let next = next.as_deref().and_then(local_path);
+    let (auth_url, pending_authorization) = auth_session
+        .backend()
+        .authorize_url(next.as_deref().and_then(local_path));
     let stored = session
         .insert(PENDING_AUTHORIZATION_KEY, pending_authorization)
-        .await
-        .and(session.insert(NEXT_URL_KEY, next).await);
+        .await;
     match stored {
         Ok(()) => Redirect::to(auth_url.as_str()).into_response(),
         Err(error) => {
@@ -46,7 +44,7 @@ async fn login(
 
 /// Only same-site absolute paths may be used as a post-login redirect, so the
 /// `next` parameter cannot be abused as an open redirect (`//evil.com`, `https://…`).
-pub(crate) fn local_path(candidate: &str) -> Option<String> {
+fn local_path(candidate: &str) -> Option<String> {
     let is_local = candidate.starts_with('/')
         && !candidate.starts_with("//")
         && !candidate.starts_with("/\\")

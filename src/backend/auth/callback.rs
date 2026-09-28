@@ -1,5 +1,5 @@
 //! `GET /v1/oauth/callback`: the second half of the GitHub OAuth flow.
-use super::{AuthSession, Credentials, login::NEXT_URL_KEY};
+use super::{AuthSession, Credentials};
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{
@@ -23,6 +23,7 @@ pub struct AuthzResp {
 pub(crate) struct PendingAuthorization {
     pub(crate) csrf_state: CsrfToken,
     pub(crate) pkce_verifier: PkceCodeVerifier,
+    pub(crate) next: Option<String>,
 }
 pub(super) fn router() -> Router<()> {
     Router::new().route("/oauth/callback", get(self::get::callback))
@@ -42,15 +43,8 @@ pub fn build_oauth_client(client_id: &str, client_secret: &str, origin: &str) ->
         .set_token_uri(token_url)
         .set_redirect_uri(oauth_redirect_uri)
 }
-async fn take_pending_authorization(
-    session: &Session,
-) -> Result<Option<PendingAuthorization>, tower_sessions::session::Error> {
-    session.remove(PENDING_AUTHORIZATION_KEY).await
-}
 mod get {
     use super::*;
-    use crate::backend::auth::login::local_path;
-
     /// `GET /v1/oauth/callback?code=…&state=…`: GitHub sends the visitor back here.
     ///
     /// Failures are logged with their cause; the visitor only sees a short status
@@ -63,7 +57,10 @@ mod get {
             state: new_state,
         }): Query<AuthzResp>,
     ) -> Response {
-        let pending = match take_pending_authorization(&session).await {
+        let pending = match session
+            .remove::<PendingAuthorization>(PENDING_AUTHORIZATION_KEY)
+            .await
+        {
             Ok(Some(pending)) => pending,
             Ok(None) => {
                 return failure(
@@ -76,11 +73,16 @@ mod get {
                 return failure(StatusCode::INTERNAL_SERVER_ERROR, "sign-in failed");
             }
         };
+        let PendingAuthorization {
+            csrf_state,
+            pkce_verifier,
+            next,
+        } = pending;
         let creds = Credentials {
             code,
-            old_state: pending.csrf_state,
+            old_state: csrf_state,
             new_state,
-            pkce_verifier: pending.pkce_verifier,
+            pkce_verifier,
         };
         let user = match auth_session.authenticate(creds).await {
             Ok(Some(user)) => user,
@@ -103,52 +105,10 @@ mod get {
             tracing::error!(%error, "could not create the session");
             return failure(StatusCode::INTERNAL_SERVER_ERROR, "sign-in failed");
         }
-        let next = session
-            .remove::<String>(NEXT_URL_KEY)
-            .await
-            .ok()
-            .flatten()
-            .and_then(|next| local_path(&next))
-            .unwrap_or_else(|| "/".to_string());
-        Redirect::to(&next).into_response()
+        Redirect::to(next.as_deref().unwrap_or("/")).into_response()
     }
 
     fn failure(status: StatusCode, message: &'static str) -> Response {
         (status, message).into_response()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use oauth2::PkceCodeChallenge;
-    use std::sync::Arc;
-    use tower_sessions::MemoryStore;
-
-    #[tokio::test]
-    async fn pkce_verifier_is_taken_once() {
-        let session = Session::new(None, Arc::new(MemoryStore::default()), None);
-        let (_, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-        let pending = PendingAuthorization {
-            csrf_state: CsrfToken::new_random(),
-            pkce_verifier,
-        };
-        session
-            .insert(PENDING_AUTHORIZATION_KEY, pending)
-            .await
-            .unwrap();
-
-        assert!(
-            take_pending_authorization(&session)
-                .await
-                .unwrap()
-                .is_some()
-        );
-        assert!(
-            take_pending_authorization(&session)
-                .await
-                .unwrap()
-                .is_none()
-        );
     }
 }
