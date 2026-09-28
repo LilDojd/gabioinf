@@ -13,8 +13,6 @@ env:
   NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  GABIOINF_SECRET: ${{ secrets.GABIOINF_SECRET }}
-  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   DOMAIN_URL: gabioinf-pr-${{ github.event.number }}.fly.dev
 
 concurrency:
