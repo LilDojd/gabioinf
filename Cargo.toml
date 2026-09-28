@@ -24,7 +24,6 @@ time = { version = "0.3.55", features = [
   "macros",
   "formatting",
   "serde",
-  "local-offset",
 ] }
 serde = { version = "1.0.229", features = ["derive"] }
 config = { version = "0.15.26", default-features = false, features = [
@@ -35,7 +34,6 @@ thiserror = { version = "2.0.21", optional = true }
 base64 = { version = "0.23.1", optional = true }
 
 axum = { version = "0.8.9", default-features = false, features = [
-  "form",
   "http1",
   "query",
   "tokio",
