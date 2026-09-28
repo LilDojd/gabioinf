@@ -88,7 +88,7 @@ pub fn Layout() -> Element {
 fn ReadingProgress(progress: ReadSignal<f32>) -> Element {
     rsx! {
         div {
-            class: "reading-progress fixed top-0 left-0 z-20 h-0.5 w-full bg-accent",
+            class: "fixed origin-left top-0 left-0 z-20 h-0.5 w-full bg-accent",
             style: "transform: scaleX({progress})",
         }
     }

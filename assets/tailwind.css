@@ -49,6 +49,12 @@
     --color-mars: #ef6f6c;
     --color-planet: #c9ccd2;
     --color-empty-cell: #1a1c21;
+    --color-rule: #3a3e46;
+    --color-nav: #8b8f97;
+    --color-footnote: #9a9ea6;
+    --color-code-text: #d3d6dc;
+    --color-code-string: #dcd3b4;
+    --color-selected-gutter: #26312a;
     --font-recursive: "Recursive", ui-monospace, monospace;
     --font-source: "Source Sans 3", "Helvetica Neue", sans-serif;
   }
@@ -482,7 +488,7 @@
     align-items: center;
     gap: 10px;
     padding-block: 3px;
-    color: #8b8f97;
+    color: var(--color-nav);
     text-decoration: none;
     &:hover {
       color: var(--color-accent);
@@ -647,6 +653,9 @@
   }
   .grow {
     flex-grow: 1;
+  }
+  .origin-left {
+    transform-origin: 0;
   }
   .translate-y-\[\.12em\] {
     --tw-translate-y: .12em;
@@ -836,7 +845,10 @@
   .tag {
     padding: 3px 7px;
     border-radius: 3px;
-    background: rgb(194 249 187 / .1);
+    background: color-mix(in srgb, #c2f9bb 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+    }
     color: var(--color-accent);
     font-family: var(--font-recursive);
     font-size: 11px;
@@ -893,7 +905,7 @@
   .quiet-link {
     color: var(--color-text);
     text-decoration: none;
-    border-bottom: 1px dashed #3a3e46;
+    border-bottom: 1px dashed var(--color-rule);
     &:hover {
       border-color: var(--color-accent);
       color: var(--color-accent);
@@ -902,7 +914,10 @@
   }
   .reaction-chip-active {
     border-color: var(--color-accent);
-    background: rgb(194 249 187 / .1);
+    background: color-mix(in srgb, #c2f9bb 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+    }
     color: var(--color-accent);
     & .reaction-count {
       color: var(--color-accent);
@@ -926,14 +941,17 @@
   .border-transparent {
     border-color: transparent;
   }
-  .bg-\[rgb\(194_249_187_\/_0\.1\)\] {
-    background-color: rgb(194 249 187 / 0.1);
-  }
   .bg-\[rgba\(10\,11\,13\,\.6\)\] {
     background-color: rgba(10,11,13,.6);
   }
   .bg-accent {
     background-color: var(--color-accent);
+  }
+  .bg-accent\/10 {
+    background-color: color-mix(in srgb, #c2f9bb 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-accent) 10%, transparent);
+    }
   }
   .bg-border-strong {
     background-color: var(--color-border-strong);
@@ -1204,7 +1222,10 @@
   .link-dashed {
     color: var(--color-accent);
     text-decoration: none;
-    border-bottom: 1px dashed rgb(194 249 187 / .45);
+    border-bottom: 1px dashed color-mix(in srgb, #c2f9bb 45%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-bottom: 1px dashed color-mix(in oklab, var(--color-accent) 45%, transparent);
+    }
     &:hover {
       font-variation-settings: "CASL" 1, "wght" 400;
     }
@@ -1214,9 +1235,6 @@
     & a {
       color: var(--color-accent);
     }
-  }
-  .text-\[\#3a3e46\] {
-    color: #3a3e46;
   }
   .text-accent {
     color: var(--color-accent);
@@ -1235,6 +1253,9 @@
   }
   .text-prose {
     color: var(--color-prose);
+  }
+  .text-rule {
+    color: var(--color-rule);
   }
   .text-secondary {
     color: var(--color-secondary);
@@ -1530,7 +1551,10 @@
     cursor: pointer;
   }
   ::selection {
-    background: rgb(194 249 187 / .3);
+    background: color-mix(in srgb, #c2f9bb 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background: color-mix(in oklab, var(--color-accent) 30%, transparent);
+    }
   }
   :focus-visible {
     outline: 2px solid var(--color-accent);
@@ -1559,7 +1583,10 @@
 .comment-body a {
   color: var(--color-accent);
   text-decoration: none;
-  border-bottom: 1px dashed rgb(194 249 187 / .45);
+  border-bottom: 1px dashed color-mix(in srgb, #c2f9bb 45%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    border-bottom: 1px dashed color-mix(in oklab, var(--color-accent) 45%, transparent);
+  }
 }
 .comment-body code {
   border-radius: 3px;
@@ -1630,7 +1657,10 @@
 .post-body a {
   color: var(--color-accent);
   text-decoration: none;
-  border-bottom: 1px dashed rgb(194 249 187 / .45);
+  border-bottom: 1px dashed color-mix(in srgb, #c2f9bb 45%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    border-bottom: 1px dashed color-mix(in oklab, var(--color-accent) 45%, transparent);
+  }
 }
 .post-body code {
   border-radius: 3px;
@@ -1674,7 +1704,7 @@
   margin: 4px 0 20px;
   padding: 12px 14px;
   border-left: 1px solid var(--color-border-strong);
-  color: #9a9ea6;
+  color: var(--color-footnote);
   font-family: var(--font-recursive);
   font-size: 13px;
   line-height: 1.55;
@@ -1788,7 +1818,7 @@
   border-radius: 6px;
   background: var(--color-code);
   padding: 12px 14px;
-  color: #d3d6dc;
+  color: var(--color-code-text);
   font-family: var(--font-recursive);
   font-size: 13.5px;
   line-height: 1.75;
@@ -1875,10 +1905,13 @@
 }
 .post-body .code-line.is-selected {
   border-left-color: var(--color-accent);
-  background: rgb(194 249 187 / .09);
+  background: color-mix(in srgb, #c2f9bb 9%, transparent);
+  @supports (color: color-mix(in lab, red, red)) {
+    background: color-mix(in oklab, var(--color-accent) 9%, transparent);
+  }
 }
 .post-body .code-line.is-selected .code-line-number {
-  background: #26312a;
+  background: var(--color-selected-gutter);
   color: var(--color-accent);
 }
 .post-body .code-block-footer {
@@ -1922,7 +1955,7 @@
   }
 }
 :is(.post-body, .comment-body) pre :is(a-s, a-ss) {
-  color: #dcd3b4;
+  color: var(--color-code-string);
 }
 :is(.post-body, .comment-body) pre :is(a-n, a-co, a-cb, a-se) {
   color: var(--color-mars);
@@ -1956,9 +1989,6 @@
   border-bottom-color: transparent;
   background-size: 100% 1px;
   color: var(--color-accent);
-}
-.reading-progress {
-  transform-origin: left;
 }
 @property --tw-translate-x {
   syntax: "*";
