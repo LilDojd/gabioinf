@@ -3,9 +3,10 @@ use axum_extra::extract::cookie::Key;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use config::{Config, ConfigError, Environment, File};
 use serde::{Deserialize, Deserializer, de};
+use std::num::NonZeroU32;
 #[derive(Debug, Deserialize)]
 pub struct RateLimiting {
-    pub requests_per_second: u64,
+    pub requests_per_second: NonZeroU32,
     pub burst_size: u32,
 }
 #[derive(Debug, Deserialize)]
@@ -117,7 +118,6 @@ mod tests {
             .unwrap();
         let limits: RateLimiting = config.get("ratelimiting").unwrap();
 
-        assert!(limits.requests_per_second > 0);
         assert!(limits.burst_size > 0);
     }
 
@@ -126,7 +126,7 @@ mod tests {
         let config = |domain: &str| AppConfig {
             domain: domain.to_string(),
             ratelimiting: RateLimiting {
-                requests_per_second: 1,
+                requests_per_second: NonZeroU32::MIN,
                 burst_size: 1,
             },
             database: DatabaseConfig {
