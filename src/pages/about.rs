@@ -114,12 +114,12 @@ fn Contact(href: &'static str, children: Element) -> Element {
 fn LabelRow(
     label: &'static str,
     children: Element,
-    accent: Option<bool>,
-    small: Option<bool>,
+    #[props(default)] accent: bool,
+    #[props(default)] small: bool,
 ) -> Element {
     rsx! {
-        div { class: "grid grid-cols-[60px_1fr] gap-4 md:grid-cols-[72px_1fr]", class: if small.unwrap_or(false) { "text-[15px]" },
-            span { class: "label-mono pt-1", class: if accent.unwrap_or(false) { "text-accent" }, {label.to_string()} }
+        div { class: "grid grid-cols-[60px_1fr] gap-4 md:grid-cols-[72px_1fr]", class: if small { "text-[15px]" },
+            span { class: "label-mono pt-1", class: if accent { "text-accent" }, {label.to_string()} }
             {children}
         }
     }

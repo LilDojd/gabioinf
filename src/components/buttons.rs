@@ -15,8 +15,8 @@ pub struct ButtonProps {
     pub variant: ButtonVariant,
     #[props(default)]
     pub disabled: bool,
-    #[props(default = "button".to_string())]
-    pub r#type: String,
+    #[props(default = "button")]
+    pub r#type: &'static str,
 }
 
 #[component]
@@ -26,7 +26,7 @@ pub fn Button(props: ButtonProps) -> Element {
             class: match props.variant { ButtonVariant::Primary => "btn-primary", ButtonVariant::Secondary => "btn-secondary" },
             r#type: props.r#type,
             disabled: props.disabled,
-            onclick: move |event| props.onclick.call(event),
+            onclick: props.onclick,
             {props.children}
         }
     }
