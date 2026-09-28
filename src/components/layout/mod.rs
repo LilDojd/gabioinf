@@ -241,7 +241,7 @@ fn CommandPalette() -> Element {
                 class: "w-[440px] max-w-[calc(100%-48px)] overflow-hidden rounded-lg border border-border-strong bg-surface shadow-[0_20px_60px_rgba(0,0,0,.5)]",
                 onclick: move |event| event.stop_propagation(),
                 input {
-                    autofocus: true,
+                    onmounted: move |event| async move { let _ = event.data().set_focus(true).await; },
                     class: "palette-input w-full border-0 border-b border-card bg-transparent px-4 py-3.5 text-base text-text outline-none placeholder:text-label",
                     placeholder: "where to?",
                     value: query,
