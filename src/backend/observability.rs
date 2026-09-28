@@ -2,12 +2,12 @@ use crate::backend::auth::AuthSession;
 use crate::shared::models::Guest;
 use axum::{extract::Request, middleware::Next, response::Response};
 use sentry::{ClientInitGuard, ClientOptions, protocol::User};
-use tracing::Level;
+use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 const DEFAULT_TRACES_SAMPLE_RATE: f32 = 0.1;
 
-pub(crate) fn init(level: Level) -> ClientInitGuard {
+pub(crate) fn init() -> ClientInitGuard {
     let guard = sentry::init(
         ClientOptions::new()
             .maybe_release(sentry::release_name!())
@@ -16,7 +16,7 @@ pub(crate) fn init(level: Level) -> ClientInitGuard {
     );
 
     let filter = tracing_subscriber::EnvFilter::builder()
-        .with_default_directive(level.into())
+        .with_default_directive(LevelFilter::INFO.into())
         .from_env_lossy()
         .add_directive(
             "hyper_util=warn"
