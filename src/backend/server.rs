@@ -56,7 +56,7 @@ pub async fn serve(cfg: impl Into<ServeConfig>, dxapp: fn() -> Element) -> anyho
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
-            .per_second(config.ratelimiting.requests_per_second)
+            .period(Duration::from_secs(1) / config.ratelimiting.requests_per_second.get())
             .burst_size(config.ratelimiting.burst_size)
             .key_extractor(CookieExtractor)
             .finish()
