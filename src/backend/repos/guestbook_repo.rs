@@ -11,13 +11,14 @@ impl GuestbookRepo {
         Self { pool }
     }
 
-    pub async fn create(&self, entry: &GuestbookEntry) -> BResult<GuestbookEntry> {
+    pub async fn create(&self, entry: &GuestbookEntry) -> BResult<Option<GuestbookEntry>> {
         Ok(sqlx::query_as!(
             GuestbookEntry,
             r#"
             WITH g AS (
                 INSERT INTO guestbook (message, signature, author_id)
                 VALUES ($1, $2, $3)
+                ON CONFLICT (author_id) DO NOTHING
                 RETURNING *
             )
             SELECT
@@ -34,7 +35,7 @@ impl GuestbookRepo {
             entry.signature,
             entry.author_id.as_value(),
         )
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await?)
     }
 
@@ -181,6 +182,7 @@ mod tests {
         })
         .await
         .unwrap()
+        .unwrap()
     }
 
     #[sqlx::test]
@@ -190,6 +192,24 @@ mod tests {
         let entry = create_entry_for(&repo, &guest).await;
 
         assert_eq!(repo.find_by_author(guest.id).await.unwrap(), Some(entry));
+    }
+
+    #[sqlx::test]
+    async fn a_second_signature_by_the_same_author_is_not_created(pool: PgPool) {
+        let guest = create_guest(&pool, 1).await;
+        let repo = GuestbookRepo::new(pool);
+        create_entry_for(&repo, &guest).await;
+
+        let duplicate = repo
+            .create(&GuestbookEntry {
+                message: "Again".into(),
+                author_id: guest.id,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(duplicate, None);
     }
 
     #[sqlx::test]
