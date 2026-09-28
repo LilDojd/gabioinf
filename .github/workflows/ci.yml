@@ -34,19 +34,14 @@ jobs:
         ports:
           - 5432:5432
 
-    strategy:
-      matrix:
-        toolchain:
-          # Last nightly before rustc's LLVM 23 wasm regression.
-          - nightly-2026-08-05
-
     steps:
       - uses: actions/checkout@v7
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
-          toolchain: ${{ matrix.toolchain }}
+          # Last nightly before rustc's LLVM 23 wasm regression.
+          toolchain: nightly-2026-08-05
           components: rustfmt, clippy
           target: wasm32-unknown-unknown
       - name: Check formatting
