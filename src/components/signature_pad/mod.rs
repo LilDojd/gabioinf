@@ -118,7 +118,7 @@ fn PadButton(label: &'static str, onclick: EventHandler<MouseEvent>) -> Element 
         button {
             r#type: "button",
             class: "label-mono rounded-sm border border-border-strong bg-surface px-2 py-0.5 hover:border-accent hover:text-accent",
-            onclick: move |event| onclick.call(event),
+            onclick,
             {label}
         }
     }

@@ -42,7 +42,7 @@ pub(super) async fn selection_released(within: Option<&web_sys::Node>) {
 #[component]
 pub(crate) fn HighlightedHtml(html: String, #[props(default)] class: String) -> Element {
     rsx! {
-        div { key: "{html}", class, dangerous_inner_html: html, onmounted: highlight_markdown }
+        div { class, dangerous_inner_html: html, onmounted: highlight_markdown }
     }
 }
 
