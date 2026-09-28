@@ -71,8 +71,8 @@ pub fn SignaturePopup(props: SignaturePopupProps) -> Element {
                     if let Some(error) = validation.read().as_ref().or(props.submit_error.as_ref()) {
                         span { role: "alert", class: "label-mono text-mars", {error.to_string()} }
                     }
-                    label { class: "label-mono flex flex-col gap-2",
-                        "sign here (optional)"
+                    div { class: "label-mono flex flex-col gap-2", role: "group", aria_labelledby: "signature-pad-label",
+                        span { id: "signature-pad-label", "sign here (optional)" }
                         SignaturePad {
                             class: "h-48 w-full rounded-md border border-card bg-code",
                             disabled: props.submitting,
