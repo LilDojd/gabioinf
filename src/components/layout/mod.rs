@@ -74,7 +74,7 @@ pub fn Layout() -> Element {
                 ReadingProgress { progress }
             }
             img {
-                class: if (ui.sesh_visible)() { "fixed right-6 bottom-0 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none" } else { "fixed right-6 -bottom-40 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none" },
+                class: "fixed right-6 z-30 w-[150px] rounded-t-md shadow-[0_-8px_30px_rgba(0,0,0,.4)] transition-[bottom] duration-500 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] pointer-events-none", class: if (ui.sesh_visible)() { "bottom-0" } else { "-bottom-40" },
                 src: asset!("/assets/sesh.avif"),
                 alt: "Sesh peeking",
             }
@@ -261,7 +261,7 @@ fn CommandPalette() -> Element {
                         button {
                             key: "{command.label}",
                             r#type: "button",
-                            class: if index == 0 { "flex w-full items-baseline justify-between gap-4 rounded-sm bg-hover-row px-2.5 py-2 text-left text-sm text-accent" } else { "flex w-full items-baseline justify-between gap-4 rounded-sm bg-transparent px-2.5 py-2 text-left text-sm text-secondary hover:bg-hover-row hover:text-accent" },
+                            class: "flex w-full items-baseline justify-between gap-4 rounded-sm px-2.5 py-2 text-left text-sm", class: if index == 0 { "bg-hover-row text-accent" } else { "bg-transparent text-secondary hover:bg-hover-row hover:text-accent" },
                             onclick: move |_| run_command(command.target, navigator, ui),
                             span { "{command.label}" }
                             span { class: "label-mono text-[11px]", "{command.hint}" }

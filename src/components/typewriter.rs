@@ -74,7 +74,7 @@ pub fn Typewriter(
     rsx! {
         "{typed}"
         span {
-            class: if cursor_visible() { "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent" } else { "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent opacity-0" },
+            class: "ml-0.5 inline-block h-[.95em] w-[.5em] translate-y-[.12em] bg-accent", class: if !cursor_visible() { "opacity-0" },
         }
     }
 }

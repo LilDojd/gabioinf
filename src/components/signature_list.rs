@@ -236,7 +236,7 @@ fn SignatureSkeleton(#[props(default)] compact: bool) -> Element {
                 div { class: "h-3.5 w-5/6 rounded bg-hover-row" }
                 div { class: "h-3.5 w-2/3 rounded bg-hover-row" }
             }
-            div { class: if compact { "h-10 rounded-sm bg-hover-row" } else { "signature-area rounded-sm bg-hover-row" } }
+            div { class: "rounded-sm bg-hover-row", class: if compact { "h-10" } else { "signature-area" } }
             div { class: "h-3 w-2/5 rounded bg-hover-row" }
         }
     }

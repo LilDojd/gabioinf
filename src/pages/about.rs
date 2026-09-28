@@ -118,8 +118,8 @@ fn LabelRow(
     small: Option<bool>,
 ) -> Element {
     rsx! {
-        div { class: if small.unwrap_or(false) { "grid grid-cols-[60px_1fr] gap-4 text-[15px] md:grid-cols-[72px_1fr]" } else { "grid grid-cols-[60px_1fr] gap-4 md:grid-cols-[72px_1fr]" },
-            span { class: if accent.unwrap_or(false) { "label-mono pt-1 text-accent" } else { "label-mono pt-1" }, {label.to_string()} }
+        div { class: "grid grid-cols-[60px_1fr] gap-4 md:grid-cols-[72px_1fr]", class: if small.unwrap_or(false) { "text-[15px]" },
+            span { class: "label-mono pt-1", class: if accent.unwrap_or(false) { "text-accent" }, {label.to_string()} }
             {children}
         }
     }
