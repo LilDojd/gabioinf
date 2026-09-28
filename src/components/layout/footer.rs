@@ -100,6 +100,10 @@ pub fn AreciboFooter() -> Element {
     let route: Route = use_route();
     let mut label = use_signal(|| "sol system, from arecibo");
     let year = time::OffsetDateTime::now_utc().year();
+    let cells = cells(&route);
+    let first_sun = cells
+        .iter()
+        .position(|cell| matches!(cell, Cell::Sun { .. }));
 
     rsx! {
         div { class: "flex flex-col gap-[14px] border-t border-line pt-4",
@@ -107,7 +111,7 @@ pub fn AreciboFooter() -> Element {
                 class: "flex w-full items-end gap-2",
                 title: "the solar system, roughly",
                 div { class: "grid grid-cols-[repeat(19,7px)] grid-rows-[repeat(5,7px)]",
-                    for (index, cell) in cells(&route).into_iter().enumerate() {
+                    for (index, cell) in cells.into_iter().enumerate() {
                         match cell {
                             Cell::Empty => rsx! { span { key: "{index}", class: "block size-[7px]" } },
                             Cell::Sun { active } => rsx! {
@@ -121,6 +125,8 @@ pub fn AreciboFooter() -> Element {
                                         class: if active { "block size-[7px] bg-sun shadow-[0_0_10px_rgba(236,167,44,.6)]" } else { "block size-[7px] bg-sun" },
                                         title: "sun",
                                         aria_label: "home · sun",
+                                        tabindex: if Some(index) == first_sun { "0" } else { "-1" },
+                                        aria_hidden: Some(index) != first_sun,
                                     }
                                 }
                             },
