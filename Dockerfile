@@ -16,6 +16,8 @@ RUN cargo install dioxus-cli@0.7.10 --locked
 RUN apt-get update && apt-get install -y binaryen
 # Copy over the source code and build the project
 COPY . .
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+RUN cargo fetch --locked
 # Copy tailwind.css we generated earlier
 COPY --from=tailwind /app/assets/tailwind.css ./assets/tailwind.css
 RUN dx build --release --fullstack
